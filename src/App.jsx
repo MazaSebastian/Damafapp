@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ClubInfoPage from './pages/ClubInfoPage'
 import RewardsStorePage from './pages/RewardsStorePage'
+import MenuPage from './pages/MenuPage'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/club-info" element={<ClubInfoPage />} />
           <Route path="/rewards" element={<RewardsStorePage />} />
+          <Route path="/menu" element={<MenuPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

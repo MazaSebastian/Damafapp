@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed } from 'lucide-react'
 import NewsManager from '../components/NewsManager'
 import RewardsManager from '../components/RewardsManager'
+import ProductManager from '../components/ProductManager'
 
 const AdminDashboard = () => {
     const { user, role, loading } = useAuth()
@@ -44,6 +45,7 @@ const AdminDashboard = () => {
                     <NavItem icon={<ShoppingCart />} label="Orders" active={activeTab === 'Orders'} onClick={() => setActiveTab('Orders')} />
                     <NavItem icon={<Newspaper />} label="Novedades" active={activeTab === 'Novedades'} onClick={() => setActiveTab('Novedades')} />
                     <NavItem icon={<Gift />} label="Canjes" active={activeTab === 'Canjes'} onClick={() => setActiveTab('Canjes')} />
+                    <NavItem icon={<UtensilsCrossed />} label="Menú" active={activeTab === 'Menu'} onClick={() => setActiveTab('Menu')} />
                     <NavItem icon={<Package />} label="Inventory" active={activeTab === 'Inventory'} onClick={() => setActiveTab('Inventory')} />
                     <NavItem icon={<Users />} label="Customers" active={activeTab === 'Customers'} onClick={() => setActiveTab('Customers')} />
                     <NavItem icon={<Settings />} label="Settings" active={activeTab === 'Settings'} onClick={() => setActiveTab('Settings')} />
@@ -75,6 +77,8 @@ const AdminDashboard = () => {
                     <NewsManager />
                 ) : activeTab === 'Canjes' ? (
                     <RewardsManager />
+                ) : activeTab === 'Menu' ? (
+                    <ProductManager />
                 ) : (
                     <>
                         {/* Stats Grid */}

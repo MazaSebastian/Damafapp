@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient'
 import LoyaltyBanner from './LoyaltyBanner'
 import NewsCard from './NewsCard'
 import BottomNav from './BottomNav'
+import FloatingOrderButton from './FloatingOrderButton'
 
 const UserHome = () => {
     const { user, role, signOut } = useAuth()
@@ -79,6 +80,7 @@ const UserHome = () => {
             </main>
 
             <BottomNav />
+            <FloatingOrderButton />
         </div>
     )
 }

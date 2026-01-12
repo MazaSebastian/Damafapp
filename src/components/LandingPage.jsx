@@ -4,6 +4,7 @@ import { Menu, UtensilsCrossed, Loader2 } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import NewsCard from './NewsCard'
 import BottomNav from './BottomNav'
+import FloatingOrderButton from './FloatingOrderButton'
 
 const LandingPage = () => {
     const [news, setNews] = useState([])
@@ -98,8 +99,10 @@ const LandingPage = () => {
 
             {/* Bottom Navigation */}
             <BottomNav />
+            <FloatingOrderButton />
         </div>
     )
 }
 
 export default LandingPage
+    ```
