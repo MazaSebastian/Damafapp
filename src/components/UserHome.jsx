@@ -50,8 +50,8 @@ const UserHome = () => {
                         <Menu className="w-6 h-6" />
                     </button>
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">Bienvenido</span>
-                        <span className="text-sm font-bold text-white leading-none">{user?.email?.split('@')[0]}</span>
+                        <span className="text-sm font-bold text-white leading-tight">Bienvenido {user?.email?.split('@')[0]}!</span>
+                        <span className="text-[10px] text-[var(--color-text-muted)]">¿Con qué pensas bajonear hoy? 🍔</span>
                     </div>
                 </div>
 
