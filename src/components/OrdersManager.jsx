@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Loader2, Check, Clock, X, ChefHat, Bell, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 const OrdersManager = () => {
     const [orders, setOrders] = useState([])
@@ -44,41 +45,65 @@ const OrdersManager = () => {
 
         if (!error) {
             setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+            toast.success(`Pedido actualizado a: ${newStatus}`)
+        } else {
+            console.error('Error updating status:', error)
+            toast.error('Error al actualizar estado')
         }
     }
 
-    const deleteOrder = async (orderId) => {
-        if (!confirm('¿Estás seguro de eliminar este pedido?')) return
+    const deleteOrder = (orderId) => {
+        toast('¿Eliminar pedido permanentemente?', {
+            description: 'Esta acción no se puede deshacer.',
+            action: {
+                label: 'Eliminar',
+                onClick: async () => {
+                    const { error } = await supabase
+                        .from('orders')
+                        .delete()
+                        .eq('id', orderId)
 
-        const { error } = await supabase
-            .from('orders')
-            .delete()
-            .eq('id', orderId)
-
-        if (!error) {
-            setOrders(orders.filter(o => o.id !== orderId))
-        } else {
-            console.error('Error deleting order:', error)
-            alert('Error al eliminar pedido')
-        }
+                    if (!error) {
+                        setOrders(prev => prev.filter(o => o.id !== orderId))
+                        toast.success('Pedido eliminado')
+                    } else {
+                        console.error('Error deleting order:', error)
+                        toast.error('Error al eliminar pedido')
+                    }
+                }
+            },
+            cancel: {
+                label: 'Cancelar'
+            }
+        })
     }
 
-    const clearHistory = async () => {
-        if (!confirm('¿Estás seguro de eliminar TODOS los pedidos completados y cancelados?')) return
-        setLoading(true)
+    const clearHistory = () => {
+        toast('¿Limpiar historial completo?', {
+            description: 'Se borrarán todos los pedidos finalizados y cancelados.',
+            action: {
+                label: 'Confirmar Limpieza',
+                onClick: async () => {
+                    setLoading(true)
+                    const { error } = await supabase
+                        .from('orders')
+                        .delete()
+                        .in('status', ['completed', 'cancelled', 'rejected'])
 
-        const { error } = await supabase
-            .from('orders')
-            .delete()
-            .in('status', ['completed', 'cancelled', 'rejected'])
-
-        if (!error) {
-            await fetchOrders() // Refresh
-        } else {
-            console.error('Error clearing history:', error)
-            alert('Error al limpiar historial')
-        }
-        setLoading(false)
+                    if (!error) {
+                        await fetchOrders()
+                        toast.success('Historial limpio')
+                    } else {
+                        console.error('Error clearing history:', error)
+                        toast.error('Error al limpiar historial')
+                    }
+                    setLoading(false)
+                }
+            },
+            cancel: {
+                label: 'Cancelar'
+            }
+        })
     }
 
     const getStatusColor = (status) => {
