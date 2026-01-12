@@ -1,4 +1,4 @@
-import { Home, UtensilsCrossed, QrCode, User, Ticket } from 'lucide-react'
+import { Home, UtensilsCrossed, QrCode, User, Ticket, ShoppingBag } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const BottomNav = () => {
@@ -8,8 +8,13 @@ const BottomNav = () => {
                 <NavItem icon={<Home className="w-6 h-6" />} label="Inicio" active />
             </Link>
             <NavItem icon={<UtensilsCrossed className="w-6 h-6" />} label="Pide aquí" />
+            <Link to="/my-orders">
+                <NavItem icon={<ShoppingBag className="w-6 h-6" />} label="Pedidos" />
+            </Link>
             <NavItem icon={<QrCode className="w-6 h-6" />} label="Código" />
-            <NavItem icon={<User className="w-6 h-6" />} label="Canjes" />
+            <Link to="/rewards">
+                <NavItem icon={<User className="w-6 h-6" />} label="Canjes" />
+            </Link>
             <NavItem icon={<Ticket className="w-6 h-6" />} label="Cupones" />
         </nav>
     )

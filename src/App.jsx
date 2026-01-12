@@ -7,6 +7,7 @@ import ClubInfoPage from './pages/ClubInfoPage'
 import RewardsStorePage from './pages/RewardsStorePage'
 import MenuPage from './pages/MenuPage'
 import CheckoutPage from './pages/CheckoutPage'
+import MyOrdersPage from './pages/MyOrdersPage'
 import { CartProvider } from './context/CartContext'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path="/rewards" element={<RewardsStorePage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/my-orders" element={<MyOrdersPage />} />
           </Routes>
         </CartProvider>
       </AuthProvider>
