@@ -82,6 +82,8 @@ const AdminDashboard = () => {
                     <OrdersManager />
                 ) : activeTab === 'Canjes' ? (
                     <RewardsManager />
+                ) : activeTab === 'Cupones' ? (
+                    <CouponsManager />
                 ) : activeTab === 'Menu' ? (
                     <ProductManager />
                 ) : (
