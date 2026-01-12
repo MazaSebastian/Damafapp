@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { supabase } from '../supabaseClient'
 import { ChefHat, ArrowRight, Loader2 } from 'lucide-react'
 
@@ -18,12 +19,18 @@ const LoginPage = () => {
 
         try {
             if (isSignUp) {
-                const { error } = await supabase.auth.signUp({
+                const { data: signUpData, error } = await supabase.auth.signUp({
                     email,
                     password
                 })
                 if (error) throw error
-                alert('Registro exitoso! Revisa tu email para confirmar.')
+                if (signUpData.user) {
+                    toast.success('Registro exitoso! Revisa tu email para confirmar.')
+                } else {
+                    // This case might occur if email confirmation is required but no user object is returned immediately
+                    // Or if there's an issue not caught by the 'error' object
+                    toast.info('Registro iniciado. Por favor, revisa tu email para confirmar tu cuenta.')
+                }
             } else {
                 const { error } = await supabase.auth.signInWithPassword({
                     email,

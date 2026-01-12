@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Plus, Trash2, Edit2, Save, X, ChevronRight, Loader2, Image, List } from 'lucide-react'
+import { toast } from 'sonner'
 
 const ProductManager = () => {
     const [categories, setCategories] = useState([])
@@ -66,8 +67,9 @@ const ProductManager = () => {
             setProducts([...products, data[0]])
             updateStats()
             e.target.reset()
+            toast.success('Producto creado correctamente')
         } else {
-            alert('Error creating product: ' + error?.message)
+            toast.error('Error creating product: ' + error?.message)
         }
     }
 
@@ -77,8 +79,9 @@ const ProductManager = () => {
         if (!error) {
             setProducts(products.filter(p => p.id !== id))
             updateStats()
+            toast.success('Producto archivado')
         } else {
-            alert('Error al archivar: ' + error.message)
+            toast.error('Error al archivar: ' + error.message)
         }
     }
 
@@ -105,8 +108,9 @@ const ProductManager = () => {
             setCategories(categories.filter(c => c.id !== id))
             if (selectedCategory?.id === id) setSelectedCategory(null)
             updateStats()
+            toast.success('Categoría eliminada')
         } else {
-            alert('Error al eliminar: ' + error.message)
+            toast.error('Error al eliminar: ' + error.message)
         }
     }
 

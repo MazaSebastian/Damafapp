@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Plus, Trash2, Image, Type, Link as LinkIcon, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 const NewsManager = () => {
     const [news, setNews] = useState([])
@@ -31,8 +32,9 @@ const NewsManager = () => {
         const { error } = await supabase.from('news_events').delete().eq('id', id)
         if (!error) {
             setNews(news.filter(n => n.id !== id))
+            toast.success('Noticia eliminada')
         } else {
-            alert('Error al eliminar: ' + error.message)
+            toast.error('Error al eliminar: ' + error.message)
         }
     }
 
@@ -48,11 +50,11 @@ const NewsManager = () => {
                 title: '',
                 description: '',
                 image_url: '',
-                type: 'Novedad',
                 action_text: 'Ver más'
             })
+            toast.success('Noticia publicada')
         } else {
-            alert('Error al crear: ' + (error?.message || 'Unknown error'))
+            toast.error('Error al crear: ' + (error?.message || 'Unknown error'))
         }
         setSubmitting(false)
     }

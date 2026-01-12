@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Ticket, Copy, Loader2, Info } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '../supabaseClient'
 
 const CouponsPage = () => {
@@ -36,7 +37,7 @@ const CouponsPage = () => {
 
     const copyCode = (code) => {
         navigator.clipboard.writeText(code)
-        alert('Código ' + code + ' copiado al portapapeles!')
+        toast.success(`Código ${code} copiado!`)
     }
 
     return (

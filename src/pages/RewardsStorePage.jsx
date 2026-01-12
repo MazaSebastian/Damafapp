@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { Star, Lock, ChefHat, ArrowLeft, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import BottomNav from '../components/BottomNav'
 
 const RewardsStorePage = () => {
@@ -37,11 +38,14 @@ const RewardsStorePage = () => {
         setLoading(false)
 
         if (error) {
-            alert('Error al canjear: ' + error.message)
+            toast.error('Error al canjear: ' + error.message)
         } else if (!data.success) {
-            alert(data.message)
+            toast.error(data.message)
         } else {
-            alert(`¡Canje exitoso! 🎉\nTu código de canje es: ${data.redemption_id.slice(0, 8)}\n(Muéstralo en el mostrador)`)
+            toast.success('¡Canje exitoso! 🎉', {
+                description: `Tu código de canje es: ${data.redemption_id.slice(0, 8)}. (Muéstralo en el mostrador)`,
+                duration: 10000
+            })
             setStars(prev => prev - item.cost) // Optimistic update
         }
     }

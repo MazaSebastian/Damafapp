@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useCart } from '../context/CartContext'
 import { supabase } from '../supabaseClient'
-import { ArrowLeft, Trash2, ShoppingBag, Plus } from 'lucide-react'
+import { ArrowLeft, Trash2, ShoppingBag, Plus, CreditCard, MapPin, Store, Utensils, Ticket } from 'lucide-react'
 
 const CheckoutPage = () => {
     const { cart, removeFromCart, total, clearCart } = useCart()
@@ -17,31 +18,31 @@ const CheckoutPage = () => {
     const applyCoupon = async () => {
         if (!couponCode) return
 
-        const { data, error } = await supabase
+        const { data: validCoupon, error } = await supabase
             .from('coupons')
             .select('*, products(name, price)')
             .eq('code', couponCode.toUpperCase())
             .single()
 
-        if (error || !data || !data.is_active) {
-            alert('Cupón inválido o expirado')
+        if (error || !validCoupon || !validCoupon.is_active) {
+            toast.error('Cupón inválido o expirado')
             setAppliedCoupon(null)
             setDiscountAmount(0)
             return
         }
 
-        if (data.usage_limit && data.usage_count >= data.usage_limit) {
-            alert('Este cupón ha alcanzado su límite de usos')
+        if (validCoupon.usage_limit && validCoupon.usage_count >= validCoupon.usage_limit) {
+            toast.error('Este cupón ha alcanzado su límite de usos')
             return
         }
 
         // Calculate discount
         let discount = 0
-        if (data.discount_type === 'percentage') {
-            discount = (total * data.value) / 100
-        } else if (data.discount_type === 'fixed') {
-            discount = data.value
-        } else if (data.discount_type === 'product') {
+        if (validCoupon.discount_type === 'percentage') {
+            discount = (total * validCoupon.value) / 100
+        } else if (validCoupon.discount_type === 'fixed') {
+            discount = validCoupon.value
+        } else if (validCoupon.discount_type === 'product') {
             // Find if product is in cart (assuming 'target_product_id' is the free product)
             // Note: Simplification - we just deduct the product price if it's in the cart, 
             // or maybe we should add it? For now, let's assume user must add it first, OR we discount the value of that product.
@@ -52,36 +53,36 @@ const CheckoutPage = () => {
             */
             // We need to fetch product price if not in Join, but we included it in query
             // wait, we need to check if product is in cart.
-            const productInCart = cart.find(item => item.main.id === data.target_product_id)
+            const productInCart = cart.find(item => item.main.id === validCoupon.target_product_id)
             if (productInCart) {
                 discount = productInCart.main.price
             } else {
-                alert(`Este cupón te regala un ${data.products?.name}. ¡Agrégalo al carrito para aplicar el descuento!`)
+                toast.info(`Este cupón te regala un ${validCoupon.products?.name || 'producto'}. ¡Si no está en el carrito, agrégalo para ver el descuento!`)
                 return
             }
         }
 
         if (discount > total) discount = total
 
-        setAppliedCoupon(data)
+        setAppliedCoupon(validCoupon)
         setDiscountAmount(discount)
-        alert(`¡Cupón ${data.code} aplicado! Ahorras $${discount.toFixed(2)}`)
+        toast.success(`¡Cupón ${validCoupon.code} aplicado! Ahorras $${discount.toFixed(2)}`)
     }
 
     const finalTotal = total - discountAmount
 
     const handleCheckout = async () => {
         if (!orderType) {
-            alert('⚠️ POR FAVOR SELECCIONA UNA OPCIÓN:\n\n🛵 DELIVERY (Envío a casa)\n🥡 RETIRO EN LOCAL (Pasar a buscar)')
+            toast.warning('Por favor selecciona: DELIVERY o RETIRO EN LOCAL')
             return
         }
 
         if (orderType === 'delivery' && !address.trim()) {
-            alert('Por favor ingresa tu dirección de envío')
+            toast.error('Por favor ingresa tu dirección de envío')
             return
         }
 
-        if (!confirm('¿Confirmar pedido por $' + total.toFixed(2) + '?')) return
+        if (!confirm('¿Confirmar pedido por $' + finalTotal.toFixed(2) + '?')) return
 
         const { data: { user } } = await supabase.auth.getUser()
 
@@ -90,17 +91,19 @@ const CheckoutPage = () => {
             .from('orders')
             .insert([{
                 user_id: user?.id || null, // Null for guests
-                total: total,
+                total: finalTotal,
                 status: 'pending',
                 order_type: orderType,
-                delivery_address: orderType === 'delivery' ? address : null
+                delivery_address: orderType === 'delivery' ? address : null,
+                coupon_code: appliedCoupon?.code || null,
+                discount_amount: discountAmount
             }])
             .select()
             .single()
 
         if (orderError) {
-            alert('Error al crear pedido: ' + orderError.message)
-            return
+            toast.error('Error al iniciar el pedido. Intenta nuevamente.')
+            throw orderError
         }
 
         // 2. Create Order Items
@@ -119,12 +122,14 @@ const CheckoutPage = () => {
             .insert(orderItems)
 
         if (itemsError) {
-            alert('Error al guardar items: ' + itemsError.message)
-        } else {
-            alert(`¡Pedido #${order.id.slice(0, 8)} enviado a cocina!`)
-            clearCart()
-            navigate('/')
+            toast.error('Error al guardar items: ' + itemsError.message)
+            return null
         }
+
+        // Success!
+        toast.success(`¡Pedido #${order.id.slice(0, 8)} enviado a cocina! 👨‍🍳`)
+        clearCart()
+        navigate('/')
     }
 
     if (cart.length === 0) {

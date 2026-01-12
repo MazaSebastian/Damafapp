@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Plus, Trash2, Image, Type, Loader2, Star } from 'lucide-react'
+import { toast } from 'sonner'
 
 const RewardsManager = () => {
     const [rewards, setRewards] = useState([])
@@ -30,8 +31,9 @@ const RewardsManager = () => {
         const { error } = await supabase.from('rewards').delete().eq('id', id)
         if (!error) {
             setRewards(rewards.filter(r => r.id !== id))
+            toast.success('Premio eliminado')
         } else {
-            alert('Error al eliminar: ' + error.message)
+            toast.error('Error al eliminar: ' + error.message)
         }
     }
 
@@ -46,11 +48,11 @@ const RewardsManager = () => {
             setFormData({
                 name: '',
                 description: '',
-                image_url: '',
                 cost: 100
             })
+            toast.success('Premio creado')
         } else {
-            alert('Error al crear: ' + (error?.message || 'Unknown error'))
+            toast.error('Error al crear: ' + (error?.message || 'Unknown error'))
         }
         setSubmitting(false)
     }

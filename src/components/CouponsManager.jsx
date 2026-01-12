@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Ticket, Plus, Trash2, StopCircle, PlayCircle, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 const CouponsManager = () => {
     const [coupons, setCoupons] = useState([])
@@ -34,9 +35,9 @@ const CouponsManager = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!formData.code) return alert('El código es obligatorio')
-        if (formData.discount_type !== 'product' && !formData.value) return alert('El valor es obligatorio')
-        if (formData.discount_type === 'product' && !formData.target_product_id) return alert('Debes seleccionar un producto')
+        if (!formData.code) return toast.error('El código es obligatorio')
+        if (formData.discount_type !== 'product' && !formData.value) return toast.error('El valor es obligatorio')
+        if (formData.discount_type === 'product' && !formData.target_product_id) return toast.error('Debes seleccionar un producto')
 
         const { error } = await supabase.from('coupons').insert([{
             code: formData.code.toUpperCase(),
@@ -48,10 +49,11 @@ const CouponsManager = () => {
         }])
 
         if (error) {
-            alert('Error: ' + error.message)
+            toast.error('Error: ' + error.message)
         } else {
             setFormData({ code: '', discount_type: 'percentage', value: '', target_product_id: '', usage_limit: '' })
             setShowForm(false)
+            toast.success('Cupón creado exitosamente')
             fetchData()
         }
     }

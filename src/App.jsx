@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -14,6 +15,7 @@ import { CartProvider } from './context/CartContext'
 function App() {
   return (
     <BrowserRouter>
+      <Toaster richColors position="top-center" />
       <AuthProvider>
         <CartProvider>
           <Routes>
