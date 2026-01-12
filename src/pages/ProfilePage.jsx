@@ -76,7 +76,7 @@ const ProfilePage = () => {
                 phone: formData.phone,
                 zip_code: formData.zip_code,
                 // birth_date: ... (Immutable)
-                updated_at: new Date()
+                // updated_at: new Date() // Column doesn't exist, removing to prevent error
             }
 
             const { error } = await supabase
