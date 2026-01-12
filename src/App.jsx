@@ -8,6 +8,7 @@ import RewardsStorePage from './pages/RewardsStorePage'
 import MenuPage from './pages/MenuPage'
 import CheckoutPage from './pages/CheckoutPage'
 import MyOrdersPage from './pages/MyOrdersPage'
+import CouponsPage from './pages/CouponsPage'
 import { CartProvider } from './context/CartContext'
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/my-orders" element={<MyOrdersPage />} />
+            <Route path="/coupons" element={<CouponsPage />} />
           </Routes>
         </CartProvider>
       </AuthProvider>

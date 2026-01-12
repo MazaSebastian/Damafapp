@@ -17,7 +17,9 @@ const BottomNav = () => {
             <Link to="/rewards">
                 <NavItem icon={<User className="w-6 h-6" />} label="Canjes" />
             </Link>
-            <NavItem icon={<Ticket className="w-6 h-6" />} label="Cupones" />
+            <Link to="/coupons">
+                <NavItem icon={<Ticket className="w-6 h-6" />} label="Cupones" />
+            </Link>
         </nav>
     )
 }
