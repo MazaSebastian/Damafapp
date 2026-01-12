@@ -28,7 +28,7 @@ const ProductManager = () => {
 
     const fetchProducts = async (catId) => {
         setLoading(true)
-        const { data } = await supabase.from('products').select('*').eq('category_id', catId)
+        const { data } = await supabase.from('products').select('*').eq('category_id', catId).eq('is_available', true)
         if (data) setProducts(data)
         setLoading(false)
     }
@@ -56,9 +56,13 @@ const ProductManager = () => {
     }
 
     const handleDeleteProduct = async (id) => {
-        if (!confirm('Eliminar producto?')) return
-        const { error } = await supabase.from('products').delete().eq('id', id)
-        if (!error) setProducts(products.filter(p => p.id !== id))
+        if (!confirm('¿Archivar producto? (Esto lo ocultará del menú pero guardará el historial)')) return
+        const { error } = await supabase.from('products').update({ is_available: false }).eq('id', id)
+        if (!error) {
+            setProducts(products.filter(p => p.id !== id))
+        } else {
+            alert('Error al archivar: ' + error.message)
+        }
     }
 
     // --- Category Handlers ---
