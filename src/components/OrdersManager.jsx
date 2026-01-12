@@ -56,8 +56,9 @@ const OrdersManager = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'pending': return 'bg-yellow-500/20 text-yellow-500'
-            case 'preparing': return 'bg-orange-500/20 text-orange-500'
-            case 'ready': return 'bg-green-500/20 text-green-500'
+            case 'cooking': return 'bg-orange-500/20 text-orange-500' // Was 'preparing'
+            case 'packaging': return 'bg-blue-500/20 text-blue-500' // New "Preparando para enviar"
+            case 'sent': return 'bg-purple-500/20 text-purple-500' // New "Pedido Enviado"
             case 'completed': return 'bg-gray-500/20 text-gray-400'
             default: return 'bg-gray-500/20 text-gray-400'
         }
@@ -115,18 +116,23 @@ const OrdersManager = () => {
                         {/* Actions */}
                         <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
                             {order.status === 'pending' && (
-                                <button onClick={() => updateStatus(order.id, 'preparing')} className="col-span-3 bg-orange-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-orange-500 transition-colors flex items-center justify-center gap-2">
+                                <button onClick={() => updateStatus(order.id, 'cooking')} className="col-span-3 bg-orange-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-orange-500 transition-colors flex items-center justify-center gap-2">
                                     <ChefHat className="w-4 h-4" /> Empezar a Cocinar
                                 </button>
                             )}
-                            {order.status === 'preparing' && (
-                                <button onClick={() => updateStatus(order.id, 'ready')} className="col-span-3 bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2">
-                                    <Bell className="w-4 h-4" /> Marcar Listo
+                            {order.status === 'cooking' && (
+                                <button onClick={() => updateStatus(order.id, 'packaging')} className="col-span-3 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
+                                    <Check className="w-4 h-4" /> Preparar Envío
                                 </button>
                             )}
-                            {order.status === 'ready' && (
+                            {order.status === 'packaging' && (
+                                <button onClick={() => updateStatus(order.id, 'sent')} className="col-span-3 bg-purple-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-purple-500 transition-colors flex items-center justify-center gap-2">
+                                    <Bell className="w-4 h-4" /> Enviar Pedido
+                                </button>
+                            )}
+                            {order.status === 'sent' && (
                                 <button onClick={() => updateStatus(order.id, 'completed')} className="col-span-3 bg-gray-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-gray-500 transition-colors flex items-center justify-center gap-2">
-                                    <Check className="w-4 h-4" /> Entregado
+                                    <Check className="w-4 h-4" /> Finalizar / Entregado
                                 </button>
                             )}
                         </div>

@@ -60,16 +60,17 @@ const MyOrdersPage = () => {
     const getStatusInfo = (status) => {
         switch (status) {
             case 'pending': return { label: 'Pendiente', color: 'text-yellow-500', bg: 'bg-yellow-500/10', icon: Clock }
-            case 'preparing': return { label: 'Cocinando', color: 'text-orange-500', bg: 'bg-orange-500/10', icon: ChefHat }
-            case 'ready': return { label: 'Listo', color: 'text-green-500', bg: 'bg-green-500/10', icon: Check }
+            case 'cooking': return { label: 'Cocinando', color: 'text-orange-500', bg: 'bg-orange-500/10', icon: ChefHat }
+            case 'packaging': return { label: 'Preparando envío', color: 'text-blue-500', bg: 'bg-blue-500/10', icon: ShoppingBag }
+            case 'sent': return { label: 'Pedido Enviado', color: 'text-purple-500', bg: 'bg-purple-500/10', icon: Bell }
             case 'completed': return { label: 'Entregado', color: 'text-gray-400', bg: 'bg-white/5', icon: Check }
-            case 'cancelled': return { label: 'Cancelado', color: 'text-red-400', bg: 'bg-red-500/10', icon: X } // Changed X to check if imported, wait X is not imported but used in logic before. Let's make sure we import X if needed or use something else.
+            case 'cancelled': return { label: 'Cancelado', color: 'text-red-400', bg: 'bg-red-500/10', icon: X }
             default: return { label: status, color: 'text-gray-400', bg: 'bg-white/5', icon: Clock }
         }
     }
 
     // Filter orders
-    const activeOrders = orders.filter(o => ['pending', 'preparing', 'ready'].includes(o.status))
+    const activeOrders = orders.filter(o => ['pending', 'cooking', 'packaging', 'sent'].includes(o.status))
     const historyOrders = orders.filter(o => ['completed', 'cancelled'].includes(o.status))
 
     const displayOrders = activeTab === 'active' ? activeOrders : historyOrders
@@ -152,8 +153,9 @@ const MyOrdersPage = () => {
                                             className="h-full bg-[var(--color-secondary)] transition-all duration-1000 animate-pulse"
                                             style={{
                                                 width: order.status === 'pending' ? '10%' :
-                                                    order.status === 'preparing' ? '50%' :
-                                                        order.status === 'ready' ? '100%' : '0%'
+                                                    order.status === 'cooking' ? '30%' :
+                                                        order.status === 'packaging' ? '60%' :
+                                                            order.status === 'sent' ? '90%' : '100%'
                                             }}
                                         ></div>
                                     </div>
