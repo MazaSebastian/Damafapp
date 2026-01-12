@@ -92,49 +92,7 @@ const AdminDashboard = () => {
                 ) : activeTab === 'Settings' ? (
                     <SettingsManager />
                 ) : (
-                    <>
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            <StatCard title="Total Revenue" value="$12,345" trend="+12%" />
-                            <StatCard title="Active Orders" value="23" trend="Pending" color="text-orange-400" />
-                            <StatCard title="Total Products" value="45" />
-                            <StatCard title="Registered Users" value="1,234" trend="+5%" />
-                        </div>
-
-                        {/* Recent Orders Placeholder */}
-                        <div className="bg-[var(--color-surface)] rounded-2xl p-6 border border-white/5">
-                            <h3 className="text-lg font-bold mb-4">Recent Orders</h3>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm text-[var(--color-text-muted)]">
-                                    <thead className="bg-[var(--color-background)]/50 text-[var(--color-text-main)] uppercase text-xs">
-                                        <tr>
-                                            <th className="p-3 rounded-l-lg">Order ID</th>
-                                            <th className="p-3">Customer</th>
-                                            <th className="p-3">Status</th>
-                                            <th className="p-3">Total</th>
-                                            <th className="p-3 rounded-r-lg">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr className="border-b border-white/5">
-                                            <td className="p-3">#ORD-001</td>
-                                            <td className="p-3 font-medium text-[var(--color-text-main)]">Juan Perez</td>
-                                            <td className="p-3"><span className="bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded text-xs">Cooking</span></td>
-                                            <td className="p-3">$25.00</td>
-                                            <td className="p-3">Today, 10:30 AM</td>
-                                        </tr>
-                                        <tr className="border-b border-white/5">
-                                            <td className="p-3">#ORD-002</td>
-                                            <td className="p-3 font-medium text-[var(--color-text-main)]">Maria Rodriguez</td>
-                                            <td className="p-3"><span className="bg-green-500/20 text-green-500 px-2 py-0.5 rounded text-xs">Ready</span></td>
-                                            <td className="p-3">$18.50</td>
-                                            <td className="p-3">Today, 10:15 AM</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </>
+                    <AdminOverview />
                 )}
             </main>
         </div>
