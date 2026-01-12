@@ -88,6 +88,20 @@ const OrdersManager = () => {
                                 <span className="text-xs text-[var(--color-text-muted)]">
                                     {new Date(order.created_at).toLocaleString()}
                                 </span>
+                                {order.order_type === 'delivery' ? (
+                                    <div className="flex items-center gap-1 mt-1 text-xs text-blue-400 font-medium">
+                                        <Bell className="w-3 h-3" /> Delivery
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1 mt-1 text-xs text-green-400 font-medium">
+                                        <ChefHat className="w-3 h-3" /> Take Away
+                                    </div>
+                                )}
+                                {order.delivery_address && (
+                                    <div className="text-xs text-white/70 italic mt-0.5 max-w-[150px] truncate">
+                                        📍 {order.delivery_address}
+                                    </div>
+                                )}
                             </div>
                             <span className="font-bold text-lg">${order.total}</span>
                         </div>

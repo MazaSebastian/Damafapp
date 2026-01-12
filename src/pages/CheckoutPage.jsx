@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { supabase } from '../supabaseClient'
@@ -7,7 +8,15 @@ const CheckoutPage = () => {
     const { cart, removeFromCart, total, clearCart } = useCart()
     const navigate = useNavigate()
 
+    const [orderType, setOrderType] = useState('takeaway')
+    const [address, setAddress] = useState('')
+
     const handleCheckout = async () => {
+        if (orderType === 'delivery' && !address.trim()) {
+            alert('Por favor ingresa tu dirección de envío')
+            return
+        }
+
         if (!confirm('¿Confirmar pedido por $' + total.toFixed(2) + '?')) return
 
         const { data: { user } } = await supabase.auth.getUser()
@@ -18,7 +27,9 @@ const CheckoutPage = () => {
             .insert([{
                 user_id: user?.id || null, // Null for guests
                 total: total,
-                status: 'pending'
+                status: 'pending',
+                order_type: orderType,
+                delivery_address: orderType === 'delivery' ? address : null
             }])
             .select()
             .single()
@@ -68,7 +79,7 @@ const CheckoutPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--color-background)] pb-32">
+        <div className="min-h-screen bg-[var(--color-background)] pb-40">
             <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
                 <Link to="/menu" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6" />
@@ -126,15 +137,47 @@ const CheckoutPage = () => {
                 </button>
             </main>
 
-            {/* Footer Summary */}
-            <div className="fixed bottom-0 w-full bg-[var(--color-surface)] border-t border-white/5 p-6 z-50">
-                <div className="max-w-lg mx-auto">
-                    <div className="flex justify-between items-end mb-4">
+            {/* Delivery Footer */}
+            <div className="fixed bottom-0 w-full bg-[var(--color-surface)] border-t border-white/5 p-6 z-50 rounded-t-3xl shadow-2xl">
+                <div className="max-w-lg mx-auto space-y-4">
+
+                    {/* Delivery Toggle */}
+                    <div className="bg-[var(--color-background)] p-1 rounded-xl flex">
+                        <button
+                            onClick={() => setOrderType('takeaway')}
+                            className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'takeaway' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                        >
+                            Retiro en Local
+                        </button>
+                        <button
+                            onClick={() => setOrderType('delivery')}
+                            className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'delivery' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                        >
+                            Delivery
+                        </button>
+                    </div>
+
+                    {/* Address Input */}
+                    {orderType === 'delivery' && (
+                        <div className="animated-slide-up">
+                            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase mb-2">Dirección de Envío</label>
+                            <input
+                                type="text"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                placeholder="Calle, Número, Piso..."
+                                className="w-full bg-[var(--color-background)] border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[var(--color-secondary)]"
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex justify-between items-end pt-2">
                         <span className="text-[var(--color-text-muted)] font-medium">Total a Pagar</span>
                         <span className="text-3xl font-bold text-white">${total.toFixed(2)}</span>
                     </div>
+
                     <button onClick={handleCheckout} className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-500 shadow-lg shadow-green-900/20 active:scale-95 transition-all">
-                        Finalizar Compra
+                        {orderType === 'delivery' ? 'Pedir Delivery' : 'Confirmar Retiro'}
                     </button>
                 </div>
             </div>

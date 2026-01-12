@@ -122,8 +122,15 @@ const MyOrdersPage = () => {
                                             <StatusIcon className="w-3 h-3" />
                                             {status.label}
                                         </div>
-                                        <div className="text-xs text-[var(--color-text-muted)]">
+                                        <div className="text-xs text-[var(--color-text-muted)] mb-1">
                                             {new Date(order.created_at).toLocaleString()}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs font-medium text-[var(--color-text-muted)]">
+                                            {order.order_type === 'delivery' ? (
+                                                <><span>🛵 Delivery</span> {order.delivery_address && <span className="text-white/50 truncate max-w-[120px]">({order.delivery_address})</span>}</>
+                                            ) : (
+                                                <><span>🥡 Retiro en Local</span></>
+                                            )}
                                         </div>
                                     </div>
                                     <span className="text-xl font-bold">${order.total}</span>
