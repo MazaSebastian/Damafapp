@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, User, Home, QrCode, Ticket, UtensilsCrossed, Loader2 } from 'lucide-react'
+import { Menu, UtensilsCrossed, Loader2 } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import NewsCard from './NewsCard'
+import BottomNav from './BottomNav'
 
 const LandingPage = () => {
     const [news, setNews] = useState([])
@@ -96,22 +97,9 @@ const LandingPage = () => {
             </main>
 
             {/* Bottom Navigation */}
-            <nav className="fixed bottom-0 w-full bg-[var(--color-surface)] border-t border-white/5 px-6 py-3 flex justify-between items-center z-50">
-                <NavItem icon={<Home className="w-6 h-6" />} label="Inicio" active />
-                <NavItem icon={<UtensilsCrossed className="w-6 h-6" />} label="Pide aquí" />
-                <NavItem icon={<QrCode className="w-6 h-6" />} label="Código" />
-                <NavItem icon={<User className="w-6 h-6" />} label="Canjes" />
-                <NavItem icon={<Ticket className="w-6 h-6" />} label="Cupones" />
-            </nav>
+            <BottomNav />
         </div>
     )
 }
-
-const NavItem = ({ icon, label, active }) => (
-    <div className={`flex flex-col items-center gap-1 ${active ? 'text-[var(--color-secondary)]' : 'text-[var(--color-text-muted)]'}`}>
-        {icon}
-        <span className="text-[10px] font-medium">{label}</span>
-    </div>
-)
 
 export default LandingPage
