@@ -14,6 +14,8 @@ import CheckoutPage from './pages/CheckoutPage'
 import MyOrdersPage from './pages/MyOrdersPage'
 import CouponsPage from './pages/CouponsPage'
 import ProfilePage from './pages/ProfilePage'
+import DeliveryDashboard from './components/DeliveryDashboard'
+import RiderInterface from './components/RiderInterface'
 import { CartProvider } from './context/CartContext'
 
 const AnimatedRoutes = () => {
@@ -24,6 +26,14 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+        <Route path="/delivery" element={
+          <ProtectedRoute role="admin">
+            <DeliveryDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/rider" element={
+          <RiderInterface />
+        } />
         <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
         <Route path="/club-info" element={<PageTransition><ClubInfoPage /></PageTransition>} />
         <Route path="/rewards" element={<PageTransition><RewardsStorePage /></PageTransition>} />
