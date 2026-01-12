@@ -3,11 +3,13 @@
 @theme {
   --color-primary: #3a0861;
   --color-secondary: #d64322;
-  --color-background: #0f172a; /* Dark slate */
-  --color-surface: #1e293b;
+  --color-background: #302c64;
+  /* User requested brand color */
+  --color-surface: #3b3678;
+  /* Slightly lighter for contrast */
   --color-text-main: #ffffff;
   --color-text-muted: #94a3b8;
-  
+
   --font-sans: "Inter", "system-ui", "sans-serif";
 }
 

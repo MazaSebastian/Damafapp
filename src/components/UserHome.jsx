@@ -49,8 +49,8 @@ const UserHome = () => {
                     <Menu className="w-6 h-6" />
                 </button>
 
-                <div className="bg-[var(--color-secondary)] p-2 rounded-xl shadow-[0_0_15px_rgba(214,67,34,0.5)] transform hover:scale-105 transition-transform cursor-pointer">
-                    <UtensilsCrossed className="text-white w-6 h-6" />
+                <div className="transform hover:scale-105 transition-transform cursor-pointer">
+                    <img src="/logo-damaf.png" alt="DamafAPP" className="h-12 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                 </div>
 
                 {/* Admin Link or Sign Out */}

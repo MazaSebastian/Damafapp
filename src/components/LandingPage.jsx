@@ -57,8 +57,8 @@ const LandingPage = () => {
                     <Menu className="w-6 h-6" />
                 </button>
 
-                <div className="bg-[var(--color-secondary)] p-1.5 rounded-lg">
-                    <UtensilsCrossed className="text-white w-5 h-5" />
+                <div className="transform hover:scale-105 transition-transform">
+                    <img src="/logo-damaf.png" alt="DamafAPP" className="h-10 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                 </div>
 
                 <Link to="/login" className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full hover:bg-gray-200 transition-colors">
