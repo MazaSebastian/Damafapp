@@ -162,52 +162,68 @@ const MealBuilder = ({ product, isOpen, onClose, categorySlug }) => {
                     {/* STEP 2: SIDES */}
                     {step === 2 && (
                         <div className="grid grid-cols-2 gap-4">
-                            {sides.map(side => (
-                                <div
-                                    key={side.id}
-                                    onClick={() => setSelectedSide(side)}
-                                    className={`relative rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${selectedSide?.id === side.id ? 'border-[var(--color-secondary)] ring-2 ring-[var(--color-secondary)]/30' : 'border-transparent'}`}
-                                >
-                                    <div className="h-32 bg-black/40">
-                                        <img src={side.image_url} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="p-3 bg-[var(--color-background)]">
-                                        <h4 className="font-bold text-sm mb-1">{side.name}</h4>
-                                        <span className="text-xs text-[var(--color-secondary)] font-bold">+${side.price}</span>
-                                    </div>
-                                    {selectedSide?.id === side.id && (
-                                        <div className="absolute top-2 right-2 bg-[var(--color-secondary)] rounded-full p-1">
-                                            <Check className="w-3 h-3 text-white" />
+                            {sides.map(side => {
+                                const isOOS = side.stock !== null && side.stock === 0
+                                return (
+                                    <div
+                                        key={side.id}
+                                        onClick={() => !isOOS && setSelectedSide(side)}
+                                        className={`relative rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${selectedSide?.id === side.id ? 'border-[var(--color-secondary)] ring-2 ring-[var(--color-secondary)]/30' : 'border-transparent'} ${isOOS ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                                    >
+                                        <div className="h-32 bg-black/40 relative">
+                                            <img src={side.image_url} className="w-full h-full object-cover" />
+                                            {isOOS && (
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-white uppercase bg-red-600 px-2 py-1 rounded">Agotado</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+                                        <div className="p-3 bg-[var(--color-background)]">
+                                            <h4 className="font-bold text-sm mb-1">{side.name}</h4>
+                                            <span className="text-xs text-[var(--color-secondary)] font-bold">+${side.price}</span>
+                                        </div>
+                                        {selectedSide?.id === side.id && (
+                                            <div className="absolute top-2 right-2 bg-[var(--color-secondary)] rounded-full p-1">
+                                                <Check className="w-3 h-3 text-white" />
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
 
                     {/* STEP 3: DRINKS */}
                     {step === 3 && (
                         <div className="grid grid-cols-2 gap-4">
-                            {drinks.map(drink => (
-                                <div
-                                    key={drink.id}
-                                    onClick={() => setSelectedDrink(drink)}
-                                    className={`relative rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${selectedDrink?.id === drink.id ? 'border-[var(--color-secondary)] ring-2 ring-[var(--color-secondary)]/30' : 'border-transparent'}`}
-                                >
-                                    <div className="h-32 bg-black/40">
-                                        <img src={drink.image_url} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="p-3 bg-[var(--color-background)]">
-                                        <h4 className="font-bold text-sm mb-1">{drink.name}</h4>
-                                        <span className="text-xs text-[var(--color-secondary)] font-bold">+${drink.price}</span>
-                                    </div>
-                                    {selectedDrink?.id === drink.id && (
-                                        <div className="absolute top-2 right-2 bg-[var(--color-secondary)] rounded-full p-1">
-                                            <Check className="w-3 h-3 text-white" />
+                            {drinks.map(drink => {
+                                const isOOS = drink.stock !== null && drink.stock === 0
+                                return (
+                                    <div
+                                        key={drink.id}
+                                        onClick={() => !isOOS && setSelectedDrink(drink)}
+                                        className={`relative rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${selectedDrink?.id === drink.id ? 'border-[var(--color-secondary)] ring-2 ring-[var(--color-secondary)]/30' : 'border-transparent'} ${isOOS ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                                    >
+                                        <div className="h-32 bg-black/40 relative">
+                                            <img src={drink.image_url} className="w-full h-full object-cover" />
+                                            {isOOS && (
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-white uppercase bg-red-600 px-2 py-1 rounded">Agotado</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+                                        <div className="p-3 bg-[var(--color-background)]">
+                                            <h4 className="font-bold text-sm mb-1">{drink.name}</h4>
+                                            <span className="text-xs text-[var(--color-secondary)] font-bold">+${drink.price}</span>
+                                        </div>
+                                        {selectedDrink?.id === drink.id && (
+                                            <div className="absolute top-2 right-2 bg-[var(--color-secondary)] rounded-full p-1">
+                                                <Check className="w-3 h-3 text-white" />
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
 

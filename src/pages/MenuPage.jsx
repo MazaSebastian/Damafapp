@@ -116,43 +116,58 @@ const MenuPage = () => {
                         </h2>
 
                         <div className="grid grid-cols-1 gap-6">
-                            {filteredProducts.map(product => (
-                                <div key={product.id} onClick={() => handleProductClick(product)} className="bg-[var(--color-surface)] rounded-xl p-3 flex gap-4 border border-white/5 hover:border-[var(--color-secondary)]/50 transition-all cursor-pointer group">
-                                    {/* Image */}
-                                    <div className="w-28 h-28 bg-black/30 rounded-lg overflow-hidden flex-shrink-0">
-                                        {product.image_url ? (
-                                            product.media_type === 'video' ? (
-                                                <video
-                                                    src={product.image_url}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                    muted
-                                                    loop
-                                                    autoPlay
-                                                    playsInline
-                                                />
-                                            ) : (
-                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                            )
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-3xl">🍔</div>
-                                        )}
-                                    </div>
+                            {filteredProducts.map(product => {
+                                const isOutOfStock = product.stock !== null && product.stock === 0
 
-                                    {/* Content */}
-                                    <div className="flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <h3 className="font-bold text-lg leading-tight mb-1">{product.name}</h3>
-                                            <p className="text-xs text-[var(--color-text-muted)] line-clamp-2">{product.description}</p>
+                                return (
+                                    <div
+                                        key={product.id}
+                                        onClick={() => !isOutOfStock && handleProductClick(product)}
+                                        className={`bg-[var(--color-surface)] rounded-xl p-3 flex gap-4 border border-white/5 transition-all group ${isOutOfStock ? 'opacity-60 cursor-not-allowed grayscale' : 'hover:border-[var(--color-secondary)]/50 cursor-pointer'}`}
+                                    >
+                                        {/* Image */}
+                                        <div className="w-28 h-28 bg-black/30 rounded-lg overflow-hidden flex-shrink-0 relative">
+                                            {product.image_url ? (
+                                                product.media_type === 'video' ? (
+                                                    <video
+                                                        src={product.image_url}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                        muted
+                                                        loop
+                                                        autoPlay
+                                                        playsInline
+                                                    />
+                                                ) : (
+                                                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                )
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-3xl">🍔</div>
+                                            )}
+                                            {isOutOfStock && (
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                                    <span className="text-[10px] uppercase font-bold text-white bg-red-600 px-2 py-1 rounded shadow-lg transform -rotate-12">
+                                                        Agotado
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex justify-between items-end mt-2">
-                                            <span className="text-[var(--color-secondary)] font-bold text-lg">${product.price}</span>
-                                            <button className="bg-[var(--color-primary)] p-2 rounded-lg text-white hover:bg-purple-700 transition-colors shadow-lg active:scale-95">
-                                                <Plus className="w-4 h-4" />
-                                            </button>
+
+                                        {/* Content */}
+                                        <div className="flex-1 flex flex-col justify-between">
+                                            <div>
+                                                <h3 className="font-bold text-lg leading-tight mb-1">{product.name}</h3>
+                                                <p className="text-xs text-[var(--color-text-muted)] line-clamp-2">{product.description}</p>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-2">
+                                                <span className="text-[var(--color-secondary)] font-bold text-lg">${product.price}</span>
+                                                <button disabled={isOutOfStock} className={`p-2 rounded-lg text-white shadow-lg transition-colors ${isOutOfStock ? 'bg-gray-600 cursor-not-allowed' : 'bg-[var(--color-primary)] hover:bg-purple-700 active:scale-95'}`}>
+                                                    <Plus className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
 
                             {filteredProducts.length === 0 && (
                                 <div className="text-center py-10 text-[var(--color-text-muted)]">
