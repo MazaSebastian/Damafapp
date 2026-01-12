@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { ArrowLeft, Search, Loader2, Plus, Minus, ShoppingBag } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import MealBuilder from '../components/MealBuilder'
 
 const MenuPage = () => {
     const [categories, setCategories] = useState([])
@@ -9,6 +10,12 @@ const MenuPage = () => {
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [loading, setLoading] = useState(true)
     const scrollContainerRef = useRef(null)
+    const navigate = useNavigate()
+
+    // Meal Builder State
+    const [selectedProduct, setSelectedProduct] = useState(null)
+    const [isBuilderOpen, setIsBuilderOpen] = useState(false)
+    const [currentCategorySlug, setCurrentCategorySlug] = useState('')
 
     useEffect(() => {
         fetchData()
@@ -36,13 +43,35 @@ const MenuPage = () => {
         // Implementation for smooth scroll if needed, or just let user swipe
     }
 
+    const handleProductClick = (product) => {
+        // Find category slug for the product to filter modifiers
+        const cat = categories.find(c => c.id === product.category_id)
+        if (cat) {
+            setCurrentCategorySlug(cat.slug)
+            setSelectedProduct(product)
+            setIsBuilderOpen(true)
+        }
+    }
+
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-24">
+            <MealBuilder
+                isOpen={isBuilderOpen}
+                onClose={() => setIsBuilderOpen(false)}
+                product={selectedProduct}
+                categorySlug={currentCategorySlug}
+            />
+
             {/* Header */}
             <header className="p-4 flex items-center justify-between sticky top-0 bg-[var(--color-background)]/95 backdrop-blur-md z-40 border-b border-white/5">
-                <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
-                    <ArrowLeft className="w-6 h-6" />
-                </Link>
+                <div className="flex items-center gap-2">
+                    <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                        <ArrowLeft className="w-6 h-6" />
+                    </Link>
+                    <Link to="/checkout">
+                        <ShoppingBag className="w-6 h-6 text-white hover:text-[var(--color-secondary)] transition-colors" />
+                    </Link>
+                </div>
                 <div className="flex-1 px-4">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -89,7 +118,7 @@ const MenuPage = () => {
 
                         <div className="grid grid-cols-1 gap-6">
                             {filteredProducts.map(product => (
-                                <div key={product.id} className="bg-[var(--color-surface)] rounded-xl p-3 flex gap-4 border border-white/5 hover:border-[var(--color-secondary)]/50 transition-all cursor-pointer group">
+                                <div key={product.id} onClick={() => handleProductClick(product)} className="bg-[var(--color-surface)] rounded-xl p-3 flex gap-4 border border-white/5 hover:border-[var(--color-secondary)]/50 transition-all cursor-pointer group">
                                     {/* Image */}
                                     <div className="w-28 h-28 bg-black/30 rounded-lg overflow-hidden flex-shrink-0">
                                         {product.image_url ? (

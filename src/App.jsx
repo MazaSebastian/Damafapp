@@ -6,19 +6,24 @@ import AdminDashboard from './pages/AdminDashboard'
 import ClubInfoPage from './pages/ClubInfoPage'
 import RewardsStorePage from './pages/RewardsStorePage'
 import MenuPage from './pages/MenuPage'
+import CheckoutPage from './pages/CheckoutPage'
+import { CartProvider } from './context/CartContext'
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/club-info" element={<ClubInfoPage />} />
-          <Route path="/rewards" element={<RewardsStorePage />} />
-          <Route path="/menu" element={<MenuPage />} />
-        </Routes>
+        <CartProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/club-info" element={<ClubInfoPage />} />
+            <Route path="/rewards" element={<RewardsStorePage />} />
+            <Route path="/menu" element={<MenuPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+          </Routes>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   )
