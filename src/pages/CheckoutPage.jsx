@@ -1,14 +1,52 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { supabase } from '../supabaseClient'
 import { ArrowLeft, Trash2, ShoppingBag, Plus } from 'lucide-react'
 
 const CheckoutPage = () => {
     const { cart, removeFromCart, total, clearCart } = useCart()
     const navigate = useNavigate()
 
-    const handleCheckout = () => {
-        if (confirm('¿Confirmar pedido por $' + total.toFixed(2) + '?')) {
-            alert('¡Pedido enviado a cocina!')
+    const handleCheckout = async () => {
+        if (!confirm('¿Confirmar pedido por $' + total.toFixed(2) + '?')) return
+
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // 1. Create Order
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert([{
+                user_id: user?.id || null, // Null for guests
+                total: total,
+                status: 'pending'
+            }])
+            .select()
+            .single()
+
+        if (orderError) {
+            alert('Error al crear pedido: ' + orderError.message)
+            return
+        }
+
+        // 2. Create Order Items
+        const orderItems = cart.map(item => ({
+            order_id: order.id,
+            product_id: item.main.id,
+            quantity: 1, // Meal builder assumes 1 for now
+            price_at_time: item.main.price,
+            modifiers: item.modifiers || [],
+            side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
+            drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
+        }))
+
+        const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItems)
+
+        if (itemsError) {
+            alert('Error al guardar items: ' + itemsError.message)
+        } else {
+            alert(`¡Pedido #${order.id.slice(0, 8)} enviado a cocina!`)
             clearCart()
             navigate('/')
         }

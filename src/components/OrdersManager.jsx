@@ -1,0 +1,146 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
+import { Loader2, Check, Clock, X, ChefHat, Bell } from 'lucide-react'
+
+const OrdersManager = () => {
+    const [orders, setOrders] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchOrders()
+
+        // Subscription for real-time updates could be added here
+        const channel = supabase
+            .channel('orders_channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [])
+
+    const fetchOrders = async () => {
+        // Fetch orders with their items
+        // Note: Supabase JS client doesn't support deep nested joins easily for all cases in one go perfectly cleanly without foreign keys setup perfectly for every hop, 
+        // but let's try standard approach.
+        // We will fetch orders first, then items for simplicity and reliability or use select with join.
+
+        const { data: ordersData, error } = await supabase
+            .from('orders')
+            .select(`
+                *,
+                order_items (
+                    *,
+                    products (name) 
+                )
+            `)
+            .order('created_at', { ascending: false })
+
+        if (ordersData) setOrders(ordersData)
+        setLoading(false)
+    }
+
+    const updateStatus = async (orderId, newStatus) => {
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: newStatus })
+            .eq('id', orderId)
+
+        if (!error) {
+            // Optimistic update
+            setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+        }
+    }
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'pending': return 'bg-yellow-500/20 text-yellow-500'
+            case 'preparing': return 'bg-orange-500/20 text-orange-500'
+            case 'ready': return 'bg-green-500/20 text-green-500'
+            case 'completed': return 'bg-gray-500/20 text-gray-400'
+            default: return 'bg-gray-500/20 text-gray-400'
+        }
+    }
+
+    if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[var(--color-secondary)]" /></div>
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+                <ChefHat className="text-[var(--color-secondary)]" />
+                Gestión de Pedidos
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {orders.map(order => (
+                    <div key={order.id} className="bg-[var(--color-surface)] rounded-2xl border border-white/5 overflow-hidden flex flex-col">
+                        {/* Header */}
+                        <div className="p-4 border-b border-white/5 bg-[var(--color-background)]/50 flex justify-between items-start">
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold">#{order.id.slice(0, 8)}</span>
+                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${getStatusColor(order.status)}`}>
+                                        {order.status}
+                                    </span>
+                                </div>
+                                <span className="text-xs text-[var(--color-text-muted)]">
+                                    {new Date(order.created_at).toLocaleString()}
+                                </span>
+                            </div>
+                            <span className="font-bold text-lg">${order.total}</span>
+                        </div>
+
+                        {/* Items */}
+                        <div className="p-4 flex-1 space-y-3">
+                            {order.order_items?.map(item => (
+                                <div key={item.id} className="text-sm">
+                                    <div className="flex justify-between font-medium">
+                                        <span>1x {item.products?.name}</span>
+                                        <span className="text-[var(--color-text-muted)]">${item.price_at_time}</span>
+                                    </div>
+
+                                    {/* Sub-items details */}
+                                    <div className="pl-4 border-l border-white/10 mt-1 text-xs text-[var(--color-text-muted)] space-y-0.5">
+                                        {item.modifiers?.map((m, i) => (
+                                            <div key={i}>+ {m.name}</div>
+                                        ))}
+                                        {item.side_info && <div>+ {item.side_info.name}</div>}
+                                        {item.drink_info && <div>+ {item.drink_info.name}</div>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
+                            {order.status === 'pending' && (
+                                <button onClick={() => updateStatus(order.id, 'preparing')} className="col-span-3 bg-orange-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-orange-500 transition-colors flex items-center justify-center gap-2">
+                                    <ChefHat className="w-4 h-4" /> Empezar a Cocinar
+                                </button>
+                            )}
+                            {order.status === 'preparing' && (
+                                <button onClick={() => updateStatus(order.id, 'ready')} className="col-span-3 bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2">
+                                    <Bell className="w-4 h-4" /> Marcar Listo
+                                </button>
+                            )}
+                            {order.status === 'ready' && (
+                                <button onClick={() => updateStatus(order.id, 'completed')} className="col-span-3 bg-gray-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-gray-500 transition-colors flex items-center justify-center gap-2">
+                                    <Check className="w-4 h-4" /> Entregado
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {orders.length === 0 && (
+                    <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
+                        No hay pedidos recientes.
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+export default OrdersManager

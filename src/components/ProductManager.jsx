@@ -83,6 +83,8 @@ const ProductManager = () => {
         if (!error) {
             setCategories(categories.filter(c => c.id !== id))
             if (selectedCategory?.id === id) setSelectedCategory(null)
+        } else {
+            alert('Error al eliminar: ' + error.message)
         }
     }
 

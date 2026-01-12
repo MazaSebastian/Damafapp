@@ -5,6 +5,7 @@ import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gif
 import NewsManager from '../components/NewsManager'
 import RewardsManager from '../components/RewardsManager'
 import ProductManager from '../components/ProductManager'
+import OrdersManager from '../components/OrdersManager'
 
 const AdminDashboard = () => {
     const { user, role, loading } = useAuth()
@@ -75,6 +76,8 @@ const AdminDashboard = () => {
 
                 {activeTab === 'Novedades' ? (
                     <NewsManager />
+                ) : activeTab === 'Orders' ? (
+                    <OrdersManager />
                 ) : activeTab === 'Canjes' ? (
                     <RewardsManager />
                 ) : activeTab === 'Menu' ? (
