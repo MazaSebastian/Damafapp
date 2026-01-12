@@ -67,7 +67,7 @@ const UserHome = () => {
             </header>
 
             {/* Welcome Section */}
-            <div className="px-4 pt-2 mb-6 text-center">
+            <div className="px-4 pt-12 mb-6 text-center">
                 <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
                     Bienvenido, <span className="text-[var(--color-secondary)]">{user?.email?.split('@')[0]}</span>!
                 </h1>
