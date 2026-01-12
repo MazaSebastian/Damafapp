@@ -118,7 +118,11 @@ const MealBuilder = ({ product, isOpen, onClose, categorySlug }) => {
                     {step === 1 && (
                         <div className="space-y-6">
                             <div className="flex items-start gap-4 p-4 bg-[var(--color-background)] rounded-xl border border-white/5">
-                                <img src={product.image_url} alt={product.name} className="w-20 h-20 object-cover rounded-lg" />
+                                {product.media_type === 'video' ? (
+                                    <video src={product.image_url} className="w-20 h-20 object-cover rounded-lg" muted loop autoPlay playsInline />
+                                ) : (
+                                    <img src={product.image_url} alt={product.name} className="w-20 h-20 object-cover rounded-lg" />
+                                )}
                                 <div>
                                     <h3 className="font-bold text-lg">{product.name}</h3>
                                     <p className="text-[var(--color-text-muted)] text-xs">{product.description}</p>

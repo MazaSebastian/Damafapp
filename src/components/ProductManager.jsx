@@ -57,6 +57,7 @@ const ProductManager = () => {
             description: formData.get('description'),
             price: parseFloat(formData.get('price')),
             image_url: formData.get('image_url'),
+            media_type: formData.get('media_type') || 'image',
             is_available: true
         }
 
@@ -164,7 +165,13 @@ const ProductManager = () => {
                                 {products.map(prod => (
                                     <div key={prod.id} className="bg-[var(--color-background)] rounded-xl p-3 flex gap-4 items-center border border-white/5">
                                         <div className="w-12 h-12 bg-white/5 rounded-lg overflow-hidden">
-                                            {prod.image_url ? <img src={prod.image_url} className="w-full h-full object-cover" /> : null}
+                                            {prod.image_url ? (
+                                                prod.media_type === 'video' ? (
+                                                    <video src={prod.image_url} className="w-full h-full object-cover" muted loop autoPlay />
+                                                ) : (
+                                                    <img src={prod.image_url} className="w-full h-full object-cover" />
+                                                )
+                                            ) : null}
                                         </div>
                                         <div className="flex-1">
                                             <h4 className="font-bold">{prod.name}</h4>
@@ -184,7 +191,15 @@ const ProductManager = () => {
                                     <input name="name" placeholder="Nombre" className="col-span-2 bg-[var(--color-surface)] p-2 rounded-lg text-sm outline-none border border-white/5 focus:border-[var(--color-secondary)]" required />
                                     <input name="description" placeholder="Descripción" className="col-span-2 bg-[var(--color-surface)] p-2 rounded-lg text-sm outline-none border border-white/5 focus:border-[var(--color-secondary)]" />
                                     <input name="price" type="number" step="0.01" placeholder="Precio" className="bg-[var(--color-surface)] p-2 rounded-lg text-sm outline-none border border-white/5 focus:border-[var(--color-secondary)]" required />
-                                    <input name="image_url" placeholder="URL Imagen" className="bg-[var(--color-surface)] p-2 rounded-lg text-sm outline-none border border-white/5 focus:border-[var(--color-secondary)]" />
+
+                                    <div className="col-span-2 flex gap-2">
+                                        <select name="media_type" className="bg-[var(--color-surface)] p-2 rounded-lg text-sm outline-none border border-white/5 focus:border-[var(--color-secondary)] text-white w-1/3">
+                                            <option value="image">Imagen 🖼️</option>
+                                            <option value="video">Video 📹</option>
+                                        </select>
+                                        <input name="image_url" placeholder="URL (Imagen o Video)" className="bg-[var(--color-surface)] p-2 rounded-lg text-sm outline-none border border-white/5 focus:border-[var(--color-secondary)] flex-1" />
+                                    </div>
+
                                     <button type="submit" className="col-span-2 bg-[var(--color-secondary)] text-white py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors">
                                         Crear Producto
                                     </button>

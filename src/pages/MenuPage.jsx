@@ -122,7 +122,18 @@ const MenuPage = () => {
                                     {/* Image */}
                                     <div className="w-28 h-28 bg-black/30 rounded-lg overflow-hidden flex-shrink-0">
                                         {product.image_url ? (
-                                            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            product.media_type === 'video' ? (
+                                                <video
+                                                    src={product.image_url}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                    muted
+                                                    loop
+                                                    autoPlay
+                                                    playsInline
+                                                />
+                                            ) : (
+                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            )
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-3xl">🍔</div>
                                         )}

@@ -157,7 +157,11 @@ const CheckoutPage = () => {
 
                         {/* Main Item */}
                         <div className="flex gap-4 mb-3">
-                            <img src={item.main.image_url} className="w-16 h-16 rounded-lg object-cover bg-black/20" />
+                            {item.main.media_type === 'video' ? (
+                                <video src={item.main.image_url} className="w-16 h-16 rounded-lg object-cover bg-black/20" muted loop autoPlay playsInline />
+                            ) : (
+                                <img src={item.main.image_url} className="w-16 h-16 rounded-lg object-cover bg-black/20" />
+                            )}
                             <div className="flex-1">
                                 <h3 className="font-bold text-lg leading-tight">{item.main.name}</h3>
                                 <p className="text-[var(--color-secondary)] font-bold">${item.main.price}</p>
