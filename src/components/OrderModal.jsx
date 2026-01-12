@@ -105,7 +105,7 @@ const OrderModal = ({ isOpen, onClose }) => {
                                             onClick={() => handleSelectProduct(product)}
                                             className="bg-[var(--color-surface)] rounded-xl overflow-hidden border border-white/5 active:scale-95 transition-transform"
                                         >
-                                            <div className="aspect-square bg-white/5 relative">
+                                            <div className="aspect-square bg-white/5 relative group">
                                                 {product.image_url ? (
                                                     product.media_type === 'video' ? (
                                                         <video src={product.image_url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
@@ -115,6 +115,13 @@ const OrderModal = ({ isOpen, onClose }) => {
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-4xl">🍔</div>
                                                 )}
+
+                                                {/* Hover Description Overlay */}
+                                                <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] flex items-center justify-center p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                                    <p className="text-white text-xs text-center font-medium leading-relaxed line-clamp-5">
+                                                        {product.description || "¡Una verdadera delicia!"}
+                                                    </p>
+                                                </div>
 
                                                 <button className="absolute bottom-2 right-2 bg-[var(--color-secondary)] p-1.5 rounded-full text-white shadow-lg">
                                                     <Plus className="w-4 h-4" />
