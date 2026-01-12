@@ -64,8 +64,26 @@ const LandingPage = () => {
                 </Link>
             </header>
 
+            {/* Welcome Banner */}
+            <div className="pt-20 px-4 mb-2">
+                <div className="bg-[#502314] rounded-xl p-4 flex justify-between items-center shadow-lg relative overflow-hidden">
+                    {/* Decor */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600"></div>
+
+                    <div className="flex-1 pr-4">
+                        <h2 className="text-white font-bold text-lg italic leading-tight mb-1">DAMAFAPP <span className="text-orange-500">CLUB</span></h2>
+                        <p className="text-white text-xs leading-relaxed">
+                            ¡Bienvenido! Podés ganar puntos con cada compra y canjearlos por productos en la tienda online!
+                        </p>
+                    </div>
+                    <button className="bg-[#3e1c0f] border border-[#7c4b38] text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-[#5a2a18] transition-colors whitespace-nowrap">
+                        Detalles
+                    </button>
+                </div>
+            </div>
+
             {/* Main Feed */}
-            <main className="pt-20 px-4 max-w-lg mx-auto">
+            <main className="px-4 max-w-lg mx-auto">
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <Loader2 className="w-8 h-8 animate-spin text-[var(--color-secondary)]" />
