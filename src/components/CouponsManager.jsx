@@ -4,33 +4,45 @@ import { Ticket, Plus, Trash2, StopCircle, PlayCircle, Loader2 } from 'lucide-re
 
 const CouponsManager = () => {
     const [coupons, setCoupons] = useState([])
+    const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [showForm, setShowForm] = useState(false)
     const [formData, setFormData] = useState({
         code: '',
-        discount_type: 'percentage', // percentage | fixed
+        discount_type: 'percentage', // percentage | fixed | product
         value: '',
+        target_product_id: '',
         usage_limit: ''
     })
 
     useEffect(() => {
-        fetchCoupons()
+        fetchData()
     }, [])
 
-    const fetchCoupons = async () => {
-        const { data } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
-        if (data) setCoupons(data)
+    const fetchData = async () => {
+        const { data: couponsData } = await supabase.from('coupons').select(`
+            *,
+            products (name)
+        `).order('created_at', { ascending: false })
+
+        const { data: productsData } = await supabase.from('products').select('id, name').order('name')
+
+        if (couponsData) setCoupons(couponsData)
+        if (productsData) setProducts(productsData)
         setLoading(false)
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!formData.code || !formData.value) return alert('Código y Valor son obligatorios')
+        if (!formData.code) return alert('El código es obligatorio')
+        if (formData.discount_type !== 'product' && !formData.value) return alert('El valor es obligatorio')
+        if (formData.discount_type === 'product' && !formData.target_product_id) return alert('Debes seleccionar un producto')
 
         const { error } = await supabase.from('coupons').insert([{
             code: formData.code.toUpperCase(),
             discount_type: formData.discount_type,
-            value: parseFloat(formData.value),
+            value: formData.discount_type === 'product' ? 0 : parseFloat(formData.value),
+            target_product_id: formData.discount_type === 'product' ? formData.target_product_id : null,
             usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
             is_active: true
         }])
@@ -38,21 +50,21 @@ const CouponsManager = () => {
         if (error) {
             alert('Error: ' + error.message)
         } else {
-            setFormData({ code: '', discount_type: 'percentage', value: '', usage_limit: '' })
+            setFormData({ code: '', discount_type: 'percentage', value: '', target_product_id: '', usage_limit: '' })
             setShowForm(false)
-            fetchCoupons()
+            fetchData()
         }
     }
 
     const toggleStatus = async (id, currentStatus) => {
         await supabase.from('coupons').update({ is_active: !currentStatus }).eq('id', id)
-        fetchCoupons()
+        fetchData()
     }
 
     const handleDelete = async (id) => {
         if (!confirm('¿Eliminar cupón?')) return
         await supabase.from('coupons').delete().eq('id', id)
-        fetchCoupons()
+        fetchData()
     }
 
     if (loading) return <Loader2 className="animate-spin" />
@@ -95,18 +107,37 @@ const CouponsManager = () => {
                             >
                                 <option value="percentage">Porcentaje (%)</option>
                                 <option value="fixed">Monto Fijo ($)</option>
+                                <option value="product">Producto Gratis 🎁</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm text-[var(--color-text-muted)] mb-1">Valor</label>
-                            <input
-                                type="number"
-                                value={formData.value}
-                                onChange={e => setFormData({ ...formData, value: e.target.value })}
-                                className="w-full bg-[var(--color-background)] border border-white/10 p-2 rounded-lg text-white"
-                                placeholder={formData.discount_type === 'percentage' ? 'Ej: 10 (para 10%)' : 'Ej: 500 (para $500)'}
-                            />
-                        </div>
+
+                        {formData.discount_type === 'product' ? (
+                            <div>
+                                <label className="block text-sm text-[var(--color-text-muted)] mb-1">Producto a Regalar</label>
+                                <select
+                                    value={formData.target_product_id}
+                                    onChange={e => setFormData({ ...formData, target_product_id: e.target.value })}
+                                    className="w-full bg-[var(--color-background)] border border-white/10 p-2 rounded-lg text-white"
+                                >
+                                    <option value="">Seleccionar producto...</option>
+                                    {products.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="block text-sm text-[var(--color-text-muted)] mb-1">Valor</label>
+                                <input
+                                    type="number"
+                                    value={formData.value}
+                                    onChange={e => setFormData({ ...formData, value: e.target.value })}
+                                    className="w-full bg-[var(--color-background)] border border-white/10 p-2 rounded-lg text-white"
+                                    placeholder={formData.discount_type === 'percentage' ? 'Ej: 10' : 'Ej: 500'}
+                                />
+                            </div>
+                        )}
+
                         <div>
                             <label className="block text-sm text-[var(--color-text-muted)] mb-1">Límite de usos (Opcional)</label>
                             <input
@@ -134,7 +165,9 @@ const CouponsManager = () => {
                                     </span>
                                 </div>
                                 <p className="text-[var(--color-text-muted)] text-sm mt-1">
-                                    {coupon.discount_type === 'percentage' ? `${coupon.value}% de descuento` : `$${coupon.value} de descuento`}
+                                    {coupon.discount_type === 'percentage' && `${coupon.value}% de descuento`}
+                                    {coupon.discount_type === 'fixed' && `$${coupon.value} de descuento`}
+                                    {coupon.discount_type === 'product' && `Regala: ${coupon.products?.name || 'Producto'}`}
                                     {coupon.usage_limit && ` • ${coupon.usage_count}/${coupon.usage_limit} usos`}
                                 </p>
                             </div>

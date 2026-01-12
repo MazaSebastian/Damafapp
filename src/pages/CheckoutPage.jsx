@@ -10,6 +10,65 @@ const CheckoutPage = () => {
 
     const [orderType, setOrderType] = useState(null)
     const [address, setAddress] = useState('')
+    const [couponCode, setCouponCode] = useState('')
+    const [appliedCoupon, setAppliedCoupon] = useState(null)
+    const [discountAmount, setDiscountAmount] = useState(0)
+
+    const applyCoupon = async () => {
+        if (!couponCode) return
+
+        const { data, error } = await supabase
+            .from('coupons')
+            .select('*, products(name, price)')
+            .eq('code', couponCode.toUpperCase())
+            .single()
+
+        if (error || !data || !data.is_active) {
+            alert('Cupón inválido o expirado')
+            setAppliedCoupon(null)
+            setDiscountAmount(0)
+            return
+        }
+
+        if (data.usage_limit && data.usage_count >= data.usage_limit) {
+            alert('Este cupón ha alcanzado su límite de usos')
+            return
+        }
+
+        // Calculate discount
+        let discount = 0
+        if (data.discount_type === 'percentage') {
+            discount = (total * data.value) / 100
+        } else if (data.discount_type === 'fixed') {
+            discount = data.value
+        } else if (data.discount_type === 'product') {
+            // Find if product is in cart (assuming 'target_product_id' is the free product)
+            // Note: Simplification - we just deduct the product price if it's in the cart, 
+            // or maybe we should add it? For now, let's assume user must add it first, OR we discount the value of that product.
+            /* 
+               Valid logic: If coupon grants a free product, we look for that product in the cart.
+               If found, we discount its price. If not found, we alert user to add it?
+               Let's try: Discount max 1 instance of that product price.
+            */
+            // We need to fetch product price if not in Join, but we included it in query
+            // wait, we need to check if product is in cart.
+            const productInCart = cart.find(item => item.main.id === data.target_product_id)
+            if (productInCart) {
+                discount = productInCart.main.price
+            } else {
+                alert(`Este cupón te regala un ${data.products?.name}. ¡Agrégalo al carrito para aplicar el descuento!`)
+                return
+            }
+        }
+
+        if (discount > total) discount = total
+
+        setAppliedCoupon(data)
+        setDiscountAmount(discount)
+        alert(`¡Cupón ${data.code} aplicado! Ahorras $${discount.toFixed(2)}`)
+    }
+
+    const finalTotal = total - discountAmount
 
     const handleCheckout = async () => {
         if (!orderType) {
@@ -20,10 +79,6 @@ const CheckoutPage = () => {
         if (orderType === 'delivery' && !address.trim()) {
             alert('Por favor ingresa tu dirección de envío')
             return
-        }
-
-        if (orderType === 'takeaway') {
-            if (!confirm('⚠️ ATENCIÓN: RETIRO EN LOCAL 🥡\n\nHas seleccionado que pasarás a buscar el pedido por nuestra sucursal.\n\n¿Confirmar que NO es para envío?')) return
         }
 
         if (!confirm('¿Confirmar pedido por $' + total.toFixed(2) + '?')) return
@@ -180,9 +235,39 @@ const CheckoutPage = () => {
                         </div>
                     )}
 
-                    <div className="flex justify-between items-end pt-2">
+                    {/* Coupon Input */}
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            placeholder="Código de descuento"
+                            className="flex-1 bg-[var(--color-background)] border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[var(--color-secondary)] uppercase"
+                            disabled={!!appliedCoupon}
+                        />
+                        {appliedCoupon ? (
+                            <button onClick={() => { setAppliedCoupon(null); setDiscountAmount(0); setCouponCode('') }} className="bg-red-500/10 text-red-500 px-4 rounded-xl font-bold">
+                                <Trash2 className="w-5 h-5" />
+                            </button>
+                        ) : (
+                            <button onClick={applyCoupon} className="bg-[var(--color-primary)] text-white px-6 rounded-xl font-bold">
+                                Aplicar
+                            </button>
+                        )}
+                    </div>
+                    {appliedCoupon && (
+                        <div className="text-green-400 text-sm font-bold flex justify-between">
+                            <span>Cupón aplicado ({appliedCoupon.code})</span>
+                            <span>-${discountAmount.toFixed(2)}</span>
+                        </div>
+                    )}
+
+                    <div className="flex justify-between items-end pt-2 border-t border-white/5">
                         <span className="text-[var(--color-text-muted)] font-medium">Total a Pagar</span>
-                        <span className="text-3xl font-bold text-white">${total.toFixed(2)}</span>
+                        <div className="text-right">
+                            {appliedCoupon && <span className="block text-sm text-[var(--color-text-muted)] line-through">${total.toFixed(2)}</span>}
+                            <span className="text-3xl font-bold text-white">${finalTotal.toFixed(2)}</span>
+                        </div>
                     </div>
 
                     <button onClick={handleCheckout} className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all
