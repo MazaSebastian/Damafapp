@@ -52,16 +52,16 @@ const LandingPage = () => {
         <div className="min-h-screen bg-[var(--color-background)] pb-20"> {/* pb-20 for bottom nav */}
 
             {/* Top Bar */}
-            <header className="fixed top-0 w-full bg-[var(--color-background)]/90 backdrop-blur-md z-50 px-4 py-3 flex justify-between items-center border-b border-white/5">
-                <button className="p-2 text-white">
+            <header className="fixed top-0 w-full bg-[var(--color-background)]/90 backdrop-blur-md z-50 px-4 py-3 flex justify-between items-center border-b border-white/5 relative">
+                <button className="p-2 text-white relative z-20">
                     <Menu className="w-6 h-6" />
                 </button>
 
-                <div className="transform hover:scale-105 transition-transform">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform hover:scale-105 transition-transform z-10">
                     <img src="/logo-damaf.png" alt="DamafAPP" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                 </div>
 
-                <Link to="/login" className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full hover:bg-gray-200 transition-colors">
+                <Link to="/login" className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full hover:bg-gray-200 transition-colors relative z-20">
                     Inscribirse
                 </Link>
             </header>

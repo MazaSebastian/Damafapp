@@ -45,16 +45,16 @@ const UserHome = () => {
 
             {/* Top Header */}
             <header className="px-4 py-4 flex justify-between items-center relative z-10">
-                <button className="p-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                <button className="p-2 text-white hover:bg-white/10 rounded-full transition-colors relative z-20">
                     <Menu className="w-6 h-6" />
                 </button>
 
-                <div className="transform hover:scale-105 transition-transform cursor-pointer">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform hover:scale-105 transition-transform cursor-pointer z-10">
                     <img src="/logo-damaf.png" alt="DamafAPP" className="h-20 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                 </div>
 
                 {/* Admin Link or Sign Out */}
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center relative z-20">
                     {role === 'admin' && (
                         <Link to="/admin" className="text-white text-[10px] font-bold px-3 py-1.5 rounded-full bg-[var(--color-primary)] hover:bg-purple-700 transition-colors border border-transparent uppercase tracking-wider">
                             Admin
