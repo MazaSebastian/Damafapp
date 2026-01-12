@@ -3,8 +3,8 @@ import { GoogleMap, useLoadScript, Marker, StandaloneSearchBox, DirectionsRender
 import { MapPin, Search, Navigation } from 'lucide-react'
 import { toast } from 'sonner'
 
-// Placeholder coordinates (Obelisk of Buenos Aires) - WILL BE UPDATED BY USER
-const STORE_LOCATION = { lat: -34.603722, lng: -58.381592 }
+// Real Coordinates provided by User
+const STORE_LOCATION = { lat: -34.530019, lng: -58.542822 }
 const LIBRARIES = ['places']
 
 const DeliveryMap = ({ onDistanceCalculated, onAddressSelected }) => {
@@ -174,7 +174,7 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected }) => {
                         position={STORE_LOCATION}
                         icon={{
                             // Simple emoji icon or create a custom one later
-                            url: 'http://maps.google.com/mapfiles/kml/pal2/icon10.png',
+                            url: 'https://maps.google.com/mapfiles/kml/pal2/icon10.png',
                             scaledSize: new window.google.maps.Size(40, 40)
                         }}
                         title="Nuestro Local"
