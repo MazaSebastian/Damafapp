@@ -9,8 +9,11 @@ const ProductManager = () => {
     const [loading, setLoading] = useState(true)
     const [view, setView] = useState('list') // 'list', 'edit-cat', 'edit-prod'
 
+    const [stats, setStats] = useState({})
+
     useEffect(() => {
         fetchCategories()
+        updateStats()
     }, [])
 
     useEffect(() => {
@@ -18,6 +21,17 @@ const ProductManager = () => {
             fetchProducts(selectedCategory.id)
         }
     }, [selectedCategory])
+
+    const updateStats = async () => {
+        const { data } = await supabase.from('products').select('category_id').eq('is_available', true)
+        if (data) {
+            const counts = {}
+            data.forEach(p => {
+                counts[p.category_id] = (counts[p.category_id] || 0) + 1
+            })
+            setStats(counts)
+        }
+    }
 
     const fetchCategories = async () => {
         setLoading(true)
@@ -49,6 +63,7 @@ const ProductManager = () => {
         const { data, error } = await supabase.from('products').insert([newProduct]).select()
         if (!error && data) {
             setProducts([...products, data[0]])
+            updateStats()
             e.target.reset()
         } else {
             alert('Error creating product: ' + error?.message)
@@ -60,6 +75,7 @@ const ProductManager = () => {
         const { error } = await supabase.from('products').update({ is_available: false }).eq('id', id)
         if (!error) {
             setProducts(products.filter(p => p.id !== id))
+            updateStats()
         } else {
             alert('Error al archivar: ' + error.message)
         }
@@ -87,6 +103,7 @@ const ProductManager = () => {
         if (!error) {
             setCategories(categories.filter(c => c.id !== id))
             if (selectedCategory?.id === id) setSelectedCategory(null)
+            updateStats()
         } else {
             alert('Error al eliminar: ' + error.message)
         }
@@ -110,9 +127,15 @@ const ProductManager = () => {
                             className={`p-3 rounded-xl cursor-pointer flex justify-between items-center group transition-colors ${selectedCategory?.id === cat.id ? 'bg-[var(--color-primary)] text-white' : 'hover:bg-white/5'}`}
                         >
                             <span className="font-medium">{cat.name}</span>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-                                <span className="text-xs bg-black/20 px-2 py-0.5 rounded">{cat.sort_order}</span>
-                                <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id) }} className="hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                            <div className="flex items-center gap-2">
+                                {(stats[cat.id] || 0) > 0 && (
+                                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded font-bold">
+                                        {stats[cat.id]}
+                                    </span>
+                                )}
+                                <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id) }} className="hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
                     ))}
