@@ -1,10 +1,17 @@
 import { Link } from 'react-router-dom'
 import { ShoppingBag, Star, ChefHat, User, LogIn } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import LandingPage from '../components/LandingPage'
 
 const HomePage = () => {
     const { user, signOut } = useAuth()
 
+    // If no user is logged in, show the Landing Page (Burger King Style)
+    if (!user) {
+        return <LandingPage />
+    }
+
+    // Authenticated View
     return (
         <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-main)] font-sans">
             {/* Header */}
