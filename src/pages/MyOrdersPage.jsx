@@ -175,7 +175,7 @@ const MyOrdersPage = () => {
                     <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
                         <div className="bg-white text-black p-8 rounded-3xl shadow-2xl max-w-sm w-full">
                             <div className="w-24 h-24 mx-auto mb-6">
-                                <img src="/logo-damaf.png" alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
+                                <img src="/logo-damaf.png" alt="Logo" className="w-full h-full object-contain drop-shadow-sm invert brightness-0" />
                             </div>
 
                             <h2 className="text-2xl font-black uppercase leading-none mb-2 tracking-tighter text-[#502314]">
