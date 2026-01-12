@@ -9,6 +9,7 @@ import OrdersManager from '../components/OrdersManager'
 import SettingsManager from '../components/SettingsManager'
 import AdminOverview from '../components/AdminOverview'
 import CouponsManager from '../components/CouponsManager'
+import InventoryManager from '../components/InventoryManager'
 
 
 
@@ -90,6 +91,8 @@ const AdminDashboard = () => {
                     <CouponsManager />
                 ) : activeTab === 'Menu' ? (
                     <ProductManager />
+                ) : activeTab === 'Inventory' ? (
+                    <InventoryManager />
                 ) : activeTab === 'Settings' ? (
                     <SettingsManager />
                 ) : (
