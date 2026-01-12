@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ClubInfoPage from './pages/ClubInfoPage'
+import RewardsStorePage from './pages/RewardsStorePage'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/club-info" element={<ClubInfoPage />} />
+          <Route path="/rewards" element={<RewardsStorePage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

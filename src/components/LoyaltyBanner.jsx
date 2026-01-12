@@ -19,7 +19,7 @@ const LoyaltyBanner = ({ stars = 0 }) => {
                     </div>
                     <p className="text-xs opacity-80 mt-1">Estrellas disponibles</p>
                 </div>
-                <Link to="/club-info" className="bg-white text-black text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-100 transition-colors">
+                <Link to="/rewards" className="bg-white text-black text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-100 transition-colors">
                     MI CLUB
                 </Link>
             </div>
