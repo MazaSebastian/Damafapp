@@ -71,6 +71,16 @@ const CheckoutPage = () => {
 
     const finalTotal = total - discountAmount
 
+    // Initialize Mercado Pago
+    import { initMercadoPago } from '@mercadopago/sdk-react'
+
+    // Replace with your Public Key (or use environment variable)
+    // For development, we can check if the env var exists, otherwise use a placeholder or handle gracefully.
+    const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY
+    if (MP_PUBLIC_KEY) {
+        initMercadoPago(MP_PUBLIC_KEY)
+    }
+
     const handleCheckout = async () => {
         if (!orderType) {
             toast.warning('Por favor selecciona: DELIVERY o RETIRO EN LOCAL')
@@ -82,54 +92,65 @@ const CheckoutPage = () => {
             return
         }
 
-        if (!confirm('¿Confirmar pedido por $' + finalTotal.toFixed(2) + '?')) return
+        if (!confirm('¿Confirmar pedido por $' + finalTotal.toFixed(2) + ' y pagar con Mercado Pago?')) return
 
         const { data: { user } } = await supabase.auth.getUser()
 
-        // 1. Create Order
-        const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert([{
-                user_id: user?.id || null, // Null for guests
-                total: finalTotal,
-                status: 'pending',
-                order_type: orderType,
-                delivery_address: orderType === 'delivery' ? address : null,
-                coupon_code: appliedCoupon?.code || null,
-                discount_amount: discountAmount
-            }])
-            .select()
-            .single()
+        try {
+            // 1. Create Order
+            const { data: order, error: orderError } = await supabase
+                .from('orders')
+                .insert([{
+                    user_id: user?.id || null,
+                    total: finalTotal,
+                    status: 'pending_payment', // New initial status
+                    order_type: orderType,
+                    delivery_address: orderType === 'delivery' ? address : null,
+                    coupon_code: appliedCoupon?.code || null,
+                    discount_amount: discountAmount
+                }])
+                .select()
+                .single()
 
-        if (orderError) {
-            toast.error('Error al iniciar el pedido. Intenta nuevamente.')
-            throw orderError
+            if (orderError) throw orderError
+
+            // 2. Create Order Items
+            const orderItems = cart.map(item => ({
+                order_id: order.id,
+                product_id: item.main.id,
+                quantity: 1,
+                price_at_time: item.main.price,
+                modifiers: item.modifiers || [],
+                side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
+                drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
+            }))
+
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .insert(orderItems)
+
+            if (itemsError) throw itemsError
+
+            // 3. Call Edge Function to get Mercado Pago Preference
+            toast.loading('Generando link de pago...')
+
+            const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment-preference', {
+                body: { order_id: order.id }
+            })
+
+            if (paymentError || !paymentData?.init_point) {
+                console.error('Payment Error:', paymentError)
+                throw new Error('Error al conectar con Mercado Pago')
+            }
+
+            // 4. Redirect to Mercado Pago
+            window.location.href = paymentData.init_point
+
+        } catch (error) {
+            console.error(error)
+            toast.dismiss() // Dismiss loading toast
+            toast.error('Ocurrió un error al procesar el pedido: ' + error.message)
         }
-
-        // 2. Create Order Items
-        const orderItems = cart.map(item => ({
-            order_id: order.id,
-            product_id: item.main.id,
-            quantity: 1, // Meal builder assumes 1 for now
-            price_at_time: item.main.price,
-            modifiers: item.modifiers || [],
-            side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
-            drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
-        }))
-
-        const { error: itemsError } = await supabase
-            .from('order_items')
-            .insert(orderItems)
-
-        if (itemsError) {
-            toast.error('Error al guardar items: ' + itemsError.message)
-            return null
-        }
-
-        // Success!
-        toast.success(`¡Pedido #${order.id.slice(0, 8)} enviado a cocina! 👨‍🍳`)
-        clearCart()
-        navigate('/')
     }
 
     if (cart.length === 0) {
@@ -280,9 +301,9 @@ const CheckoutPage = () => {
                     </div>
 
                     <button onClick={handleCheckout} className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all
-                        ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-green-600 hover:bg-green-500 shadow-green-900/20'}`}>
-                        {orderType === 'delivery' ? 'Pedir Delivery' :
-                            orderType === 'takeaway' ? 'Confirmar Retiro' :
+                        ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-[#009ee3] hover:bg-[#009ee3]/90 shadow-blue-900/20'}`}>
+                        {orderType === 'delivery' ? 'Pagar con Mercado Pago' :
+                            orderType === 'takeaway' ? 'Pagar Retiro con MP' :
                                 'Seleccione método de entrega'}
                     </button>
                 </div>

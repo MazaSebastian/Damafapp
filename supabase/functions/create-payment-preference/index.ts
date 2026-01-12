@@ -1,9 +1,5 @@
-// Follow this setup guide to deploy: https://supabase.com/docs/guides/functions/quickstart
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
-// Replace with your Access Token from: https://www.mercadopago.com/developers/panel
-const MP_ACCESS_TOKEN = 'TEST-00000000-0000-0000-0000-000000000000'; // PLACEHOLDER
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -11,65 +7,103 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-    // Handle CORS for options request
+    // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
     try {
-        const { items, orderId, payerEmail } = await req.json()
+        const supabaseClient = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+        )
 
-        if (!items || !orderId) {
-            throw new Error('Missing items or orderId')
+        const { order_id } = await req.json()
+
+        if (!order_id) {
+            throw new Error('Missing order_id')
         }
 
-        // Format items for Mercado Pago
-        // MP expects: { title, quantity, unit_price, currency_id: 'ARS' }
-        const mpItems = items.map((item: any) => ({
-            title: item.title,
+        // 1. Fetch Order details from Database (Security Best Practice: Don't trust frontend prices)
+        const { data: order, error: orderError } = await supabaseClient
+            .from('orders')
+            .select('*, order_items(*, products(*))')
+            .eq('id', order_id)
+            .single()
+
+        if (orderError || !order) {
+            throw new Error('Order not found')
+        }
+
+        // 2. Prepare items for Mercado Pago
+        const items = order.order_items.map((item: any) => ({
+            id: item.product_id,
+            title: item.products.name,
             quantity: item.quantity,
-            currency_id: 'ARS', // Change if needed (USD, etc)
-            unit_price: Number(item.unit_price)
+            currency_id: 'ARS', // Argentina Peso
+            unit_price: Number(item.price)
         }))
 
+        // 3. Create Preference in Mercado Pago
+        const mpAccessToken = Deno.env.get('MP_ACCESS_TOKEN')
+        if (!mpAccessToken) {
+            console.error('MP_ACCESS_TOKEN is not set')
+            throw new Error('Server configuration error: Missing MP Token')
+        }
+
         const preferenceData = {
-            items: mpItems,
-            external_reference: orderId, // We link the MP preference to our Supabase Order ID
-            payer: {
-                email: payerEmail || 'test_user@test.com'
-            },
-            auto_return: 'approved',
+            items: items,
             back_urls: {
-                success: 'https://damafapp.vercel.app/checkout/success', // Update with your real URL
-                failure: 'https://damafapp.vercel.app/checkout/failure',
-                pending: 'https://damafapp.vercel.app/checkout/pending'
+                success: "https://damafapp.vercel.app/my-orders?status=approved", // Update with your domain
+                failure: "https://damafapp.vercel.app/checkout?status=failure",
+                pending: "https://damafapp.vercel.app/my-orders?status=pending"
+            },
+            auto_return: "approved",
+            external_reference: order_id, // Link MP payment to our Order ID
+            statement_descriptor: "DAMAFAPP",
+            payer: {
+                // Optional: Pre-fill user info if available in 'profiles'
+                // email: ...
             }
         }
 
-        const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`
+                'Authorization': `Bearer ${mpAccessToken}`
             },
             body: JSON.stringify(preferenceData)
         })
 
-        const data = await response.json()
+        const mpData = await mpResponse.json()
 
-        if (data.error) {
-            throw new Error(data.message || 'Error creating preference')
+        if (!mpResponse.ok) {
+            console.error('Mercado Pago Error:', mpData)
+            throw new Error(`Mercado Pago API Error: ${mpData.message || 'Unknown'}`)
         }
 
+        // 4. Update Order with Preference ID (Optional but useful)
+        await supabaseClient
+            .from('orders')
+            .update({ mercadopago_preference_id: mpData.id })
+            .eq('id', order_id)
+
+        // 5. Return init_point (Checkout URL) and preference_id
         return new Response(
-            JSON.stringify({ preferenceId: data.id, init_point: data.init_point }),
+            JSON.stringify({
+                init_point: mpData.init_point, // For production (or sandbox_init_point if testing)
+                preference_id: mpData.id
+            }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
 
-    } catch (error) {
+    } catch (error: any) {
+        console.error(error)
         return new Response(
             JSON.stringify({ error: error.message }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         )
     }
 })
