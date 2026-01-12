@@ -8,12 +8,14 @@ import NewsCard from './NewsCard'
 import BottomNav from './BottomNav'
 import FloatingOrderButton from './FloatingOrderButton'
 import { NewsSkeleton } from './skeletons/NewsSkeleton'
+import Sidebar from './Sidebar'
 
 const UserHome = () => {
     const { user, role, signOut } = useAuth()
     const [stars, setStars] = useState(0)
     const [news, setNews] = useState([])
     const [loading, setLoading] = useState(true)
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -43,10 +45,14 @@ const UserHome = () => {
 
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-24">
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
             {/* Top Header */}
             <header className="px-4 py-4 flex justify-between items-center relative z-10">
-                <button className="p-2 text-white hover:bg-white/10 rounded-full transition-colors relative z-20">
+                <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="p-2 text-white hover:bg-white/10 rounded-full transition-colors relative z-20"
+                >
                     <Menu className="w-6 h-6" />
                 </button>
 
