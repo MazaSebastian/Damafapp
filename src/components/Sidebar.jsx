@@ -31,7 +31,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         // { icon: CreditCard, label: 'Métodos de pago', action: () => { } }, // Hidden as per MP integration
         { icon: ShoppingBag, label: 'Órdenes recientes', to: '/my-orders' },
         { icon: Globe, label: 'Preferencia de comunicación', action: () => { } },
-        { icon: MapPin, label: 'Encontrar un restaurante', action: () => { } },
         { icon: Info, label: 'Sobre la aplicación', to: '/club-info' },
     ]
 
