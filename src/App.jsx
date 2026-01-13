@@ -1,6 +1,8 @@
+```javascript
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
+import { LanguageProvider } from './context/LanguageContext'
 import { AnimatePresence } from 'framer-motion'
 import PageTransition from './components/PageTransition'
 import ProtectedRoute from './components/ProtectedRoute'
