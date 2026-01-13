@@ -178,29 +178,29 @@ const MyOrdersPage = () => {
                     })
                 ) : (
                     <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-                        <div className="bg-white text-black p-8 rounded-3xl shadow-2xl max-w-sm w-full">
+                        <div className="bg-[var(--color-surface)] border border-white/5 p-8 rounded-3xl shadow-2xl max-w-sm w-full">
                             <div className="w-24 h-24 mx-auto mb-6">
-                                <img src="/logo-damaf.png" alt="Logo" className="w-full h-full object-contain drop-shadow-sm invert brightness-0" />
+                                <img src="/logo-damaf.png" alt="Logo" className="w-full h-full object-contain drop-shadow-sm opacity-80" />
                             </div>
 
-                            <h2 className="text-2xl font-black uppercase leading-none mb-2 tracking-tighter text-[#502314]">
+                            <h2 className="text-2xl font-black uppercase leading-none mb-2 tracking-tighter text-white">
                                 LOS PEDIDOS Y ARTÍCULOS RECIENTES APARECERÁN AQUÍ
                             </h2>
 
-                            <p className="text-sm font-bold text-[#502314]/70 mb-8">
+                            <p className="text-sm font-bold text-[var(--color-text-muted)] mb-8">
                                 ¡Empiece un nuevo pedido ahora!
                             </p>
 
                             <Link
                                 to="/menu"
-                                className="block w-full bg-[#d62300] text-white font-black text-lg py-3 rounded-full shadow-md mb-3 hover:bg-[#b01d00] transition-colors uppercase tracking-wide"
+                                className="block w-full bg-[var(--color-secondary)] text-white font-black text-lg py-3 rounded-full shadow-md mb-3 hover:bg-orange-600 transition-colors uppercase tracking-wide"
                             >
                                 Pide aquí
                             </Link>
 
                             <button
                                 onClick={fetchOrders}
-                                className="block w-full bg-transparent border-2 border-[#d62300] text-[#d62300] font-black text-lg py-3 rounded-full hover:bg-[#d62300]/5 transition-colors uppercase tracking-wide"
+                                className="block w-full bg-transparent border-2 border-white/10 text-white font-black text-lg py-3 rounded-full hover:bg-white/5 transition-colors uppercase tracking-wide"
                             >
                                 Actualizar
                             </button>
