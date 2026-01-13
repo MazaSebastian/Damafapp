@@ -10,39 +10,66 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Check active sessions and sets the user
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null)
-            setLoading(false) // Unblock UI immediately
-            if (session?.user) {
-                fetchProfile(session.user.id)
-            }
-        }).catch(err => {
-            console.error('Session check failed', err)
-            setLoading(false)
-        })
+        let mounted = true
 
-        // Listen for changes on auth state (logged in, signed out, etc.)
+        // Safety timeout (Force load after 4s if DB hangs)
+        const timeout = setTimeout(() => {
+            if (mounted) {
+                setLoading((current) => {
+                    if (current) console.warn('Auth loading safety timeout triggered')
+                    return false
+                })
+            }
+        }, 4000)
+
+        // Check active sessions and sets the user
+        const initAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+
+                if (mounted) {
+                    setUser(session?.user ?? null)
+
+                    if (session?.user) {
+                        // WAIT for profile before opening the app
+                        await fetchProfile(session.user.id)
+                    }
+                }
+            } catch (error) {
+                console.error('Auth initialization error:', error)
+            } finally {
+                if (mounted) setLoading(false)
+            }
+        }
+
+        initAuth()
+
+        // Listen for changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             console.log('Auth state changed:', _event)
+            if (!mounted) return
+
             setUser(session?.user ?? null)
-            // If we just signed in, loading might be true, so ensure it's false
-            setLoading(false)
 
             if (session?.user) {
+                // If logging in, pause loading until profile is ready
                 await fetchProfile(session.user.id)
             } else {
                 setProfile(null)
                 setRole(null)
             }
+            setLoading(false)
         })
 
-        return () => subscription.unsubscribe()
+        return () => {
+            mounted = false
+            subscription.unsubscribe()
+            clearTimeout(timeout)
+        }
     }, [])
 
     const fetchProfile = async (userId) => {
         try {
-            console.log('Fetching profile for:', userId)
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -50,18 +77,23 @@ export const AuthProvider = ({ children }) => {
                 .single()
 
             if (error) {
-                console.warn('Error fetching profile (RLS?):', error)
+                console.error('Error fetching profile:', error)
+                // Even if there's an error, we should clear the profile/role
+                setProfile(null)
+                setRole(null)
                 return
             }
 
             if (data) {
-                console.log('Profile loaded:', data.full_name)
                 setProfile(data)
                 setRole(data.role)
             }
         } catch (error) {
-            console.error('Error loading profile logic:', error)
+            console.error('Error fetching profile:', error)
+            setProfile(null)
+            setRole(null)
         }
+        // Note: We don't set loading(false) here, the caller handles it
     }
 
     const signUp = async (email, password, options) => {
