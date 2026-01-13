@@ -248,9 +248,9 @@ const ProfilePage = () => {
 
                 {/* Footer Links */}
                 <div className="mt-8 space-y-4 border-t border-white/5 pt-4">
-                    <button className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
+                    <Link to="/privacy" className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
                         Política de privacidad <ArrowLeft className="w-4 h-4 rotate-180" />
-                    </button>
+                    </Link>
                     <button className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
                         Términos de servicio <ArrowLeft className="w-4 h-4 rotate-180" />
                     </button>
