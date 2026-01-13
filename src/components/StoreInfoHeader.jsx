@@ -53,7 +53,7 @@ const StoreInfoHeader = () => {
             >
                 {/* Logo Area */}
                 <div className="flex justify-center mb-2">
-                    <img src="/logo-damaf.png" alt="DAMAFAPP" className="h-28 md:h-36 w-auto drop-shadow-2xl hover:scale-105 transition-transform" />
+                    <img src="/logo-damaf.png" alt="DAMAFAPP" className="h-20 md:h-28 w-auto drop-shadow-2xl hover:scale-105 transition-transform" />
                 </div>
 
                 <div>
