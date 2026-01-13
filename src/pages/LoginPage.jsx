@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { supabase } from '../supabaseClient'
-import { ChefHat, ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowRight, Loader2, Mail, Lock } from 'lucide-react'
 
 const LoginPage = () => {
     const navigate = useNavigate()
@@ -27,8 +27,6 @@ const LoginPage = () => {
                 if (signUpData.user) {
                     toast.success('Registro exitoso! Revisa tu email para confirmar.')
                 } else {
-                    // This case might occur if email confirmation is required but no user object is returned immediately
-                    // Or if there's an issue not caught by the 'error' object
                     toast.info('Registro iniciado. Por favor, revisa tu email para confirmar tu cuenta.')
                 }
             } else {
@@ -41,83 +39,83 @@ const LoginPage = () => {
             }
         } catch (err) {
             setError(err.message)
+            toast.error('Error: ' + err.message)
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen flex flex-col justify-center items-center bg-[var(--color-background)] p-4 relative overflow-hidden">
-            {/* Background Decor */}
-            <div className="absolute top-0 left-0 w-full h-1/2 bg-[var(--color-primary)]/10 -skew-y-6 transform origin-top-left z-0"></div>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-background)] p-4 relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-[#1a1a2e] to-transparent opacity-50 z-0"></div>
 
-            <div className="z-10 w-full max-w-md bg-[var(--color-surface)] p-8 rounded-2xl shadow-2xl border border-[var(--color-primary)]/20 animate-fade-in-up">
+            <div className="z-10 w-full max-w-sm">
+                {/* Brand Logo Section */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="bg-[var(--color-secondary)] p-3 rounded-xl mb-4 shadow-lg shadow-orange-500/20">
-                        <ChefHat className="text-white w-8 h-8" />
+                    <div className="w-32 h-32 rounded-full bg-[#1a1a2e] border-4 border-[var(--color-surface)] shadow-2xl flex items-center justify-center mb-6 overflow-hidden relative">
+                        <img src="/logo-damaf.png" alt="Damafa" className="w-full h-full object-cover" />
                     </div>
-                    <h2 className="text-2xl font-bold text-[var(--color-text-main)]">
-                        {isSignUp ? 'Join the Club' : 'Welcome Back'}
-                    </h2>
-                    <p className="text-[var(--color-text-muted)] text-sm mt-1">
-                        {isSignUp ? 'Create an account to start ordering' : 'Sign in to your account'}
+                    <h1 className="text-3xl font-black text-white tracking-tight mb-2">DAMAFA</h1>
+                    <p className="text-[var(--color-text-muted)] text-center max-w-xs">
+                        {isSignUp ? 'Únete al club y disfruta de las mejores hamburguesas.' : '¡Qué bueno verte de nuevo! ¿Sale bajón? 🍔'}
                     </p>
                 </div>
 
-                <form onSubmit={handleAuth} className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-semibold uppercase text-[var(--color-text-muted)] mb-1 ml-1">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-[var(--color-background)] border border-[var(--color-primary)]/30 text-[var(--color-text-main)] rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)] transition-all placeholder:text-slate-600"
-                            placeholder="you@example.com"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-semibold uppercase text-[var(--color-text-muted)] mb-1 ml-1">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-[var(--color-background)] border border-[var(--color-primary)]/30 text-[var(--color-text-main)] rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)] transition-all placeholder:text-slate-600"
-                            placeholder="••••••••"
-                            required
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="bg-red-500/10 border border-red-500/30 text-red-500 text-sm p-3 rounded-lg text-center">
-                            {error}
+                <div className="bg-[var(--color-surface)]/80 backdrop-blur-md p-8 rounded-3xl border border-white/5 shadow-2xl">
+                    <form onSubmit={handleAuth} className="space-y-5">
+                        <div className="space-y-2">
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-[var(--color-background)] border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-secondary)] transition-all"
+                                    placeholder="tu-email@ejemplo.com"
+                                    required
+                                />
+                            </div>
                         </div>
-                    )}
+                        <div className="space-y-2">
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-[var(--color-background)] border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-secondary)] transition-all"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
+                        </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-[var(--color-secondary)] hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-orange-500/20 transition-all flex justify-center items-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (
-                            <>
-                                {isSignUp ? 'Sign Up' : 'Log In'}
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                <div className="mt-6 text-center">
-                    <p className="text-[var(--color-text-muted)] text-sm">
-                        {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                         <button
-                            onClick={() => setIsSignUp(!isSignUp)}
-                            className="text-[var(--color-secondary)] font-semibold hover:underline"
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-gradient-to-r from-[var(--color-secondary)] to-orange-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-orange-500/25 transition-all flex justify-center items-center gap-2 group transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            {isSignUp ? 'Log In' : 'Sign Up'}
+                            {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (
+                                <>
+                                    {isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión'}
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
                         </button>
-                    </p>
+                    </form>
+
+                    <div className="mt-8 text-center pt-6 border-t border-white/5">
+                        <p className="text-[var(--color-text-muted)] text-sm">
+                            {isSignUp ? '¿Ya tienes cuenta?' : '¿Primera vez por aquí?'}{' '}
+                            <button
+                                onClick={() => setIsSignUp(!isSignUp)}
+                                className="text-[var(--color-secondary)] font-bold hover:underline ml-1"
+                            >
+                                {isSignUp ? 'Inicia Sesión' : 'Regístrate'}
+                            </button>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
