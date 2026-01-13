@@ -92,6 +92,7 @@ export const useLoyaltyLevels = () => {
         progress: Math.min(Math.max(progress, 0), 100), // Clamp 0-100
         starsToNext,
         loading: settingsLoading,
-        levels: levelsMap
+        levels: levelsMap,
+        moneyPerStar: getSetting('loyalty_money_per_star', 100, 'number')
     }
 }

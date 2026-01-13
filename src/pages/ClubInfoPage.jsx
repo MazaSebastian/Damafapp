@@ -6,7 +6,7 @@ import LoyaltyBanner from '../components/LoyaltyBanner'
 
 const ClubInfoPage = () => {
     const { user, profile } = useAuth()
-    const { levels, loading } = useLoyaltyLevels()
+    const { levels, loading, moneyPerStar } = useLoyaltyLevels()
     const stars = profile?.stars || 0
 
     if (loading) return <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center text-white">Cargando...</div>
@@ -55,7 +55,7 @@ const ClubInfoPage = () => {
                             <span className="text-2xl">💰</span>
                         </div>
                         <div>
-                            <p className="font-bold text-white">1 Estrella por cada $100</p>
+                            <p className="font-bold text-white">1 Estrella por cada ${moneyPerStar}</p>
                             <p className="text-xs text-[var(--color-text-muted)]">Cada compra te acerca a tu próximo nivel.</p>
                         </div>
                     </div>
