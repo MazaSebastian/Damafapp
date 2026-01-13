@@ -236,88 +236,7 @@ const ProductManager = () => {
                             </div>
                         </div>
 
-                        {/* Modal for Add/Edit Product */}
-                        {isModalOpen && (
-                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={cancelEditing}>
-                                <div className="bg-[var(--color-surface)] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                                    <button onClick={cancelEditing} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
-                                        <X className="w-6 h-6" />
-                                    </button>
 
-                                    <h4 className="font-bold text-xl mb-6">
-                                        {editingProduct ? 'Editar Producto' : `Nuevo Producto en ${selectedCategory.name}`}
-                                    </h4>
-
-                                    <form
-                                        key={editingProduct ? editingProduct.id : 'new-product-form'}
-                                        onSubmit={handleSaveProduct}
-                                        className="space-y-4"
-                                    >
-                                        <div>
-                                            <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">NOMBRE</label>
-                                            <input
-                                                name="name"
-                                                defaultValue={editingProduct?.name || ''}
-                                                placeholder="Ej: Hamburguesa Doble"
-                                                className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">PRECIO</label>
-                                            <input
-                                                name="price"
-                                                type="number"
-                                                step="0.01"
-                                                defaultValue={editingProduct?.price || ''}
-                                                placeholder="0.00"
-                                                className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">DESCRIPCIÓN</label>
-                                            <textarea
-                                                name="description"
-                                                defaultValue={editingProduct?.description || ''}
-                                                placeholder="Ingredientes y detalles..."
-                                                rows="3"
-                                                className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all resize-none"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div className="col-span-1">
-                                                <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">TIPO MEDIA</label>
-                                                <select
-                                                    name="media_type"
-                                                    defaultValue={editingProduct?.media_type || 'image'}
-                                                    className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] text-white"
-                                                >
-                                                    <option value="image">Imagen 🖼️</option>
-                                                    <option value="video">Video 📹</option>
-                                                </select>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">URL MEDIA</label>
-                                                <input
-                                                    name="image_url"
-                                                    defaultValue={editingProduct?.image_url || ''}
-                                                    placeholder="https://..."
-                                                    className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <button type="submit" className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 ${editingProduct ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-blue-500/20' : 'bg-[var(--color-secondary)] hover:bg-orange-600 hover:shadow-orange-500/20'}`}>
-                                            {editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        )}
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-[var(--color-text-muted)]">
@@ -326,6 +245,88 @@ const ProductManager = () => {
                     </div>
                 )}
             </div>
+            {/* Modal for Add/Edit Product */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={cancelEditing}>
+                    <div className="bg-[var(--color-surface)] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <button onClick={cancelEditing} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <h4 className="font-bold text-xl mb-6">
+                            {editingProduct ? 'Editar Producto' : `Nuevo Producto en ${selectedCategory.name}`}
+                        </h4>
+
+                        <form
+                            key={editingProduct ? editingProduct.id : 'new-product-form'}
+                            onSubmit={handleSaveProduct}
+                            className="space-y-4"
+                        >
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">NOMBRE</label>
+                                <input
+                                    name="name"
+                                    defaultValue={editingProduct?.name || ''}
+                                    placeholder="Ej: Hamburguesa Doble"
+                                    className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">PRECIO</label>
+                                <input
+                                    name="price"
+                                    type="number"
+                                    step="0.01"
+                                    defaultValue={editingProduct?.price || ''}
+                                    placeholder="0.00"
+                                    className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">DESCRIPCIÓN</label>
+                                <textarea
+                                    name="description"
+                                    defaultValue={editingProduct?.description || ''}
+                                    placeholder="Ingredientes y detalles..."
+                                    rows="3"
+                                    className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all resize-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="col-span-1">
+                                    <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">TIPO MEDIA</label>
+                                    <select
+                                        name="media_type"
+                                        defaultValue={editingProduct?.media_type || 'image'}
+                                        className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] text-white"
+                                    >
+                                        <option value="image">Imagen 🖼️</option>
+                                        <option value="video">Video 📹</option>
+                                    </select>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">URL MEDIA</label>
+                                    <input
+                                        name="image_url"
+                                        defaultValue={editingProduct?.image_url || ''}
+                                        placeholder="https://..."
+                                        className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <button type="submit" className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 ${editingProduct ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-blue-500/20' : 'bg-[var(--color-secondary)] hover:bg-orange-600 hover:shadow-orange-500/20'}`}>
+                                {editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
