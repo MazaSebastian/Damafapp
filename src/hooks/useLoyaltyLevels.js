@@ -93,6 +93,6 @@ export const useLoyaltyLevels = () => {
         starsToNext,
         loading: settingsLoading,
         levels: levelsMap,
-        moneyPerStar: getSetting('loyalty_money_per_star', 100, 'number')
+        moneyPerStar: getSetting('loyalty_earning_divisor', 100, 'number')
     }
 }
