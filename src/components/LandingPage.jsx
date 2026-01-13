@@ -56,7 +56,7 @@ const LandingPage = () => {
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
             {/* Top Bar */}
-            <header className="fixed top-0 w-full bg-[var(--color-background)]/90 backdrop-blur-md z-50 px-4 py-3 flex justify-between items-center border-b border-white/5 relative">
+            <header className="fixed top-0 w-full bg-[var(--color-background)]/90 backdrop-blur-md z-50 px-4 py-6 flex justify-between items-center border-b border-white/5 relative">
                 <button
                     onClick={() => setIsSidebarOpen(true)}
                     className="p-2 text-white relative z-20"
@@ -74,7 +74,7 @@ const LandingPage = () => {
             </header>
 
             {/* Welcome Banner */}
-            <div className="pt-20 px-4 mb-2">
+            <div className="pt-28 px-4 mb-2">
                 <div className="bg-[#502314] rounded-xl p-4 flex justify-between items-center shadow-lg relative overflow-hidden">
                     {/* Decor */}
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600"></div>

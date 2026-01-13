@@ -49,7 +49,8 @@ const UserHome = () => {
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
             {/* Top Header */}
-            <header className="px-4 py-4 flex justify-between items-center relative z-10">
+            {/* Top Header */}
+            <header className="px-4 py-6 flex justify-between items-center relative z-10">
                 <button
                     onClick={() => setIsSidebarOpen(true)}
                     className="p-2 text-white hover:bg-white/10 rounded-full transition-colors relative z-20"
@@ -58,7 +59,7 @@ const UserHome = () => {
                 </button>
 
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform hover:scale-105 transition-transform cursor-pointer z-10">
-                    <img src="/logo-damaf.png" alt="DamafAPP" className="h-20 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
+                    <img src="/logo-damaf.png" alt="DamafAPP" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                 </div>
 
                 {/* Admin Link or Sign Out */}
