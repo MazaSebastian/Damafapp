@@ -14,6 +14,7 @@ const LoginPage = () => {
     const [fullName, setFullName] = useState('')
     const [phoneData, setPhoneData] = useState({ countryCode: '+54', number: '' })
     const [dob, setDob] = useState({ day: '', month: '', year: '' })
+    const [zipCode, setZipCode] = useState('')
 
     const [isSignUp, setIsSignUp] = useState(false)
     const [error, setError] = useState(null)
