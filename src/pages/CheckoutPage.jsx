@@ -26,8 +26,8 @@ const CheckoutPage = () => {
 
     // Dynamic Delivery Settings State
     const [deliverySettings, setDeliverySettings] = useState({
-        store_lat: -34.603722, // Default fallback
-        store_lng: -58.381592,
+        store_lat: -34.530019, // Default fallback (Carapachay)
+        store_lng: -58.542822,
         delivery_price_per_km: 500,
         delivery_free_range_km: 0
     })
