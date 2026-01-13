@@ -78,7 +78,7 @@ const DeliveryDashboard = () => {
             .eq('id', orderId)
 
         if (error) toast.error('Error al finalizar pedido')
-        else toast.success('Pedido ENTREGRADO ✅')
+        else toast.success('Pedido ENTREGADO ✅')
     }
 
     return (
