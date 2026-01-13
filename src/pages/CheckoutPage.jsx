@@ -129,24 +129,7 @@ const CheckoutPage = () => {
         initMercadoPago(MP_PUBLIC_KEY)
     }
 
-    const handleCheckout = async () => {
-        if (!orderType) {
-            toast.warning('Por favor selecciona: DELIVERY o RETIRO EN LOCAL')
-            return
-        }
-
-        if (orderType === 'delivery' && !address.trim()) {
-            toast.error('Por favor confirma tu ubicación en el mapa')
-            return
-        }
-
-        if (orderType === 'delivery' && shippingCost === 0 && distanceKm === 0) {
-            toast.error('Calculando costo de envío, por favor espera...')
-            return
-        }
-
-        if (!confirm('¿Confirmar pedido por $' + finalTotal.toFixed(2) + ' y pagar con Mercado Pago?')) return
-
+    const processOrder = async () => {
         const { data: { user } } = await supabase.auth.getUser()
 
         try {
@@ -212,6 +195,37 @@ const CheckoutPage = () => {
             toast.dismiss()
             toast.error('Ocurrió un error al procesar el pedido: ' + error.message)
         }
+    }
+
+    const handleCheckout = async () => {
+        if (!orderType) {
+            toast.warning('Por favor selecciona: DELIVERY o RETIRO EN LOCAL')
+            return
+        }
+
+        if (orderType === 'delivery' && !address.trim()) {
+            toast.error('Por favor confirma tu ubicación en el mapa')
+            return
+        }
+
+        if (orderType === 'delivery' && shippingCost === 0 && distanceKm === 0) {
+            toast.error('Calculando costo de envío, por favor espera...')
+            return
+        }
+
+        // Custom Toast Confirmation
+        toast(`¿Confirmar pedido por $${finalTotal.toFixed(2)}?`, {
+            description: 'Serás redirigido a Mercado Pago',
+            action: {
+                label: 'Sí, Pagar',
+                onClick: () => processOrder(),
+            },
+            cancel: {
+                label: 'Cancelar',
+                onClick: () => console.log('Cancelado')
+            },
+            duration: 5000,
+        })
     }
 
     if (cart.length === 0) {
