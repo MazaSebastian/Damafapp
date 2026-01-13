@@ -46,20 +46,17 @@ const StoreInfoHeader = () => {
     return (
         <div className="text-center mb-8 relative">
             {/* Logo Area */}
-            <div className="relative inline-block mb-4">
-                {/* Replicating the circle logo style from image */}
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#1a1a2e] border-4 border-[var(--color-background)] shadow-2xl flex items-center justify-center mx-auto relative z-10 overflow-hidden">
-                    <img src="/logo-damaf.png" alt="Damafa" className="w-full h-full object-cover" />
-                </div>
-            </div>
-
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-3"
             >
+                {/* Logo Area */}
+                <div className="flex justify-center mb-2">
+                    <img src="/logo-damaf.png" alt="DAMAFAPP" className="h-28 md:h-36 w-auto drop-shadow-2xl hover:scale-105 transition-transform" />
+                </div>
+
                 <div>
-                    <h1 className="text-3xl font-black tracking-tight text-white mb-1">DAMAFA</h1>
                     <p className="text-lg font-bold text-gray-400 italic">{info.slogan}</p>
                 </div>
 
