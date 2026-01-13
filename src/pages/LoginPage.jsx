@@ -30,12 +30,28 @@ const LoginPage = () => {
                     toast.info('Registro iniciado. Por favor, revisa tu email para confirmar tu cuenta.')
                 }
             } else {
-                const { error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password
                 })
                 if (error) throw error
-                navigate('/')
+
+                // Check role for redirect
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', data.user.id)
+                    .single()
+
+                const role = profile?.role
+
+                if (role === 'admin' || role === 'owner') {
+                    navigate('/admin')
+                } else if (role === 'rider' || role === 'driver') {
+                    navigate('/rider')
+                } else {
+                    navigate('/')
+                }
             }
         } catch (err) {
             setError(err.message)
