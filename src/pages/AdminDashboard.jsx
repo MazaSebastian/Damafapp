@@ -11,6 +11,7 @@ import AdminOverview from '../components/AdminOverview'
 import CouponsManager from '../components/CouponsManager'
 import InventoryManager from '../components/InventoryManager'
 import CustomersManager from '../components/CustomersManager'
+import DebugConnection from '../components/DebugConnection'
 
 
 
@@ -96,6 +97,9 @@ const AdminDashboard = () => {
                         Cerrar Sesión
                     </button>
                 </div>
+
+                {/* Connection Status */}
+                <DebugConnection />
             </aside>
 
             {/* Main Content */}

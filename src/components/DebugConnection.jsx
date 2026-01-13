@@ -47,33 +47,32 @@ const DebugConnection = () => {
     // if (status === 'connected') return null // Commented out to force visibility for now
 
     return (
-        <div className="fixed bottom-24 right-4 z-50 bg-black/80 backdrop-blur-md text-white p-3 rounded-lg shadow-lg border border-white/10 text-xs max-w-xs transition-all duration-300">
+    return (
+        <div className="bg-black/40 rounded-lg p-3 border border-white/5 mx-2 mb-2 text-xs">
             <div className="flex items-center gap-2 mb-1">
-                {status === 'checking' && <Loader2 className="w-4 h-4 animate-spin text-yellow-400" />}
-                {status === 'connected' && <Wifi className="w-4 h-4 text-green-400" />}
-                {status === 'error' && <WifiOff className="w-4 h-4 text-red-400" />}
+                {status === 'checking' && <Loader2 className="w-3 h-3 animate-spin text-yellow-400" />}
+                {status === 'connected' && <Wifi className="w-3 h-3 text-green-400" />}
+                {status === 'error' && <WifiOff className="w-3 h-3 text-red-400" />}
                 <span className="font-bold">
-                    {status === 'checking' && 'Verificando Conexión...'}
-                    {status === 'connected' && 'Conectado'}
-                    {status === 'error' && 'Error de Conexión'}
+                    {status === 'checking' && 'Verificando...'}
+                    {status === 'connected' && 'Supabase OK'}
+                    {status === 'error' && 'Sin Conexión'}
                 </span>
             </div>
 
             {status === 'connected' && latency && (
-                <div className="text-gray-400 pl-6">
+                <div className="text-gray-400 pl-5">
                     Ping: {latency}ms
                 </div>
             )}
 
             {status === 'error' && (
-                <div className="text-red-300 pl-6 break-words">
-                    {details}
-                    <div className="mt-2 text-[10px] text-gray-400">
-                        Intenta ejecutar el script SQL_DISABLE_RLS_ALL.sql en Supabase.
-                    </div>
+                <div className="text-red-300 pl-5 break-words">
+                    Error
                 </div>
             )}
         </div>
+    )
     )
 }
 
