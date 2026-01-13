@@ -213,6 +213,20 @@ const LoginPage = () => {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Zip Code (Optional) */}
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 flex items-center justify-center font-bold text-xs border border-gray-500 rounded">CP</div>
+                                        <input
+                                            type="text"
+                                            value={zipCode}
+                                            onChange={(e) => setZipCode(e.target.value)}
+                                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-secondary)] transition-all"
+                                            placeholder="Código Postal (Opcional)"
+                                        />
+                                    </div>
+                                </div>
                             </>
                         )}
 
