@@ -4,9 +4,106 @@ import { useAuth } from '../context/AuthContext'
 import { ArrowLeft, Loader2, Save, Home } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
-// ... existing code ...
+import { toast } from 'sonner'
+import { countryCodes } from '../utils/countryCodes'
 
-{/* Header */ }
+const ProfilePage = () => {
+    const { user } = useAuth()
+    const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState(false)
+    const [formData, setFormData] = useState({
+        full_name: '',
+        phone: '',
+        zip_code: '',
+        birth_date: '',
+    })
+
+    // Separate phone state for UI
+    const [phoneData, setPhoneData] = useState({ countryCode: '+54', number: '' })
+
+    // Separate birth date for UI inputs
+    const [dob, setDob] = useState({ day: '', month: '', year: '' })
+
+    useEffect(() => {
+        if (user) {
+            fetchProfile()
+        }
+    }, [user])
+
+    const fetchProfile = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single()
+
+            if (error) throw error
+
+            setFormData({
+                full_name: data.full_name || '',
+                phone: data.phone || '',
+                zip_code: data.zip_code || '',
+                birth_date: data.birth_date || ''
+            })
+
+            if (data.phone) {
+                // Simplistic parsing: check if starts with any known code
+                const foundCode = countryCodes.find(c => data.phone.startsWith(c.code))
+                if (foundCode) {
+                    setPhoneData({
+                        countryCode: foundCode.code,
+                        number: data.phone.replace(foundCode.code, '').trim()
+                    })
+                } else {
+                    setPhoneData({ countryCode: '+54', number: data.phone })
+                }
+            } else {
+                setPhoneData({ countryCode: '+54', number: '' })
+            }
+
+            if (data.birth_date) {
+                const [y, m, d] = data.birth_date.split('-')
+                setDob({ day: d, month: m, year: y })
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleUpdate = async (e) => {
+        e.preventDefault()
+        setSaving(true)
+
+        try {
+            const fullPhone = `${phoneData.countryCode} ${phoneData.number}`.trim()
+
+            const updates = {
+                id: user.id,
+                full_name: formData.full_name,
+                phone: fullPhone,
+                zip_code: formData.zip_code,
+            }
+
+            const { error } = await supabase
+                .from('profiles')
+                .upsert(updates)
+
+            if (error) throw error
+            toast.success('Perfil actualizado correctamente')
+        } catch (error) {
+            toast.error('Error al actualizar: ' + error.message)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    return (
+        <div className="min-h-screen bg-[var(--color-background)] pb-20">
+            {/* Header */}
             <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
                 <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6" />
