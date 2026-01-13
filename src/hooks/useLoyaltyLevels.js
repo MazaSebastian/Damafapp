@@ -10,7 +10,17 @@ export const useLoyaltyLevels = () => {
     // Fetch dynamic settings (with defaults if missing)
     const LEVEL_GREEN_MIN = getSetting('loyalty_level_green', 50, 'number')
     const LEVEL_GOLD_MIN = getSetting('loyalty_level_gold', 300, 'number')
-    const REWARD_CYCLE = 100 // Hardcoded for now, or could be a setting too
+    const REWARD_CYCLE = 100
+
+    // Helper to parse comma-separated benefits
+    const parseBenefits = (key, defaultText) => {
+        const val = getSetting(key, defaultText)
+        return val ? val.split(',').map(b => b.trim()).filter(Boolean) : []
+    }
+
+    const BENEFITS_WELCOME = parseBenefits('loyalty_benefits_welcome', 'Bebida de cumpleaños')
+    const BENEFITS_GREEN = parseBenefits('loyalty_benefits_green', 'Refill Café del Día, Ofertas especiales')
+    const BENEFITS_GOLD = parseBenefits('loyalty_benefits_gold', 'Bebida Alta cada 100 stars, Eventos VIP, Gold Card Digital')
 
     // Define Levels based on dynamic settings
     const LEVELS = [
@@ -20,7 +30,7 @@ export const useLoyaltyLevels = () => {
             max: LEVEL_GREEN_MIN - 1,
             color: 'text-gray-400',
             bg: 'bg-gray-400',
-            benefits: ['Bebida de cumpleaños']
+            benefits: BENEFITS_WELCOME
         },
         {
             name: 'Green',
@@ -28,7 +38,7 @@ export const useLoyaltyLevels = () => {
             max: LEVEL_GOLD_MIN - 1,
             color: 'text-emerald-500',
             bg: 'bg-emerald-500',
-            benefits: ['Refill Café del Día', 'Ofertas especiales']
+            benefits: BENEFITS_GREEN
         },
         {
             name: 'Gold',
@@ -36,7 +46,7 @@ export const useLoyaltyLevels = () => {
             max: Infinity,
             color: 'text-yellow-400',
             bg: 'bg-yellow-400',
-            benefits: ['Bebida Alta cada 100 stars', 'Eventos VIP', 'Gold Card Digital']
+            benefits: BENEFITS_GOLD
         }
     ]
 
