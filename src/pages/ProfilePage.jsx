@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
 import { ArrowLeft, Loader2, Save, Home } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -10,7 +9,6 @@ import { countryCodes } from '../utils/countryCodes'
 
 const ProfilePage = () => {
     const { user } = useAuth()
-    const { language, changeLanguage } = useLanguage()
     const navigate = useNavigate()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -226,26 +224,7 @@ const ProfilePage = () => {
                             />
                         </div>
 
-                        {/* Language Preference */}
-                        <div className="space-y-1 pt-4 border-t border-white/5">
-                            <label className="text-xs font-bold text-[var(--color-text-muted)] ml-1">Preferencia de Comunicación (Idioma)</label>
-                            <div className="flex bg-[var(--color-surface)] rounded-xl p-1 border border-white/10">
-                                <button
-                                    type="button"
-                                    onClick={() => changeLanguage('es')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${language === 'es' ? 'bg-[var(--color-secondary)] text-white shadow-md' : 'text-white/50 hover:text-white'}`}
-                                >
-                                    Español 🇦🇷
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => changeLanguage('en')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${language === 'en' ? 'bg-[var(--color-secondary)] text-white shadow-md' : 'text-white/50 hover:text-white'}`}
-                                >
-                                    English 🇺🇸
-                                </button>
-                            </div>
-                        </div>
+
 
                         {/* Submit Button */}
                         <button
