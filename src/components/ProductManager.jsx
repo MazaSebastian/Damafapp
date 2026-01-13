@@ -48,6 +48,7 @@ const ProductManager = () => {
         setLoading(false)
     }
 
+    const [editingProduct, setEditingProduct] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
 
     // --- Product Handlers ---
