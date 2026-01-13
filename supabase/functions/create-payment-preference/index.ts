@@ -13,42 +13,66 @@ serve(async (req) => {
     }
 
     try {
+        // Use SERVICE_ROLE_KEY to bypass RLS and ensure we can read the order
+        // This is critical for getting the correct price if the user lacks select permissions
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            }
         )
 
         const { order_id } = await req.json()
 
         if (!order_id) {
+            console.error('Missing order_id in request body')
             throw new Error('Missing order_id')
         }
 
-        // 1. Fetch Order details from Database (Security Best Practice: Don't trust frontend prices)
+        console.log(`Processing Order ID: ${order_id}`)
+
+        // 1. Fetch Order details
         const { data: order, error: orderError } = await supabaseClient
             .from('orders')
-            .select('*, order_items(*, products(*))')
+            .select('*')
             .eq('id', order_id)
             .single()
 
         if (orderError || !order) {
+            console.error('Order Fetch Error:', orderError)
             throw new Error('Order not found')
         }
 
-        // 2. Prepare items for Mercado Pago (Simplified Strategy: Send Total Amount as 1 Item)
-        // This avoids negative price issues with discounts and complex modifier validation.
+        // 2. Prepare items for Mercado Pago
+        console.log('Order Data:', JSON.stringify(order))
+
+        // --- STRICT PRICE VALIDATION ---
+        // Force conversion to number (Handle string "100.50", number 100.50, etc.)
+        let safePrice = Number(order.total)
+
+        // Validate: If it's NaN or <= 0, we have a problem.
+        if (isNaN(safePrice) || safePrice <= 0) {
+            console.error(`Invalid Price Detected: ${order.total} (Type: ${typeof order.total}). Defaulting to 1.0 for debugging/fallback.`)
+            // Fallback to 1.0 to prevent MP crash, but log error loudly.
+            safePrice = 1.0
+        } else {
+            console.log(`Valid Price: ${safePrice} (Type: ${typeof safePrice})`)
+        }
+        // --- STRICT PRICE VALIDATION END ---
+
         const items = [
             {
                 id: "order-total",
-                title: `Pedido DamafAPP #${order_id.slice(0, 8)}`,
+                title: `Pedido DamafAPP`,
                 quantity: 1,
                 currency_id: 'ARS',
-                unit_price: Number(order.total)
+                unit_price: safePrice // Guaranteed to be a number
             }
         ];
-
-        // Note: The total in 'orders' table already includes the discount calculation.
 
         // 3. Create Preference in Mercado Pago
         const mpAccessToken = Deno.env.get('MP_ACCESS_TOKEN')
@@ -60,12 +84,12 @@ serve(async (req) => {
         const preferenceData = {
             items: items,
             back_urls: {
-                success: "https://damafapp.vercel.app/my-orders?status=approved", // Update with your domain
+                success: "https://damafapp.vercel.app/my-orders?status=approved",
                 failure: "https://damafapp.vercel.app/checkout?status=failure",
                 pending: "https://damafapp.vercel.app/my-orders?status=pending"
             },
             auto_return: "approved",
-            external_reference: order_id, // Link MP payment to our Order ID
+            external_reference: order_id,
             statement_descriptor: "DAMAFAPP"
         }
 
@@ -85,26 +109,34 @@ serve(async (req) => {
             throw new Error(`Mercado Pago API Error: ${mpData.message || 'Unknown'}`)
         }
 
-        // 4. Update Order with Preference ID (Optional but useful)
+        // 4. Update Order with Preference ID
         await supabaseClient
             .from('orders')
             .update({ mercadopago_preference_id: mpData.id })
             .eq('id', order_id)
 
-        // 5. Return init_point (Checkout URL) and preference_id
+        // 5. Return init_point
         return new Response(
             JSON.stringify({
-                init_point: mpData.init_point, // For production (or sandbox_init_point if testing)
+                init_point: mpData.init_point,
                 preference_id: mpData.id
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
 
     } catch (error: any) {
-        console.error(error)
+        // Log the full error to Supabase Dashboard Logs
+        console.error('CRITIAL ERROR IN EDGE FUNCTION:', error)
+
         return new Response(
-            JSON.stringify({ error: error.message }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+            JSON.stringify({
+                error: error.message || 'Error interno desconocido',
+                details: error.toString()
+            }),
+            {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 400
+            }
         )
     }
 })

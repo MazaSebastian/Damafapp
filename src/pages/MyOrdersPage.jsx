@@ -5,6 +5,7 @@ import { Loader2, Clock, ChefHat, Check, ShoppingBag, ArrowRight } from 'lucide-
 import BottomNav from '../components/BottomNav'
 import { Link } from 'react-router-dom'
 import { OrderSkeleton } from '../components/skeletons/OrderSkeleton'
+import LiveTrackingMap from '../components/LiveTrackingMap'
 
 const MyOrdersPage = () => {
     const { user } = useAuth()
@@ -157,15 +158,19 @@ const MyOrdersPage = () => {
 
                                 {activeTab === 'active' && (
                                     <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-[var(--color-secondary)] transition-all duration-1000 animate-pulse"
-                                            style={{
-                                                width: order.status === 'pending' ? '10%' :
-                                                    order.status === 'cooking' ? '30%' :
-                                                        order.status === 'packaging' ? '60%' :
-                                                            order.status === 'sent' ? '90%' : '100%'
-                                            }}
-                                        ></div>
+                                    </div>
+                                )}
+
+                                {order.status === 'sent' && order.order_type === 'delivery' && (
+                                    <div className="mb-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                        <div className="flex items-center gap-2 mb-2 text-sm font-bold text-orange-400">
+                                            <span className="relative flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+                                            </span>
+                                            Seguimiento en Vivo
+                                        </div>
+                                        <LiveTrackingMap order={order} />
                                     </div>
                                 )}
                             </div>
