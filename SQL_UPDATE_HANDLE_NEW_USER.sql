@@ -9,7 +9,7 @@ begin
     'user',
     new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'phone',
-    new.raw_user_meta_data->>'birth_date',
+    NULLIF(new.raw_user_meta_data->>'birth_date', '')::date,
     new.raw_user_meta_data->>'zip_code'
   );
   return new;
