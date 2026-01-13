@@ -43,8 +43,8 @@ const LoginPage = () => {
                         data: {
                             full_name: fullName,
                             phone: fullPhone,
-                            birth_date: birthDate
-                            // zip_code can be added later if needed in signup, but user only asked for birth/phone matching account info
+                            birth_date: birthDate,
+                            zip_code: zipCode
                         }
                     }
                 })
