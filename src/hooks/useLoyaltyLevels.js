@@ -80,11 +80,18 @@ export const useLoyaltyLevels = () => {
         starsToNext = REWARD_CYCLE - starsTowardsNextDrink
     }
 
+    const levelsMap = {
+        WELCOME: LEVELS[0],
+        GREEN: LEVELS[1],
+        GOLD: LEVELS[2]
+    }
+
     return {
         currentLevel,
         nextLevel,
         progress: Math.min(Math.max(progress, 0), 100), // Clamp 0-100
         starsToNext,
-        loading: settingsLoading
+        loading: settingsLoading,
+        levels: levelsMap
     }
 }

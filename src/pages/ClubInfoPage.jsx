@@ -6,8 +6,10 @@ import LoyaltyBanner from '../components/LoyaltyBanner'
 
 const ClubInfoPage = () => {
     const { user, profile } = useAuth()
-    const { levels } = useLoyaltyLevels()
+    const { levels, loading } = useLoyaltyLevels()
     const stars = profile?.stars || 0
+
+    if (loading) return <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center text-white">Cargando...</div>
 
     return (
         <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-main)] pb-20">
