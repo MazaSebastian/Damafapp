@@ -1,17 +1,19 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Shield, Home } from 'lucide-react'
 
 const PrivacyPolicyPage = () => {
+    const navigate = useNavigate()
+
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-24 text-white">
             {/* Header */}
             <header className="fixed top-0 left-0 right-0 bg-[var(--color-surface)]/80 backdrop-blur-md z-50 border-b border-white/5 px-4 py-4">
                 <div className="max-w-3xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Link to="/profile" className="p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors">
+                        <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors text-white">
                             <ArrowLeft className="w-6 h-6" />
-                        </Link>
+                        </button>
                         <h1 className="text-xl font-bold">Políticas de Privacidad</h1>
                     </div>
 
