@@ -9,6 +9,7 @@ import BottomNav from './BottomNav'
 import FloatingOrderButton from './FloatingOrderButton'
 import { NewsSkeleton } from './skeletons/NewsSkeleton'
 import Sidebar from './Sidebar'
+import StoreInfoHeader from './StoreInfoHeader'
 
 const UserHome = () => {
     const { user, role, signOut } = useAuth()
