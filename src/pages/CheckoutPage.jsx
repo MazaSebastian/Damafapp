@@ -3,13 +3,16 @@ import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useCart } from '../context/CartContext'
 import { supabase } from '../supabaseClient'
-import { ArrowLeft, Trash2, ShoppingBag, Plus, Car, MapPin } from 'lucide-react'
+import { ArrowLeft, Trash2, ShoppingBag, Plus, Car, MapPin, Store, Loader2 } from 'lucide-react'
 import { initMercadoPago } from '@mercadopago/sdk-react'
 import DeliveryMap from '../components/DeliveryMap'
+import { useStoreStatus } from '../hooks/useStoreStatus'
 
 const CheckoutPage = () => {
     const { cart, removeFromCart, total, clearCart } = useCart()
     const navigate = useNavigate()
+    const { isOpen, loading: statusLoading } = useStoreStatus()
+    const [loading, setLoading] = useState(false)
 
     const [orderType, setOrderType] = useState(null)
     const [address, setAddress] = useState('')
