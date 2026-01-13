@@ -10,6 +10,17 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        // Safety timeout
+        const timeout = setTimeout(() => {
+            setLoading((current) => {
+                if (current) {
+                    console.warn('Auth loading timed out, forcing render.')
+                    return false
+                }
+                return current
+            })
+        }, 3000)
+
         // Check active sessions and sets the user
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null)
@@ -18,10 +29,14 @@ export const AuthProvider = ({ children }) => {
             } else {
                 setLoading(false)
             }
+        }).catch(err => {
+            console.error('Session check failed', err)
+            setLoading(false)
         })
 
         // Listen for changes on auth state (logged in, signed out, etc.)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            console.log('Auth state changed:', _event)
             setUser(session?.user ?? null)
             if (session?.user) {
                 await fetchProfile(session.user.id)
@@ -32,7 +47,10 @@ export const AuthProvider = ({ children }) => {
             }
         })
 
-        return () => subscription.unsubscribe()
+        return () => {
+            subscription.unsubscribe()
+            clearTimeout(timeout)
+        }
     }, [])
 
     const fetchProfile = async (userId) => {
