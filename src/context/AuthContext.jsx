@@ -54,6 +54,18 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
+    const signUp = async (email, password, options) => {
+        return await supabase.auth.signUp({
+            email,
+            password,
+            options
+        })
+    }
+
+    const signIn = async (email, password) => {
+        return await supabase.auth.signInWithPassword({ email, password })
+    }
+
     const signOut = async () => {
         await supabase.auth.signOut()
         setUser(null)
@@ -62,6 +74,8 @@ export const AuthProvider = ({ children }) => {
     }
 
     const value = {
+        signUp,
+        signIn,
         user,
         profile,
         role,
