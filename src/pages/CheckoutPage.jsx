@@ -241,7 +241,7 @@ const CheckoutPage = () => {
         }
     }
 
-    // SIMULATION FOR TESTING
+    // SIMULATION FOR TESTING (TRIGGER BUILD)
     const simulatePayment = async () => {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
