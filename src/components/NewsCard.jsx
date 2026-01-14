@@ -1,6 +1,10 @@
-import { ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowRight, ChevronUp } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const NewsCard = ({ item }) => {
+    const [isExpanded, setIsExpanded] = useState(false)
+
     return (
         <div className="bg-[var(--color-surface)] rounded-2xl overflow-hidden shadow-lg border border-white/5 mb-6 group">
             {/* Image Container */}
@@ -26,13 +30,30 @@ const NewsCard = ({ item }) => {
             {/* Content */}
             <div className="p-5">
                 <h3 className="text-xl font-bold mb-2 text-white leading-tight">{item.title}</h3>
-                <p className="text-[var(--color-text-muted)] text-sm mb-4 line-clamp-3">
-                    {item.description}
-                </p>
 
-                <button className="w-full bg-[var(--color-background)] hover:bg-[var(--color-primary)] border border-[var(--color-primary)]/50 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group-hover:border-[var(--color-secondary)] group-hover:text-[var(--color-secondary)] group-hover:bg-[var(--color-surface)]">
-                    {item.action_text || 'See Details'}
-                    <ArrowRight className="w-4 h-4" />
+                <div className="relative">
+                    <p className={`text-[var(--color-text-muted)] text-sm mb-4 transition-all duration-300 ${isExpanded ? '' : 'line-clamp-3'}`}>
+                        {item.description}
+                    </p>
+
+                    {/* Optional: Add gradient overlay if collapsed and long text? For now just simple line-clamp toggle */}
+                </div>
+
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="w-full bg-[var(--color-background)] hover:bg-[var(--color-primary)] border border-[var(--color-primary)]/50 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 group-hover:border-[var(--color-secondary)] group-hover:text-[var(--color-secondary)] group-hover:bg-[var(--color-surface)] active:scale-95"
+                >
+                    {isExpanded ? (
+                        <>
+                            Cerrar
+                            <ChevronUp className="w-4 h-4" />
+                        </>
+                    ) : (
+                        <>
+                            {item.action_text || 'Ver más'}
+                            <ArrowRight className="w-4 h-4" />
+                        </>
+                    )}
                 </button>
             </div>
         </div>
