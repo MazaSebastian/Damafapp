@@ -31,6 +31,18 @@ const MenuPage = () => {
         setLoading(false)
     }
 
+    const getCategoryIcon = (name) => {
+        const lower = name.toLowerCase()
+        if (lower.includes('hamburguesa') || lower.includes('burger')) return <span className="text-2xl">🍔</span>
+        if (lower.includes('papa') || lower.includes('frita') || lower.includes('acompaña')) return <span className="text-2xl">🍟</span>
+        if (lower.includes('bebida') || lower.includes('refresco') || lower.includes('agua') || lower.includes('gaseosa')) return <span className="text-2xl">🥤</span>
+        if (lower.includes('postre') || lower.includes('dulce') || lower.includes('helado')) return <span className="text-2xl">🍦</span>
+        if (lower.includes('veggie') || lower.includes('vegan') || lower.includes('ensalada')) return <span className="text-2xl">🥗</span>
+        if (lower.includes('combo') || lower.includes('cajita')) return <span className="text-2xl">🥡</span>
+        if (lower.includes('pollo') || lower.includes('chicken')) return <span className="text-2xl">🍗</span>
+        return <span className="text-2xl">🍽️</span>
+    }
+
     const filteredProducts = selectedCategory === 'all'
         ? products
         : products.filter(p => p.category_id === selectedCategory)
@@ -65,7 +77,7 @@ const MenuPage = () => {
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${selectedCategory === 'all'
                             ? 'bg-[var(--color-secondary)]/10 border-[var(--color-secondary)] text-[var(--color-secondary)] shadow-[0_0_15px_rgba(255,107,0,0.3)]'
                             : 'bg-[var(--color-surface)] border-white/5 text-gray-400 grayscale group-hover:grayscale-0 group-hover:bg-white/5'}`}>
-                            <span className="text-2xl">🍽️</span>
+                            <span className="text-2xl">🔥</span>
                         </div>
                         <span className={`text-xs font-bold transition-colors ${selectedCategory === 'all' ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
                             Todos
@@ -84,7 +96,7 @@ const MenuPage = () => {
                                 {cat.image_url ? (
                                     <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
                                 ) : (
-                                    <span className="text-xl capitalize">{cat.name.substring(0, 2)}</span>
+                                    getCategoryIcon(cat.name)
                                 )}
                             </div>
                             <span className={`text-xs font-bold transition-colors truncate w-full text-center ${selectedCategory === cat.id ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
