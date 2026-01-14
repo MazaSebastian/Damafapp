@@ -219,12 +219,7 @@ const MyOrdersPage = () => {
                             </h2>
 
                             <p className="text-sm font-bold text-[var(--color-text-muted)] mb-8">
-                                {user ? '¡Empiece un nuevo pedido ahora!' : (
-                                    <span>
-                                        ¡Haz tu primer pedido como invitado!<br />
-                                        <span className="text-xs opacity-60">(Se guardará en este dispositivo)</span>
-                                    </span>
-                                )}
+                                {user ? '¡Empiece un nuevo pedido ahora!' : '¡Haz tu primer pedido como invitado!'}
                             </p>
 
                             <Link
