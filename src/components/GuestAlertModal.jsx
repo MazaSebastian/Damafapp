@@ -38,7 +38,8 @@ const GuestAlertModal = ({ isOpen, onClose, onContinueAsGuest }) => {
                             <UserPlus className="w-8 h-8 text-[var(--color-primary)]" />
                         </div>
 
-                        <h3 className="text-xl font-bold text-white">¿No tenés cuenta?</h3>
+                        <h3 className="text-xl font-bold text-white">Psst Psst! Hey! 👋</h3>
+                        <p className="text-[var(--color-primary)] font-bold text-sm -mt-2">¡Para ver más tenés que registrarte!</p>
 
                         <p className="text-[var(--color-text-muted)] text-sm leading-relaxed">
                             Registrate ahora para acceder a descuentos exclusivos, acumular puntos y seguir tus pedidos en tiempo real.
