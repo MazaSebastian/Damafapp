@@ -396,10 +396,9 @@ const CheckoutPage = () => {
                                 'Seleccione método de entrega'}
                     </button>
                 </div>
-                </div>
             </div>
 
-            <OrderConfirmationModal 
+            <OrderConfirmationModal
                 isOpen={isConfirmModalOpen}
                 onClose={() => setIsConfirmModalOpen(false)}
                 onConfirm={() => {
