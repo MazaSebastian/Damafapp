@@ -120,7 +120,7 @@ const MenuPage = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="text-2xl font-black mb-6 capitalize text-white tracking-tight"
                         >
-                            {selectedCategory === 'all' ? 'Menú Mediodía' : categories.find(c => c.id === selectedCategory)?.name}
+                            {selectedCategory === 'all' ? 'Menú' : (categories.find(c => c.id === selectedCategory)?.name === 'Papas & Acompañamientos' ? 'Acompañamientos' : categories.find(c => c.id === selectedCategory)?.name)}
                         </motion.h2>
 
                         <div className="space-y-6">
