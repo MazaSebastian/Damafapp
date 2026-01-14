@@ -19,6 +19,7 @@ const CheckoutPage = () => {
     const { isOpen, loading: statusLoading } = useStoreStatus()
     const [loading, setLoading] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [paymentMethod, setPaymentMethod] = useState('mercadopago') // 'mercadopago' | 'cash'
 
     const [orderType, setOrderType] = useState('takeaway')
     const [address, setAddress] = useState('')
@@ -158,8 +159,9 @@ const CheckoutPage = () => {
                 .insert([{
                     user_id: user?.id || null,
                     total: finalTotal,
-                    status: 'pending_payment',
+                    status: paymentMethod === 'mercadopago' ? 'pending_payment' : 'pending', // Cash orders go straight to 'pending' (Kitchen)
                     order_type: orderType,
+                    payment_method: paymentMethod, // NEW FIELD
                     delivery_address: orderType === 'delivery' ? address : null,
                     coupon_code: appliedCoupon?.code || null,
                     discount_amount: discountAmount,
@@ -186,38 +188,9 @@ const CheckoutPage = () => {
 
             if (itemsError) throw itemsError
 
-            // 3. Create Pref
-            toast.loading('Generando link de pago...')
-
-            const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment-preference', {
-                body: { order_id: order.id }
-            })
-
-            if (paymentError) {
-                console.error('Supabase Function Error:', paymentError)
-                let diffMsg = paymentError.message || 'Error desconocido del servidor'
-                try {
-                    const parsed = JSON.parse(paymentError.message)
-                    if (parsed.error) diffMsg = parsed.error
-                } catch (e) { }
-                throw new Error(diffMsg)
-            }
-
-            if (!paymentData?.init_point) {
-                throw new Error('No se recibió el link de pago')
-            }
-
             // Save order locally if guest
             if (!user) {
                 const currentGuestOrders = JSON.parse(localStorage.getItem('damaf_guest_orders') || '[]')
-                // Add the new order. Since we don't have the full order object from Supabase (only single select), 
-                // we should refetch or construct it, but 'order' variable holds the created order row.
-                // We need to fetch items to store a complete view, or just store the basic view.
-                // For simplicity/perf, let's store what we have and maybe basic items info if needed for display.
-                // MyOrdersPage expects order + order_items. 
-                // Let's attach the orderItems we just created locally to the order object.
-                // Note: orderItems has productId, not the product details (name, image).
-                // We can map from 'cart' to populate product details for local storage display.
 
                 const fullGuestOrder = {
                     ...order,
@@ -236,7 +209,30 @@ const CheckoutPage = () => {
                 localStorage.setItem('damaf_guest_orders', JSON.stringify([fullGuestOrder, ...currentGuestOrders]))
             }
 
-            window.location.href = paymentData.init_point
+            // 3. Handle Payment Flow
+            if (paymentMethod === 'mercadopago') {
+                toast.loading('Generando link de pago...')
+
+                const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment-preference', {
+                    body: { order_id: order.id }
+                })
+
+                if (paymentError) {
+                    console.error('Supabase Function Error:', paymentError)
+                    throw new Error('Error al conectar con Mercado Pago')
+                }
+
+                if (!paymentData?.init_point) {
+                    throw new Error('No se recibió el link de pago')
+                }
+
+                window.location.href = paymentData.init_point
+            } else {
+                // CASH FLOW
+                toast.success(`Pedido realizado! Tienes que pagar $${finalTotal} en ${orderType === 'delivery' ? 'la entrega' : 'caja'}.`)
+                clearCart()
+                navigate('/my-orders')
+            }
 
         } catch (error) {
             console.error(error)
@@ -506,11 +502,30 @@ const CheckoutPage = () => {
                         </div>
                     </div>
 
+                    {/* Payment Method Selector */}
+                    <div className="bg-[var(--color-background)] p-1 rounded-xl flex border border-white/10 mb-2">
+                        <button
+                            onClick={() => setPaymentMethod('mercadopago')}
+                            className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${paymentMethod === 'mercadopago' ? 'bg-[#009ee3] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                        >
+                            <span>💳 Mercado Pago</span>
+                        </button>
+                        <button
+                            onClick={() => setPaymentMethod('cash')}
+                            className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${paymentMethod === 'cash' ? 'bg-green-600 text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                        >
+                            <span>💵 Efectivo</span>
+                        </button>
+                    </div>
+
                     <button onClick={handleCheckout} className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all
-                        ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-[#009ee3] hover:bg-[#009ee3]/90 shadow-blue-900/20'}`}>
-                        {orderType === 'delivery' ? 'Pagar con Mercado Pago' :
-                            orderType === 'takeaway' ? 'Pagar Retiro con MP' :
-                                'Seleccione método de entrega'}
+                        ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' :
+                            paymentMethod === 'mercadopago' ? 'bg-[#009ee3] hover:bg-[#009ee3]/90 shadow-blue-900/20' :
+                                'bg-green-600 hover:bg-green-500 shadow-green-900/20'}`}>
+                        {orderType === 'delivery' ?
+                            (paymentMethod === 'mercadopago' ? 'Pagar con Mercado Pago' : 'Confirmar Pedido (Efectivo)') :
+                            (paymentMethod === 'mercadopago' ? 'Pagar Retiro con MP' : 'Confirmar Pedido (Efectivo)')
+                        }
                     </button>
                 </div>
             </div>
@@ -525,7 +540,7 @@ const CheckoutPage = () => {
                     address: address, // Pass address
                     customerName: user?.user_metadata?.name || 'Cliente',
                     customerPhone: user?.phone || '', // User phone if available
-                    paymentMethod: 'Mercado Pago' // Default for now
+                    paymentMethod: paymentMethod === 'mercadopago' ? 'Mercado Pago' : 'Efectivo'
                 }}
                 onConfirm={() => {
                     setShowConfirmModal(false)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed, Ticket, Menu, X, Loader2, LogOut } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed, Ticket, Menu, X, Loader2, LogOut, DollarSign } from 'lucide-react'
 import NewsManager from '../components/NewsManager'
 import RewardsManager from '../components/RewardsManager'
 import ProductManager from '../components/ProductManager'
@@ -12,7 +12,7 @@ import CouponsManager from '../components/CouponsManager'
 import InventoryManager from '../components/InventoryManager'
 import CustomersManager from '../components/CustomersManager'
 import DebugConnection from '../components/DebugConnection'
-
+import CashManager from '../components/CashManager'
 
 
 const AdminDashboard = () => {
@@ -71,6 +71,7 @@ const AdminDashboard = () => {
                 <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
                     <NavItem icon={<LayoutDashboard />} label="Vista General" active={activeTab === 'Overview'} onClick={() => { setActiveTab('Overview'); setIsSidebarOpen(false) }} />
                     <NavItem icon={<ShoppingCart />} label="Pedidos" active={activeTab === 'Orders'} onClick={() => { setActiveTab('Orders'); setIsSidebarOpen(false) }} />
+                    <NavItem icon={<DollarSign />} label="Caja" active={activeTab === 'Cash'} onClick={() => { setActiveTab('Cash'); setIsSidebarOpen(false) }} />
                     <NavItem icon={<Newspaper />} label="Novedades" active={activeTab === 'Novedades'} onClick={() => { setActiveTab('Novedades'); setIsSidebarOpen(false) }} />
                     <NavItem icon={<Gift />} label="Canjes" active={activeTab === 'Canjes'} onClick={() => { setActiveTab('Canjes'); setIsSidebarOpen(false) }} />
                     <NavItem icon={<Ticket />} label="Cupones" active={activeTab === 'Cupones'} onClick={() => { setActiveTab('Cupones'); setIsSidebarOpen(false) }} />
@@ -120,6 +121,8 @@ const AdminDashboard = () => {
                     <NewsManager />
                 ) : activeTab === 'Orders' ? (
                     <OrdersManager />
+                ) : activeTab === 'Cash' ? (
+                    <CashManager />
                 ) : activeTab === 'Canjes' ? (
                     <RewardsManager />
                 ) : activeTab === 'Cupones' ? (
