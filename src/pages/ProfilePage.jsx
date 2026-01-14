@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { ArrowLeft, Loader2, Save, Home } from 'lucide-react'
+import { ArrowLeft, Loader2, Home, User, Star, Gift, LogIn } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-
 import { toast } from 'sonner'
 import { countryCodes } from '../utils/countryCodes'
 
@@ -28,6 +27,8 @@ const ProfilePage = () => {
     useEffect(() => {
         if (user) {
             fetchProfile()
+        } else {
+            setLoading(false)
         }
     }, [user])
 
@@ -99,6 +100,75 @@ const ProfilePage = () => {
         } finally {
             setSaving(false)
         }
+    }
+
+    // Guest View
+    if (!loading && !user) {
+        return (
+            <div className="min-h-screen bg-[var(--color-background)] pb-20">
+                <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
+                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                        <ArrowLeft className="w-6 h-6" />
+                    </button>
+                    <div className="flex-1 text-center pr-2">
+                        <span className="font-bold text-lg">Mi Cuenta</span>
+                    </div>
+                    <Link to="/" className="p-2 -mr-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                        <Home className="w-6 h-6 text-[var(--color-primary)]" />
+                    </Link>
+                </header>
+
+                <main className="px-6 py-10 max-w-md mx-auto flex flex-col items-center text-center">
+                    <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
+                        <User className="w-10 h-10 text-[var(--color-text-muted)]" />
+                    </div>
+
+                    <h1 className="text-2xl font-bold mb-2 text-white">Modo Invitado</h1>
+                    <p className="text-[var(--color-text-muted)] mb-8 max-w-[80%]">
+                        Estás navegando como invitado. Crea una cuenta para acceder a todos los beneficios.
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-4 w-full mb-8">
+                        <div className="bg-[var(--color-surface)] p-4 rounded-2xl flex items-center gap-4 text-left border border-white/5">
+                            <div className="bg-yellow-500/10 p-2 rounded-lg">
+                                <Star className="w-6 h-6 text-yellow-500" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white text-sm">Suma Puntos</h3>
+                                <p className="text-xs text-[var(--color-text-muted)]">Gana estrellas en cada compra</p>
+                            </div>
+                        </div>
+                        <div className="bg-[var(--color-surface)] p-4 rounded-2xl flex items-center gap-4 text-left border border-white/5">
+                            <div className="bg-purple-500/10 p-2 rounded-lg">
+                                <Gift className="w-6 h-6 text-purple-500" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white text-sm">Premios Exclusivos</h3>
+                                <p className="text-xs text-[var(--color-text-muted)]">Canjea tus puntos por comida</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full space-y-3">
+                        <Link to="/register" className="block w-full bg-[var(--color-secondary)] text-white font-black text-lg py-3.5 rounded-full shadow-lg hover:bg-orange-600 transition-transform active:scale-95">
+                            Crear Cuenta
+                        </Link>
+                        <Link to="/login" className="block w-full bg-transparent border border-white/10 text-white font-bold text-lg py-3.5 rounded-full hover:bg-white/5 transition-colors">
+                            Iniciar Sesión
+                        </Link>
+                    </div>
+
+                    <div className="mt-12 space-y-4 border-t border-white/5 pt-4 w-full">
+                        <Link to="/privacy" className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
+                            Política de privacidad <ArrowLeft className="w-4 h-4 rotate-180" />
+                        </Link>
+                        <Link to="/terms" className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
+                            Términos de servicio <ArrowLeft className="w-4 h-4 rotate-180" />
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        )
     }
 
     return (
