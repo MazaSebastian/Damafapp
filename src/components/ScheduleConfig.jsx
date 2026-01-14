@@ -135,12 +135,12 @@ const ScheduleConfig = ({ value, onChange }) => {
                 })}
             </div>
 
-            <div className="bg-[var(--color-primary)]/5 p-3 text-xs text-[var(--color-primary)] flex items-start gap-2 border-t border-[var(--color-primary)]/10">
-                <CalendarCheck className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="bg-[var(--color-primary)]/10 p-4 text-xs text-white/90 flex items-start gap-3 border-t border-white/5">
+                <CalendarCheck className="w-4 h-4 mt-0.5 shrink-0 text-[var(--color-primary)]" />
                 <p>
                     El sistema abrirá y cerrará automáticamente el local según estos horarios.
                     <br />
-                    <span className="opacity-70">Para cerrar un feriado específico, simplemente apaga el interruptor de ese día.</span>
+                    <span className="text-white/60">Para cerrar un feriado específico, simplemente apaga el interruptor de ese día.</span>
                 </p>
             </div>
         </div>
