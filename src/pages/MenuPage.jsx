@@ -68,11 +68,11 @@ const MenuPage = () => {
             <div className="sticky top-[76px] bg-[var(--color-background)] z-30 pt-2 pb-4 border-b border-white/5 shadow-2xl shadow-black/20">
                 <div
                     ref={scrollContainerRef}
-                    className="flex overflow-x-auto gap-4 px-4 hide-scrollbar"
+                    className="flex overflow-x-auto gap-4 px-4 hide-scrollbar justify-start md:justify-center"
                 >
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`flex flex-col items-center gap-2 w-24 flex-shrink-0 transition-all duration-300 group`}
+                        className={`flex flex-col items-center gap-2 w-28 flex-shrink-0 transition-all duration-300 group`}
                     >
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${selectedCategory === 'all'
                             ? 'bg-[var(--color-secondary)]/10 border-[var(--color-secondary)] text-[var(--color-secondary)] shadow-[0_0_15px_rgba(255,107,0,0.3)]'
@@ -88,7 +88,7 @@ const MenuPage = () => {
                         <button
                             key={cat.id}
                             onClick={() => setSelectedCategory(cat.id)}
-                            className={`flex flex-col items-center gap-2 w-24 flex-shrink-0 transition-all duration-300 group`}
+                            className={`flex flex-col items-center gap-2 w-28 flex-shrink-0 transition-all duration-300 group`}
                         >
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all relative overflow-hidden ${selectedCategory === cat.id
                                 ? 'bg-[var(--color-secondary)]/10 border-[var(--color-secondary)] text-[var(--color-secondary)] shadow-[0_0_15px_rgba(255,107,0,0.3)]'
@@ -101,7 +101,7 @@ const MenuPage = () => {
                                     </span>
                                 )}
                             </div>
-                            <span className={`text-[10px] uppercase tracking-wide font-bold text-center leading-tight transition-colors w-full px-0.5 truncate ${selectedCategory === cat.id ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                            <span className={`text-[10px] uppercase tracking-wide font-bold text-center leading-tight transition-colors w-full px-0.5 whitespace-normal ${selectedCategory === cat.id ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
                                 {cat.name === 'Papas & Acompañamientos' ? 'Acompañamientos' : cat.name}
                             </span>
                         </button>
