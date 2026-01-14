@@ -7,12 +7,14 @@ import { ArrowLeft, Trash2, ShoppingBag, Plus, Car, MapPin, Store, Loader2 } fro
 import { initMercadoPago } from '@mercadopago/sdk-react'
 import DeliveryMap from '../components/DeliveryMap'
 import { useStoreStatus } from '../hooks/useStoreStatus'
+import OrderConfirmationModal from '../components/OrderConfirmationModal'
 
 const CheckoutPage = () => {
     const { cart, removeFromCart, total, clearCart } = useCart()
     const navigate = useNavigate()
     const { isOpen, loading: statusLoading } = useStoreStatus()
     const [loading, setLoading] = useState(false)
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
 
     const [orderType, setOrderType] = useState(null)
     const [address, setAddress] = useState('')
@@ -224,19 +226,8 @@ const CheckoutPage = () => {
             return
         }
 
-        // Custom Toast Confirmation
-        toast(`¿Confirmar pedido por $${finalTotal.toFixed(2)}?`, {
-            description: 'Serás redirigido a Mercado Pago',
-            action: {
-                label: 'Sí, Pagar',
-                onClick: () => processOrder(),
-            },
-            cancel: {
-                label: 'Cancelar',
-                onClick: () => console.log('Cancelado')
-            },
-            duration: 5000,
-        })
+        // Custom Toast Confirmation - REPLACED BY MODAL
+        setIsConfirmModalOpen(true)
     }
 
     if (cart.length === 0) {
@@ -405,8 +396,19 @@ const CheckoutPage = () => {
                                 'Seleccione método de entrega'}
                     </button>
                 </div>
+                </div>
             </div>
-        </div>
+
+            <OrderConfirmationModal 
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={() => {
+                    setIsConfirmModalOpen(false)
+                    processOrder()
+                }}
+                total={finalTotal}
+            />
+        </div >
     )
 }
 
