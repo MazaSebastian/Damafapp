@@ -39,7 +39,7 @@ const GuestAlertModal = ({ isOpen, onClose, onContinueAsGuest }) => {
                         </div>
 
                         <h3 className="text-xl font-bold text-white">Psst Psst! Hey! 👋</h3>
-                        <p className="text-[var(--color-primary)] font-bold text-sm -mt-2">¡Para ver más tenés que registrarte!</p>
+                        <p className="text-white font-bold text-sm -mt-2">¡Para ver más tenés que registrarte!</p>
 
                         <p className="text-[var(--color-text-muted)] text-sm leading-relaxed">
                             Registrate ahora para acceder a descuentos exclusivos, acumular puntos y seguir tus pedidos en tiempo real.
