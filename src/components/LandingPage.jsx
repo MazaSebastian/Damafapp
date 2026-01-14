@@ -7,6 +7,7 @@ import BottomNav from './BottomNav'
 import FloatingOrderButton from './FloatingOrderButton'
 import { NewsSkeleton } from './skeletons/NewsSkeleton'
 import StoreInfoHeader from './StoreInfoHeader'
+import LockedLoyaltyBanner from './LockedLoyaltyBanner'
 
 const LandingPage = () => {
     const [news, setNews] = useState([])
@@ -65,22 +66,9 @@ const LandingPage = () => {
             <div className="pt-16 pb-6">
                 <StoreInfoHeader />
 
-                {/* Welcome Banner */}
-                <div className="px-4 mb-2">
-                    <div className="bg-[#502314] rounded-xl p-4 flex justify-between items-center shadow-lg relative overflow-hidden ring-1 ring-white/10">
-                        {/* Decor */}
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600"></div>
-
-                        <div className="flex-1 pr-4">
-                            <h2 className="text-white font-bold text-lg italic leading-tight mb-1">DAMAFAPP <span className="text-orange-500">CLUB</span></h2>
-                            <p className="text-white/80 text-xs leading-relaxed">
-                                ¡Bienvenido! Podés ganar puntos con cada compra y canjearlos por productos en la tienda online!
-                            </p>
-                        </div>
-                        <Link to="/club-info" className="bg-[#3e1c0f] border border-[#7c4b38] text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-[#5a2a18] transition-colors whitespace-nowrap">
-                            Detalles
-                        </Link>
-                    </div>
+                {/* Locked Welcome Banner */}
+                <div className="px-4">
+                    <LockedLoyaltyBanner />
                 </div>
             </div>
 
