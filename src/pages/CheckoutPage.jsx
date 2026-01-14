@@ -367,13 +367,13 @@ const CheckoutPage = () => {
                 <div className="bg-[var(--color-surface)] p-1 rounded-xl flex border border-white/5">
                     <button
                         onClick={() => { setOrderType('takeaway'); setShippingCost(0); }}
-                        className={`flex - 1 py - 3 rounded - lg font - bold text - sm transition - all ${orderType === 'takeaway' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'} `}
+                        className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'takeaway' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
                     >
                         Retiro en Local
                     </button>
                     <button
                         onClick={() => setOrderType('delivery')}
-                        className={`flex - 1 py - 3 rounded - lg font - bold text - sm transition - all ${orderType === 'delivery' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'} `}
+                        className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'delivery' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
                     >
                         Delivery
                     </button>
@@ -496,8 +496,8 @@ const CheckoutPage = () => {
                         </div>
                     </div>
 
-                    <button onClick={handleCheckout} className={`w - full text - white py - 4 rounded - xl font - bold text - lg shadow - lg active: scale - 95 transition - all
-                        ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-[#009ee3] hover:bg-[#009ee3]/90 shadow-blue-900/20'} `}>
+                    <button onClick={handleCheckout} className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all
+                        ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-[#009ee3] hover:bg-[#009ee3]/90 shadow-blue-900/20'}`}>
                         {orderType === 'delivery' ? 'Pagar con Mercado Pago' :
                             orderType === 'takeaway' ? 'Pagar Retiro con MP' :
                                 'Seleccione método de entrega'}
