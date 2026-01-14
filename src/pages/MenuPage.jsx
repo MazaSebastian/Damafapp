@@ -72,14 +72,14 @@ const MenuPage = () => {
                 >
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`flex flex-col items-center gap-2 min-w-[70px] transition-all duration-300 group`}
+                        className={`flex flex-col items-center gap-2 w-24 flex-shrink-0 transition-all duration-300 group`}
                     >
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${selectedCategory === 'all'
                             ? 'bg-[var(--color-secondary)]/10 border-[var(--color-secondary)] text-[var(--color-secondary)] shadow-[0_0_15px_rgba(255,107,0,0.3)]'
                             : 'bg-white/5 border-transparent text-white/40 group-hover:text-white group-hover:bg-white/10'}`}>
                             <span className="text-2xl filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">🔥</span>
                         </div>
-                        <span className={`text-xs font-bold transition-colors ${selectedCategory === 'all' ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                        <span className={`text-[10px] uppercase tracking-wide font-bold text-center leading-tight transition-colors ${selectedCategory === 'all' ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
                             Todos
                         </span>
                     </button>
@@ -88,7 +88,7 @@ const MenuPage = () => {
                         <button
                             key={cat.id}
                             onClick={() => setSelectedCategory(cat.id)}
-                            className={`flex flex-col items-center gap-2 min-w-[70px] transition-all duration-300 group`}
+                            className={`flex flex-col items-center gap-2 w-24 flex-shrink-0 transition-all duration-300 group`}
                         >
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all relative overflow-hidden ${selectedCategory === cat.id
                                 ? 'bg-[var(--color-secondary)]/10 border-[var(--color-secondary)] text-[var(--color-secondary)] shadow-[0_0_15px_rgba(255,107,0,0.3)]'
@@ -101,7 +101,7 @@ const MenuPage = () => {
                                     </span>
                                 )}
                             </div>
-                            <span className={`text-xs font-bold transition-colors truncate w-full text-center ${selectedCategory === cat.id ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
+                            <span className={`text-[10px] uppercase tracking-wide font-bold text-center leading-tight transition-colors w-full px-1 ${selectedCategory === cat.id ? 'text-[var(--color-secondary)]' : 'text-gray-500 group-hover:text-gray-300'}`}>
                                 {cat.name}
                             </span>
                         </button>
