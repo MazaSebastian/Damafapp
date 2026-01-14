@@ -67,7 +67,7 @@ const LandingPage = () => {
                 <StoreInfoHeader />
 
                 {/* Locked Welcome Banner */}
-                <div className="px-4">
+                <div className="px-4 max-w-lg mx-auto">
                     <LockedLoyaltyBanner />
                 </div>
             </div>
