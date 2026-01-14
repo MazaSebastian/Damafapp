@@ -104,7 +104,7 @@ const ScheduleConfig = ({ value, onChange }) => {
                                         type="time"
                                         value={dayData.start}
                                         onChange={(e) => updateDay(dayIndex, { start: e.target.value })}
-                                        className="bg-transparent text-white text-sm outline-none w-20 appearance-none [&::-webkit-calendar-picker-indicator]:invert"
+                                        className="bg-transparent text-white text-sm outline-none w-28 appearance-none [&::-webkit-calendar-picker-indicator]:invert"
                                     />
                                 </div>
                                 <span className="text-white/20">-</span>
@@ -114,7 +114,7 @@ const ScheduleConfig = ({ value, onChange }) => {
                                         type="time"
                                         value={dayData.end}
                                         onChange={(e) => updateDay(dayIndex, { end: e.target.value })}
-                                        className="bg-transparent text-white text-sm outline-none w-20 appearance-none [&::-webkit-calendar-picker-indicator]:invert"
+                                        className="bg-transparent text-white text-sm outline-none w-28 appearance-none [&::-webkit-calendar-picker-indicator]:invert"
                                     />
                                 </div>
                             </div>
