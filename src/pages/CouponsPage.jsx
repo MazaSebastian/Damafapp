@@ -3,15 +3,27 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Ticket, Copy, Loader2, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '../supabaseClient'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { CouponSkeleton } from '../components/skeletons/CouponSkeleton'
 
 const CouponsPage = () => {
+    const { user, loading: authLoading } = useAuth()
+    const navigate = useNavigate()
     const [coupons, setCoupons] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetchCoupons()
-    }, [])
+        if (!authLoading) {
+            if (!user) {
+                // If not logged in, show different view or redirect
+                // Let's show a nice "Exclusive for Members" message
+                setLoading(false)
+            } else {
+                fetchCoupons()
+            }
+        }
+    }, [user, authLoading])
 
     const fetchCoupons = async () => {
         try {
@@ -19,15 +31,10 @@ const CouponsPage = () => {
                 .from('coupons')
                 .select('*, products(name)')
                 .eq('is_active', true)
-                .lt('usage_count', 1000) // Simple filter to hide exhausted coupons if we had a limit field check, but RLS/Query is better.
-            // Actually usage_limit is a column perfectly usable.
-            // Let's filter in JS for complexity or just show all active ones.
 
             if (error) throw error
 
-            // Filter out those with expired limits locally or via advanced query if needed
             const validCoupons = data.filter(c => !c.usage_limit || c.usage_count < c.usage_limit)
-
             setCoupons(validCoupons)
         } catch (error) {
             console.error('Error fetching coupons:', error)
@@ -39,6 +46,40 @@ const CouponsPage = () => {
     const copyCode = (code) => {
         navigator.clipboard.writeText(code)
         toast.success(`Código ${code} copiado!`)
+    }
+
+    if (authLoading) return <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-white" /></div>
+
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-[var(--color-background)] pb-24 flex flex-col">
+                <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
+                    <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                        <ArrowLeft className="w-6 h-6" />
+                    </Link>
+                    <h1 className="ml-2 font-bold text-lg">Cupones</h1>
+                </header>
+
+                <main className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
+                    <div className="w-24 h-24 bg-[var(--color-surface)] rounded-full flex items-center justify-center border border-white/10">
+                        <Ticket className="w-10 h-10 text-[var(--color-primary)]" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold text-white mb-2">Beneficio Exclusivo</h2>
+                        <p className="text-[var(--color-text-muted)]">
+                            Los cupones de descuento son solo para miembros del club.
+                            <br />Regístrate gratis para acceder.
+                        </p>
+                    </div>
+                    <Link
+                        to="/login"
+                        className="w-full max-w-xs bg-[var(--color-primary)] text-white font-bold py-4 rounded-xl shadow-lg shadow-purple-900/20 hover:bg-purple-700 transition-all active:scale-95"
+                    >
+                        Iniciar Sesión / Registrarme
+                    </Link>
+                </main>
+            </div>
+        )
     }
 
     return (

@@ -58,6 +58,17 @@ const CheckoutPage = () => {
     const applyCoupon = async () => {
         if (!couponCode) return
 
+        // New Restriction: Check if user is logged in (actually we need to check auth state here)
+        // Since useAuth is not imported in this file yet (wait, let me check viewed content),
+        // Ah, CheckoutPage.jsx does NOT import useAuth. I need to import it.
+        // For now, I will use supabase.auth.getUser() which is already imported/available or use local check.
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            toast.error('Debes iniciar sesión para usar cupones')
+            return
+        }
+
         const { data: validCoupon, error } = await supabase
             .from('coupons')
             .select('*, products(name, price)')
