@@ -293,10 +293,10 @@ const CheckoutPage = () => {
             await refreshProfile()
 
             toast.dismiss()
-            toast.success('¡Pago simulado exitosamente! ⭐️')
+            toast.success('Pedido pagado correctamente, en breve estaras disfrutando de tu burga! 🍔')
 
             clearCart()
-            navigate('/my-orders')
+            navigate('/')
 
         } catch (error) {
             console.error('Error simulando:', error)

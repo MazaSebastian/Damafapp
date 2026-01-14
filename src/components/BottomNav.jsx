@@ -1,7 +1,8 @@
 import { Home, UtensilsCrossed, User, Ticket, ShoppingBag } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 import GuestAlertModal from './GuestAlertModal'
 
 const BottomNav = () => {
@@ -10,6 +11,46 @@ const BottomNav = () => {
     const navigate = useNavigate()
     const { user } = useAuth()
     const [showGuestAlert, setShowGuestAlert] = useState(false)
+    const [activeOrdersCount, setActiveOrdersCount] = useState(0)
+
+    useEffect(() => {
+        if (!user) {
+            // Check Guest Orders
+            const guestOrders = JSON.parse(localStorage.getItem('damaf_guest_orders') || '[]')
+            const active = guestOrders.filter(o => ['pending', 'cooking', 'packaging', 'sent'].includes(o.status)).length
+            setActiveOrdersCount(active)
+            return
+        }
+
+        const fetchActiveOrders = async () => {
+            const { count } = await supabase
+                .from('orders')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .in('status', ['pending', 'cooking', 'packaging', 'sent'])
+
+            setActiveOrdersCount(count || 0)
+        }
+
+        fetchActiveOrders()
+
+        // Subscribe to changes
+        const channel = supabase
+            .channel('bottom_nav_orders')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'orders',
+                filter: `user_id=eq.${user.id}`
+            }, () => {
+                fetchActiveOrders()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [user])
 
     const handleMenuClick = () => {
         if (user) {
@@ -33,12 +74,17 @@ const BottomNav = () => {
                     </Link>
 
                     {/* 2. Pedidos */}
-                    <Link to="/my-orders" className="flex flex-col items-center justify-end pb-3">
+                    <Link to="/my-orders" className="flex flex-col items-center justify-end pb-3 relative">
                         <NavItem
                             icon={<ShoppingBag className="w-5 h-5" />}
                             label="Pedidos"
                             active={currentPath === '/my-orders'}
                         />
+                        {activeOrdersCount > 0 && (
+                            <span className="absolute top-0 right-4 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full animate-pulse shadow-lg ring-2 ring-[var(--color-surface)]">
+                                {activeOrdersCount}
+                            </span>
+                        )}
                     </Link>
 
                     {/* 3. HOME (Center Floating) */}
