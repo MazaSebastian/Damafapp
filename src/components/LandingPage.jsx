@@ -58,7 +58,7 @@ const LandingPage = () => {
             {/* Top Bar - Minimal */}
             <header className="fixed top-0 w-full z-50 px-4 py-4 flex justify-end items-center">
                 <Link to="/register" className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-white/20 transition-colors uppercase tracking-wider shadow-lg">
-                    Inscribirse
+                    Registrarse
                 </Link>
             </header>
 
