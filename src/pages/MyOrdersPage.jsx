@@ -88,7 +88,7 @@ const MyOrdersPage = () => {
     }
 
     // Filter orders
-    const activeOrders = orders.filter(o => ['pending', 'cooking', 'packaging', 'sent'].includes(o.status))
+    const activeOrders = orders.filter(o => ['paid', 'pending', 'cooking', 'packaging', 'sent'].includes(o.status))
     const historyOrders = orders.filter(o => ['completed', 'cancelled'].includes(o.status))
 
     const displayOrders = activeTab === 'active' ? activeOrders : historyOrders

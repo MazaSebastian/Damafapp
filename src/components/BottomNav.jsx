@@ -17,7 +17,7 @@ const BottomNav = () => {
         if (!user) {
             // Check Guest Orders
             const guestOrders = JSON.parse(localStorage.getItem('damaf_guest_orders') || '[]')
-            const active = guestOrders.filter(o => ['pending', 'cooking', 'packaging', 'sent'].includes(o.status)).length
+            const active = guestOrders.filter(o => ['paid', 'pending', 'cooking', 'packaging', 'sent'].includes(o.status)).length
             setActiveOrdersCount(active)
             return
         }
@@ -27,7 +27,7 @@ const BottomNav = () => {
                 .from('orders')
                 .select('*', { count: 'exact', head: true })
                 .eq('user_id', user.id)
-                .in('status', ['pending', 'cooking', 'packaging', 'sent'])
+                .in('status', ['paid', 'pending', 'cooking', 'packaging', 'sent'])
 
             setActiveOrdersCount(count || 0)
         }

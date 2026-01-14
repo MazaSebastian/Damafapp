@@ -261,7 +261,7 @@ const CheckoutPage = () => {
                 .insert([{
                     user_id: user.id,
                     total: finalTotal,
-                    status: 'paid', // FORCE PAID STATUS
+                    status: 'pending', // FORCE PENDING STATUS (Visible in Orders)
                     order_type: orderType,
                     delivery_address: orderType === 'delivery' ? address : null,
                     coupon_code: appliedCoupon?.code || null,
