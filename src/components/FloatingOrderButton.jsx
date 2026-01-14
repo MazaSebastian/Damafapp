@@ -5,9 +5,11 @@ import OrderModal from './OrderModal'
 import { useStoreStatus } from '../hooks/useStoreStatus'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
+import GuestAlertModal from './GuestAlertModal'
 
 const FloatingOrderButton = () => {
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [showGuestAlert, setShowGuestAlert] = useState(false)
     const navigate = useNavigate()
     const { isOpen, loading } = useStoreStatus()
     const { user } = useAuth()
@@ -17,19 +19,7 @@ const FloatingOrderButton = () => {
             setIsModalOpen(true)
             return
         }
-
-        toast('No estás registrado en DAMAFAPP', {
-            description: '¿Querés registrarte para aprovechar las promos y beneficios?',
-            duration: 8000,
-            action: {
-                label: 'Sí, Registrarme',
-                onClick: () => navigate('/login')
-            },
-            cancel: {
-                label: 'Ahora no',
-                onClick: () => setIsModalOpen(true)
-            }
-        })
+        setShowGuestAlert(true)
     }
 
     if (loading) return null
@@ -57,6 +47,15 @@ const FloatingOrderButton = () => {
                 <ShoppingBag className="w-5 h-5 fill-white/20" />
                 PIDE AQUÍ
             </button>
+
+            <GuestAlertModal
+                isOpen={showGuestAlert}
+                onClose={() => setShowGuestAlert(false)}
+                onContinueAsGuest={() => {
+                    setShowGuestAlert(false)
+                    setIsModalOpen(true)
+                }}
+            />
 
             <OrderModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </>

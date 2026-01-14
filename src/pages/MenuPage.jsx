@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext'
 import { toast } from 'sonner'
 import MealBuilder from '../components/MealBuilder'
 import { MenuSkeleton } from '../components/skeletons/MenuSkeleton'
+import GuestAlertModal from '../components/GuestAlertModal'
 
 const MenuPage = () => {
     const [categories, setCategories] = useState([])
@@ -22,6 +23,9 @@ const MenuPage = () => {
     const [selectedProduct, setSelectedProduct] = useState(null)
     const [isBuilderOpen, setIsBuilderOpen] = useState(false)
     const [currentCategorySlug, setCurrentCategorySlug] = useState('')
+
+    // Guest Alert State
+    const [showGuestAlert, setShowGuestAlert] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -70,23 +74,21 @@ const MenuPage = () => {
             return
         }
 
-        // Guest logic
-        toast('No estás registrado en DAMAFAPP', {
-            description: '¿Querés registrarte para aprovechar las promos y beneficios?',
-            duration: 8000,
-            action: {
-                label: 'Sí, Registrarme',
-                onClick: () => navigate('/login')
-            },
-            cancel: {
-                label: 'Ahora no',
-                onClick: () => navigate('/checkout')
-            }
-        })
+        // Guest logic - Show Modal
+        setShowGuestAlert(true)
     }
 
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-24">
+            <GuestAlertModal
+                isOpen={showGuestAlert}
+                onClose={() => setShowGuestAlert(false)}
+                onContinueAsGuest={() => {
+                    setShowGuestAlert(false)
+                    navigate('/checkout')
+                }}
+            />
+
             <MealBuilder
                 isOpen={isBuilderOpen}
                 onClose={() => setIsBuilderOpen(false)}
@@ -100,10 +102,10 @@ const MenuPage = () => {
                     <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                         <ArrowLeft className="w-6 h-6" />
                     </Link>
-                    <button onClick={handleCheckoutClick} className="relative">
+                    <button onClick={handleCheckoutClick} className="relative p-2 rounded-full hover:bg-white/10 transition-colors">
                         <ShoppingBag className="w-6 h-6 text-white hover:text-[var(--color-secondary)] transition-colors" />
                         {cart.length > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-[var(--color-secondary)] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full animate-pulse">
+                            <span className="absolute top-1 right-0 bg-[var(--color-secondary)] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full animate-pulse border border-[var(--color-background)]">
                                 {cart.length}
                             </span>
                         )}
