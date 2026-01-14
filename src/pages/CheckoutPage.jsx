@@ -238,206 +238,275 @@ const CheckoutPage = () => {
             toast.error('Ocurrió un error al procesar el pedido: ' + error.message)
         }
     }
+}
 
-    const handleCheckout = async () => {
-        if (!orderType) {
-            toast.warning('Por favor selecciona: DELIVERY o RETIRO EN LOCAL')
-            return
-        }
-
-        if (orderType === 'delivery' && !address.trim()) {
-            toast.error('Por favor confirma tu ubicación en el mapa')
-            return
-        }
-
-        if (orderType === 'delivery' && shippingCost === 0 && distanceKm === 0) {
-            toast.error('Calculando costo de envío, por favor espera...')
-            return
-        }
-
-        // Custom Toast Confirmation - REPLACED BY MODAL
-        setIsConfirmModalOpen(true)
+// SIMULATION FOR TESTING
+const simulatePayment = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        toast.error('Debes iniciar sesión para simular')
+        return
     }
 
-    if (cart.length === 0) {
-        return (
-            <div className="min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center p-4 text-center">
-                <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
-                    <ShoppingBag className="w-10 h-10 text-[var(--color-text-muted)]" />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">Tu pedido está vacío</h2>
-                <p className="text-[var(--color-text-muted)] mb-8">¡Hora de buscar algo delicioso!</p>
-                <Link to="/menu" className="bg-[var(--color-secondary)] text-white px-8 py-3 rounded-full font-bold hover:bg-orange-600 transition-colors">
-                    Ir al Menú
-                </Link>
-            </div>
-        )
+    try {
+        toast.loading('Simulando pago...')
+        // 1. Create Order as PAID directly
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert([{
+                user_id: user.id,
+                total: finalTotal,
+                status: 'paid', // FORCE PAID STATUS
+                order_type: orderType,
+                delivery_address: orderType === 'delivery' ? address : null,
+                coupon_code: appliedCoupon?.code || null,
+                discount_amount: discountAmount,
+            }])
+            .select()
+            .single()
+
+        if (orderError) throw orderError
+
+        // 2. Create Order Items
+        const orderItems = cart.map(item => ({
+            order_id: order.id,
+            product_id: item.main.id,
+            quantity: 1,
+            price_at_time: item.main.price,
+            modifiers: item.modifiers || [],
+            side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
+            drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
+        }))
+
+        const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItems)
+
+        if (itemsError) throw itemsError
+
+        // Success
+        clearCart()
+        toast.dismiss()
+        toast.success('¡Pago simulado! Estrellas acreditadas ⭐️')
+        navigate('/')
+
+    } catch (error) {
+        console.error(error)
+        toast.dismiss()
+        toast.error('Error simulando: ' + error.message)
+    }
+}
+
+const handleCheckout = async () => {
+    if (!orderType) {
+        toast.warning('Por favor selecciona: DELIVERY o RETIRO EN LOCAL')
+        return
     }
 
+    if (orderType === 'delivery' && !address.trim()) {
+        toast.error('Por favor confirma tu ubicación en el mapa')
+        return
+    }
+
+    if (orderType === 'delivery' && shippingCost === 0 && distanceKm === 0) {
+        toast.error('Calculando costo de envío, por favor espera...')
+        return
+    }
+
+    // Custom Toast Confirmation - REPLACED BY MODAL
+    setIsConfirmModalOpen(true)
+}
+
+if (cart.length === 0) {
     return (
-        <div className="min-h-screen bg-[var(--color-background)] pb-64">
-            <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
-                <Link to="/menu" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
-                    <ArrowLeft className="w-6 h-6" />
-                </Link>
-                <h1 className="ml-2 font-bold text-lg">Tu Pedido</h1>
-            </header>
+        <div className="min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center p-4 text-center">
+            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                <ShoppingBag className="w-10 h-10 text-[var(--color-text-muted)]" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Tu pedido está vacío</h2>
+            <p className="text-[var(--color-text-muted)] mb-8">¡Hora de buscar algo delicioso!</p>
+            <Link to="/menu" className="bg-[var(--color-secondary)] text-white px-8 py-3 rounded-full font-bold hover:bg-orange-600 transition-colors">
+                Ir al Menú
+            </Link>
+        </div>
+    )
+}
 
-            <main className="p-4 max-w-lg mx-auto space-y-6">
+return (
+    <div className="min-h-screen bg-[var(--color-background)] pb-64">
+        <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
+            <Link to="/menu" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                <ArrowLeft className="w-6 h-6" />
+            </Link>
+            <h1 className="ml-2 font-bold text-lg">Tu Pedido</h1>
+        </header>
 
-                {/* Delivery Toggle (Moved to Main) */}
-                <div className="bg-[var(--color-surface)] p-1 rounded-xl flex border border-white/5">
-                    <button
-                        onClick={() => { setOrderType('takeaway'); setShippingCost(0); }}
-                        className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'takeaway' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
-                    >
-                        Retiro en Local
-                    </button>
-                    <button
-                        onClick={() => setOrderType('delivery')}
-                        className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'delivery' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
-                    >
-                        Delivery
-                    </button>
-                </div>
+        <main className="p-4 max-w-lg mx-auto space-y-6">
 
-                {/* Map Integration (Moved to Main) */}
-                {orderType === 'delivery' && (
-                    <div className="animated-slide-up space-y-2">
-                        <div className="bg-orange-500/10 text-orange-400 p-3 rounded-lg text-sm mb-2 border border-orange-500/20">
-                            📍 Selecciona tu ubicación exacta en el mapa
+            {/* Delivery Toggle (Moved to Main) */}
+            <div className="bg-[var(--color-surface)] p-1 rounded-xl flex border border-white/5">
+                <button
+                    onClick={() => { setOrderType('takeaway'); setShippingCost(0); }}
+                    className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'takeaway' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                >
+                    Retiro en Local
+                </button>
+                <button
+                    onClick={() => setOrderType('delivery')}
+                    className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${orderType === 'delivery' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                >
+                    Delivery
+                </button>
+            </div>
+
+            {/* Map Integration (Moved to Main) */}
+            {orderType === 'delivery' && (
+                <div className="animated-slide-up space-y-2">
+                    <div className="bg-orange-500/10 text-orange-400 p-3 rounded-lg text-sm mb-2 border border-orange-500/20">
+                        📍 Selecciona tu ubicación exacta en el mapa
+                    </div>
+                    <DeliveryMap
+                        storeLocation={{
+                            lat: deliverySettings.store_lat,
+                            lng: deliverySettings.store_lng
+                        }}
+                        onDistanceCalculated={handleDistanceCalculated}
+                        onAddressSelected={handleAddressSelected}
+                    />
+                    {distanceKm > 0 && (
+                        <div className="flex justify-between items-center text-sm px-2 bg-[var(--color-surface)] p-3 rounded-xl border border-white/5">
+                            <span className="text-[var(--color-text-muted)] flex items-center gap-1">
+                                <MapPin className="w-4 h-4" /> {distanceKm.toFixed(1)} km
+                            </span>
+                            <span className="text-[var(--color-secondary)] font-bold flex items-center gap-1">
+                                <Car className="w-4 h-4" /> Envío: ${shippingCost}
+                            </span>
                         </div>
-                        <DeliveryMap
-                            storeLocation={{
-                                lat: deliverySettings.store_lat,
-                                lng: deliverySettings.store_lng
-                            }}
-                            onDistanceCalculated={handleDistanceCalculated}
-                            onAddressSelected={handleAddressSelected}
-                        />
-                        {distanceKm > 0 && (
-                            <div className="flex justify-between items-center text-sm px-2 bg-[var(--color-surface)] p-3 rounded-xl border border-white/5">
-                                <span className="text-[var(--color-text-muted)] flex items-center gap-1">
-                                    <MapPin className="w-4 h-4" /> {distanceKm.toFixed(1)} km
-                                </span>
-                                <span className="text-[var(--color-secondary)] font-bold flex items-center gap-1">
-                                    <Car className="w-4 h-4" /> Envío: ${shippingCost}
-                                </span>
+                    )}
+                </div>
+            )}
+
+            {/* List Items */}
+            <div className="space-y-4">
+                {cart.map((item, index) => (
+                    <div key={item.id} className="bg-[var(--color-surface)] rounded-2xl p-4 border border-white/5 animated-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+                        <div className="flex gap-4 mb-3">
+                            {item.main.media_type === 'video' ? (
+                                <video src={item.main.image_url} className="w-16 h-16 rounded-lg object-cover bg-black/20" muted loop autoPlay playsInline />
+                            ) : (
+                                <img src={item.main.image_url} className="w-16 h-16 rounded-lg object-cover bg-black/20" />
+                            )}
+                            <div className="flex-1">
+                                <h3 className="font-bold text-lg leading-tight">{item.main.name}</h3>
+                                <p className="text-[var(--color-secondary)] font-bold">${item.main.price}</p>
                             </div>
-                        )}
+                            <button onClick={() => removeFromCart(item.id)} className="self-start text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="pl-4 border-l-2 border-white/10 space-y-1 text-sm text-[var(--color-text-muted)]">
+                            {item.modifiers?.map(mod => (
+                                <div key={mod.id} className="flex justify-between">
+                                    <span>• {mod.name}</span>
+                                    {mod.price > 0 && <span>+${mod.price}</span>}
+                                </div>
+                            ))}
+                            {item.side && (
+                                <div className="flex justify-between text-white/80">
+                                    <span>+ {item.side.name}</span>
+                                    <span>+${item.side.price}</span>
+                                </div>
+                            )}
+                            {item.drink && (
+                                <div className="flex justify-between text-white/80">
+                                    <span>+ {item.drink.name}</span>
+                                    <span>+${item.drink.price}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <button
+                onClick={() => navigate('/menu')}
+                className="w-full py-4 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center gap-2 text-[var(--color-text-muted)] hover:border-[var(--color-secondary)] hover:text-[var(--color-secondary)] transition-all font-bold"
+            >
+                <Plus className="w-5 h-5" />
+                Agregar otro pedido
+            </button>
+        </main>
+
+        {/* Delivery Footer - Only Coupon, Total & Pay */}
+        <div className="fixed bottom-0 w-full bg-[var(--color-surface)]/95 backdrop-blur-xl border-t border-white/5 p-6 z-50 rounded-t-3xl shadow-2xl">
+            <div className="max-w-lg mx-auto space-y-4">
+
+                {/* Coupon Input */}
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Código de descuento"
+                        className="flex-1 bg-[var(--color-background)] border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[var(--color-secondary)] uppercase"
+                        disabled={!!appliedCoupon}
+                    />
+                    {appliedCoupon ? (
+                        <button onClick={() => { setAppliedCoupon(null); setDiscountAmount(0); setCouponCode('') }} className="bg-red-500/10 text-red-500 px-4 rounded-xl font-bold">
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    ) : (
+                        <button onClick={applyCoupon} className="bg-[var(--color-primary)] text-white px-6 rounded-xl font-bold">
+                            Aplicar
+                        </button>
+                    )}
+                </div>
+                {appliedCoupon && (
+                    <div className="text-green-400 text-sm font-bold flex justify-between">
+                        <span>Cupón aplicado ({appliedCoupon.code})</span>
+                        <span>-${discountAmount.toFixed(2)}</span>
                     </div>
                 )}
 
-                {/* List Items */}
-                <div className="space-y-4">
-                    {cart.map((item, index) => (
-                        <div key={item.id} className="bg-[var(--color-surface)] rounded-2xl p-4 border border-white/5 animated-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
-                            <div className="flex gap-4 mb-3">
-                                {item.main.media_type === 'video' ? (
-                                    <video src={item.main.image_url} className="w-16 h-16 rounded-lg object-cover bg-black/20" muted loop autoPlay playsInline />
-                                ) : (
-                                    <img src={item.main.image_url} className="w-16 h-16 rounded-lg object-cover bg-black/20" />
-                                )}
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-lg leading-tight">{item.main.name}</h3>
-                                    <p className="text-[var(--color-secondary)] font-bold">${item.main.price}</p>
-                                </div>
-                                <button onClick={() => removeFromCart(item.id)} className="self-start text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                            <div className="pl-4 border-l-2 border-white/10 space-y-1 text-sm text-[var(--color-text-muted)]">
-                                {item.modifiers?.map(mod => (
-                                    <div key={mod.id} className="flex justify-between">
-                                        <span>• {mod.name}</span>
-                                        {mod.price > 0 && <span>+${mod.price}</span>}
-                                    </div>
-                                ))}
-                                {item.side && (
-                                    <div className="flex justify-between text-white/80">
-                                        <span>+ {item.side.name}</span>
-                                        <span>+${item.side.price}</span>
-                                    </div>
-                                )}
-                                {item.drink && (
-                                    <div className="flex justify-between text-white/80">
-                                        <span>+ {item.drink.name}</span>
-                                        <span>+${item.drink.price}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
+                <div className="flex justify-between items-end pt-2 border-t border-white/5">
+                    <span className="text-[var(--color-text-muted)] font-medium">Total a Pagar</span>
+                    <div className="text-right">
+                        {appliedCoupon && <span className="block text-sm text-[var(--color-text-muted)] line-through">${total.toFixed(2)}</span>}
+                        <span className="text-3xl font-bold text-white">${finalTotal.toFixed(2)}</span>
+                    </div>
                 </div>
 
-                <button
-                    onClick={() => navigate('/menu')}
-                    className="w-full py-4 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center gap-2 text-[var(--color-text-muted)] hover:border-[var(--color-secondary)] hover:text-[var(--color-secondary)] transition-all font-bold"
-                >
-                    <Plus className="w-5 h-5" />
-                    Agregar otro pedido
-                </button>
-            </main>
-
-            {/* Delivery Footer - Only Coupon, Total & Pay */}
-            <div className="fixed bottom-0 w-full bg-[var(--color-surface)]/95 backdrop-blur-xl border-t border-white/5 p-6 z-50 rounded-t-3xl shadow-2xl">
-                <div className="max-w-lg mx-auto space-y-4">
-
-                    {/* Coupon Input */}
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                            placeholder="Código de descuento"
-                            className="flex-1 bg-[var(--color-background)] border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-[var(--color-secondary)] uppercase"
-                            disabled={!!appliedCoupon}
-                        />
-                        {appliedCoupon ? (
-                            <button onClick={() => { setAppliedCoupon(null); setDiscountAmount(0); setCouponCode('') }} className="bg-red-500/10 text-red-500 px-4 rounded-xl font-bold">
-                                <Trash2 className="w-5 h-5" />
-                            </button>
-                        ) : (
-                            <button onClick={applyCoupon} className="bg-[var(--color-primary)] text-white px-6 rounded-xl font-bold">
-                                Aplicar
-                            </button>
-                        )}
-                    </div>
-                    {appliedCoupon && (
-                        <div className="text-green-400 text-sm font-bold flex justify-between">
-                            <span>Cupón aplicado ({appliedCoupon.code})</span>
-                            <span>-${discountAmount.toFixed(2)}</span>
-                        </div>
-                    )}
-
-                    <div className="flex justify-between items-end pt-2 border-t border-white/5">
-                        <span className="text-[var(--color-text-muted)] font-medium">Total a Pagar</span>
-                        <div className="text-right">
-                            {appliedCoupon && <span className="block text-sm text-[var(--color-text-muted)] line-through">${total.toFixed(2)}</span>}
-                            <span className="text-3xl font-bold text-white">${finalTotal.toFixed(2)}</span>
-                        </div>
-                    </div>
-
-                    <button onClick={handleCheckout} className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all
+                <button onClick={handleCheckout} className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all
                         ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-[#009ee3] hover:bg-[#009ee3]/90 shadow-blue-900/20'}`}>
-                        {orderType === 'delivery' ? 'Pagar con Mercado Pago' :
-                            orderType === 'takeaway' ? 'Pagar Retiro con MP' :
-                                'Seleccione método de entrega'}
-                    </button>
-                </div>
+                    {orderType === 'delivery' ? 'Pagar con Mercado Pago' :
+                        orderType === 'takeaway' ? 'Pagar Retiro con MP' :
+                            'Seleccione método de entrega'}
+                </button>
             </div>
+        </div>
 
-            <OrderConfirmationModal
-                isOpen={isConfirmModalOpen}
-                onClose={() => setIsConfirmModalOpen(false)}
-                onConfirm={() => {
-                    setIsConfirmModalOpen(false)
-                    processOrder()
-                }}
-                total={finalTotal}
-            />
-        </div >
-    )
+        <OrderConfirmationModal
+            isOpen={isConfirmModalOpen}
+            onClose={() => setIsConfirmModalOpen(false)}
+            onConfirm={() => {
+                setIsConfirmModalOpen(false)
+                processOrder()
+            }}
+            total={finalTotal}
+        />
+
+        {/* DEV TOOL: Simulation Button */}
+        <div className="fixed top-20 right-4 z-50">
+            <button
+                onClick={simulatePayment}
+                className="bg-purple-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-lg opacity-50 hover:opacity-100 transition-opacity flex items-center gap-1"
+            >
+                🛠 Simular Pago
+            </button>
+        </div>
+
+    </div >
+)
 }
 
 export default CheckoutPage
