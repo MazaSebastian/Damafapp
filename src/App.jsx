@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ClubInfoPage from './pages/ClubInfoPage'
 import RewardsStorePage from './pages/RewardsStorePage'
@@ -31,6 +32,7 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+        <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
         <Route path="/delivery" element={
           <ProtectedRoute role="admin">
             <DeliveryDashboard />
