@@ -290,30 +290,18 @@ const CheckoutPage = () => {
             if (itemsError) throw itemsError
 
             // Refresh Profile to get new stars
-            // We need to access refreshProfile from context.
-            // Since simulatePayment is inside the component, we can use the hook result.
-            // But we didn't destructure it at the top.
-            // Wait, we need to update the top destructuring first!
+            await refreshProfile()
 
-            // This replacement handles the function body, but I need access to 'refreshProfile'
-            // which is returned by useAuth() (imported but not fully destructured in CheckoutPage?)
-            // Let's check line 12. CheckoutPage didn't import useAuth! 
-            // It uses supabase.auth.getUser() directly.
-            // I MUST import useAuth and consume it.
+            toast.dismiss()
+            toast.success('¡Pago simulado exitosamente! ⭐️')
 
-            await supabase.from('profiles').select('stars').eq('id', user.id).single()
-            // Actually, if I can't easily access context here (I can't change line 12 easily in this chunk),
-            // I can force a page reload? navigate(0)?
-            // Or better: use the 'refreshProfile' if I destructure it.
-            // I will DO A MULTI CHUNK to add useAuth.
-
-            // Re-read: CheckoutPage line 12: const CheckoutPage = () => { const { cart... } ... }
-            // It does NOT use useAuth().
-
-            // So my plan requires importing useAuth.
+            clearCart()
+            navigate('/my-orders')
 
         } catch (error) {
-            // ...
+            console.error('Error simulando:', error)
+            toast.dismiss()
+            toast.error('Error al simular: ' + error.message)
         }
     }
 
