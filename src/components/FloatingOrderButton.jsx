@@ -4,11 +4,33 @@ import { ShoppingBag, XCircle } from 'lucide-react'
 import OrderModal from './OrderModal'
 import { useStoreStatus } from '../hooks/useStoreStatus'
 import { toast } from 'sonner'
+import { useAuth } from '../context/AuthContext'
 
 const FloatingOrderButton = () => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const navigate = useNavigate()
     const { isOpen, loading } = useStoreStatus()
+    const { user } = useAuth()
+
+    const handleClick = () => {
+        if (user) {
+            setIsModalOpen(true)
+            return
+        }
+
+        toast('No estás registrado en DAMAFAPP', {
+            description: '¿Querés registrarte para aprovechar las promos y beneficios?',
+            duration: 8000,
+            action: {
+                label: 'Sí, Registrarme',
+                onClick: () => navigate('/login')
+            },
+            cancel: {
+                label: 'Ahora no',
+                onClick: () => setIsModalOpen(true)
+            }
+        })
+    }
 
     if (loading) return null
 
@@ -28,7 +50,7 @@ const FloatingOrderButton = () => {
     return (
         <>
             <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleClick}
                 className="fixed bottom-28 left-1/2 -translate-x-1/2 bg-[#d64322] text-white px-6 py-3 rounded-full shadow-[0_0_20px_rgba(214,67,34,0.6)] flex items-center gap-2 z-50 animate-bounce hover:scale-105 active:scale-95 transition-all font-bold border-2 border-white/20"
                 style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
             >

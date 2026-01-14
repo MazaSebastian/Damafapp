@@ -1,9 +1,33 @@
 import { Home, UtensilsCrossed, User, Ticket, ShoppingBag } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { toast } from 'sonner'
 
 const BottomNav = () => {
     const location = useLocation()
     const currentPath = location.pathname
+    const navigate = useNavigate()
+    const { user } = useAuth()
+
+    const handleMenuClick = () => {
+        if (user) {
+            navigate('/menu')
+            return
+        }
+
+        toast('No estás registrado en DAMAFAPP', {
+            description: '¿Querés registrarte para aprovechar las promos y beneficios?',
+            duration: 8000,
+            action: {
+                label: 'Sí, Registrarme',
+                onClick: () => navigate('/login')
+            },
+            cancel: {
+                label: 'Ahora no',
+                onClick: () => navigate('/menu')
+            }
+        })
+    }
 
     return (
         <nav className="fixed bottom-0 w-full bg-[var(--color-surface)] border-t border-white/5 pb-2 pt-2 z-50 h-[80px]">
@@ -19,13 +43,13 @@ const BottomNav = () => {
                 </Link>
 
                 {/* 2. Pide Aquí */}
-                <Link to="/menu" className="flex flex-col items-center justify-end pb-3">
+                <button onClick={handleMenuClick} className="flex flex-col items-center justify-end pb-3">
                     <NavItem
                         icon={<UtensilsCrossed className="w-5 h-5" />}
                         label="Pide aquí"
                         active={currentPath === '/menu'}
                     />
-                </Link>
+                </button>
 
                 {/* 3. HOME (Center Floating) */}
                 <div className="flex items-end justify-center pb-8 relative">
