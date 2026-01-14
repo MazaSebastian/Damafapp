@@ -210,8 +210,8 @@ const MyOrdersPage = () => {
                 ) : (
                     <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
                         <div className="bg-[var(--color-surface)] border border-white/5 p-8 rounded-3xl shadow-2xl max-w-sm w-full">
-                            <div className="w-24 h-24 mx-auto mb-6">
-                                <img src="/logo-damaf.png" alt="Logo" className="w-full h-full object-contain drop-shadow-sm opacity-80" />
+                            <div className="w-40 h-40 mx-auto mb-4">
+                                <img src="/logo-damaf.png" alt="Logo" className="w-full h-full object-contain drop-shadow-md" />
                             </div>
 
                             <h2 className="text-2xl font-black uppercase leading-none mb-2 tracking-tighter text-white">
