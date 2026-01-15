@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Loader2, TrendingUp, Users, ShoppingBag, Package } from 'lucide-react'
+import { Loader2, TrendingUp, Users, ShoppingBag, Package, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -71,6 +71,40 @@ const AdminOverview = () => {
 
             if (recentData) setRecentOrders(recentData)
 
+            // 6. Cash Register Status
+            const { data: openRegister } = await supabase
+                .from('cash_registers')
+                .select('id, opening_amount')
+                .eq('status', 'open')
+                .single()
+
+            let currentCash = 0
+            let cashStatus = 'closed'
+
+            if (openRegister) {
+                cashStatus = 'open'
+                const { data: movements } = await supabase
+                    .from('cash_movements')
+                    .select('amount, type')
+                    .eq('register_id', openRegister.id)
+
+                const sales = movements?.filter(m => m.type === 'sale').reduce((acc, m) => acc + Number(m.amount), 0) || 0
+                const deposits = movements?.filter(m => m.type === 'deposit').reduce((acc, m) => acc + Number(m.amount), 0) || 0
+                const expenses = movements?.filter(m => m.type === 'expense').reduce((acc, m) => acc + Number(m.amount), 0) || 0
+                const withdrawals = movements?.filter(m => m.type === 'withdrawal').reduce((acc, m) => acc + Number(m.amount), 0) || 0
+
+                currentCash = Number(openRegister.opening_amount) + sales + deposits - expenses - withdrawals
+            }
+
+            setStats({
+                totalRevenue,
+                activeOrders: activeOrdersCount || 0,
+                totalProducts: productsCount || 0,
+                totalUsers: usersCount || 0,
+                currentCash,
+                cashStatus
+            })
+
         } catch (error) {
             console.error("Error fetching dashboard data:", error)
         }
@@ -108,6 +142,13 @@ const AdminOverview = () => {
                     icon={<Users className="w-6 h-6 text-blue-400" />}
                     trend="+5%"
                     trendColor="text-blue-400"
+                />
+                <StatCard
+                    title="Caja Actual"
+                    value={stats.cashStatus === 'closed' ? 'Cerrada' : `$${stats.currentCash?.toLocaleString()}`}
+                    icon={<DollarSign className={`w-6 h-6 ${stats.cashStatus === 'open' ? 'text-green-400' : 'text-red-400'}`} />}
+                    trend={stats.cashStatus === 'open' ? 'En vivo' : 'Requiere apertura'}
+                    trendColor={stats.cashStatus === 'open' ? 'text-green-400' : 'text-red-400'}
                 />
             </div>
 

@@ -38,6 +38,13 @@ const OrdersManager = () => {
     }
 
     const updateStatus = async (orderId, newStatus) => {
+        // Fetch current order details needed for cash logging before update
+        // (Or we could assume we have them in state, but let's be safe if we want the payment_method which might be missing in state if not fetched)
+        // Actually, we need to update fetchOrder to include payment_method first. 
+        // But let's assume valid order object in 'orders' state.
+
+        const order = orders.find(o => o.id === orderId)
+
         const { error } = await supabase
             .from('orders')
             .update({ status: newStatus })
@@ -46,6 +53,19 @@ const OrdersManager = () => {
         if (!error) {
             setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
             toast.success(`Pedido actualizado a: ${newStatus}`)
+
+            // Log Cash Sale if Completed
+            if (newStatus === 'completed' || newStatus === 'paid') {
+                // Dynamic import or passed as prop would be cleaner, but we'll import at top
+                const { logCashSale } = await import('../utils/cashUtils')
+                const result = await logCashSale(orderId, order.total, order.payment_method, supabase)
+                if (result.message && newStatus === 'completed' && order.payment_method === 'cash') {
+                    // Show toast specific to cash result
+                    if (result.success) toast.success(result.message)
+                    else toast.warning(result.message)
+                }
+            }
+
         } else {
             console.error('Error updating status:', error)
             toast.error('Error al actualizar estado')

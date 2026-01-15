@@ -84,12 +84,28 @@ const RiderInterface = () => {
 
     const markDelivered = async (orderId) => {
         stopTracking()
+
+        // Find order to get details
+        const order = orders.find(o => o.id === orderId)
+
         const { error } = await supabase
             .from('orders')
             .update({ status: 'completed', delivery_status: 'delivered' })
             .eq('id', orderId)
 
-        if (!error) toast.success('Pedido entregado ✅')
+        if (!error) {
+            toast.success('Pedido entregado ✅')
+
+            // Log Cash Sale
+            if (order) {
+                const { logCashSale } = await import('../utils/cashUtils')
+                const result = await logCashSale(orderId, order.total, order.payment_method, supabase)
+                if (result.message && order.payment_method === 'cash') {
+                    if (result.success) toast.success(result.message)
+                    else toast.warning(result.message)
+                }
+            }
+        }
     }
 
     return (

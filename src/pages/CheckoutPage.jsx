@@ -159,7 +159,7 @@ const CheckoutPage = () => {
                 .insert([{
                     user_id: user?.id || null,
                     total: finalTotal,
-                    status: paymentMethod === 'mercadopago' ? 'pending_payment' : 'pending', // Cash orders go straight to 'pending' (Kitchen)
+                    status: paymentMethod === 'mercadopago' ? 'pending_payment' : 'pending', // Cash/Transfer orders go straight to 'pending' (Kitchen)
                     order_type: orderType,
                     payment_method: paymentMethod, // NEW FIELD
                     delivery_address: orderType === 'delivery' ? address : null,
@@ -228,10 +228,38 @@ const CheckoutPage = () => {
 
                 window.location.href = paymentData.init_point
             } else {
-                // CASH FLOW
-                toast.success(`Pedido realizado! Tienes que pagar $${finalTotal} en ${orderType === 'delivery' ? 'la entrega' : 'caja'}.`)
-                clearCart()
-                navigate('/my-orders')
+                // CASH OR TRANSFER FLOW -> WHATSAPP REDIRECT
+                const waNumber = deliverySettings.store_phone || '5491100000000' // Fallback
+                const orderDate = new Date().toLocaleDateString()
+
+                let message = `Hola! Quiero confirmar mi pedido *#${order.id.slice(0, 8)}* 🍔\n\n`
+                message += `📅 *Fecha:* ${orderDate}\n`
+                message += `👤 *Cliente:* ${user?.user_metadata?.name || 'Invitado'}\n`
+                message += `📍 *Entrega:* ${orderType === 'delivery' ? 'Delivery (' + address + ')' : 'Retiro en Local'}\n`
+                message += `💵 *Pago:* ${paymentMethod === 'transfer' ? 'Transferencia Bancaria' : 'Efectivo'}\n\n`
+
+                if (paymentMethod === 'transfer') {
+                    message += `ℹ️ *Solicito datos bancarios para transferir.*\n\n`
+                }
+
+                message += `📝 *Pedido:*\n`
+                cart.forEach(item => {
+                    message += `- ${item.main.name} x1`
+                    if (item.modifiers?.length) message += ` (${item.modifiers.map(m => m.name).join(', ')})`
+                    message += '\n'
+                })
+
+                message += `\n💰 *Total a Pagar:* $${finalTotal}`
+
+                const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`
+
+                toast.success(paymentMethod === 'transfer' ? 'Abriendo WhatsApp para coordinar pago...' : 'Abriendo WhatsApp para confirmar...')
+                clearCart() // Clear cart before redirect
+
+                // Slight delay to allow toast to show
+                setTimeout(() => {
+                    window.location.href = waUrl
+                }, 1000)
             }
 
         } catch (error) {
@@ -336,6 +364,21 @@ const CheckoutPage = () => {
 
         if (orderType === 'delivery' && shippingCost === 0 && distanceKm === 0) {
             toast.error('Calculando costo de envío, por favor espera...')
+            return
+        }
+
+        // Check if Cash Register is OPEN (Blocker)
+        // User Request: "No se pueden recibir pedidos sin haber abierto la caja"
+        const { data: openRegister, error: regError } = await supabase
+            .from('cash_registers')
+            .select('id')
+            .eq('status', 'open')
+            .maybeSingle() // Use maybeSingle to avoid 406 error log if possible, or handle error
+
+        if (!openRegister) {
+            toast.error('Lo sentimos, el local no ha abierto caja aún. Intenta nuevamente en unos minutos.', {
+                duration: 5000,
+            })
             return
         }
 
@@ -506,13 +549,19 @@ const CheckoutPage = () => {
                     <div className="bg-[var(--color-background)] p-1 rounded-xl flex border border-white/10 mb-2">
                         <button
                             onClick={() => setPaymentMethod('mercadopago')}
-                            className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${paymentMethod === 'mercadopago' ? 'bg-[#009ee3] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                            className={`flex-1 py-3 rounded-lg font-bold text-xs transition-all flex flex-col items-center justify-center gap-1 ${paymentMethod === 'mercadopago' ? 'bg-[#009ee3] text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
                         >
                             <span>💳 Mercado Pago</span>
                         </button>
                         <button
+                            onClick={() => setPaymentMethod('transfer')}
+                            className={`flex-1 py-3 rounded-lg font-bold text-xs transition-all flex flex-col items-center justify-center gap-1 ${paymentMethod === 'transfer' ? 'bg-purple-600 text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                        >
+                            <span>🏦 Transferencia</span>
+                        </button>
+                        <button
                             onClick={() => setPaymentMethod('cash')}
-                            className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${paymentMethod === 'cash' ? 'bg-green-600 text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
+                            className={`flex-1 py-3 rounded-lg font-bold text-xs transition-all flex flex-col items-center justify-center gap-1 ${paymentMethod === 'cash' ? 'bg-green-600 text-white shadow-lg' : 'text-[var(--color-text-muted)]'}`}
                         >
                             <span>💵 Efectivo</span>
                         </button>
@@ -521,10 +570,11 @@ const CheckoutPage = () => {
                     <button onClick={handleCheckout} className={`w-full text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all
                         ${!orderType ? 'bg-gray-600 cursor-not-allowed opacity-50' :
                             paymentMethod === 'mercadopago' ? 'bg-[#009ee3] hover:bg-[#009ee3]/90 shadow-blue-900/20' :
-                                'bg-green-600 hover:bg-green-500 shadow-green-900/20'}`}>
+                                paymentMethod === 'transfer' ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/20' :
+                                    'bg-green-600 hover:bg-green-500 shadow-green-900/20'}`}>
                         {orderType === 'delivery' ?
-                            (paymentMethod === 'mercadopago' ? 'Pagar con Mercado Pago' : 'Confirmar Pedido (Efectivo)') :
-                            (paymentMethod === 'mercadopago' ? 'Pagar Retiro con MP' : 'Confirmar Pedido (Efectivo)')
+                            (paymentMethod === 'mercadopago' ? 'Pagar con Mercado Pago' : paymentMethod === 'transfer' ? 'Confirmar (Transferencia)' : 'Confirmar (Efectivo)') :
+                            (paymentMethod === 'mercadopago' ? 'Pagar Retiro con MP' : paymentMethod === 'transfer' ? 'Confirmar (Transferencia)' : 'Confirmar (Efectivo)')
                         }
                     </button>
                 </div>
@@ -540,7 +590,7 @@ const CheckoutPage = () => {
                     address: address, // Pass address
                     customerName: user?.user_metadata?.name || 'Cliente',
                     customerPhone: user?.phone || '', // User phone if available
-                    paymentMethod: paymentMethod === 'mercadopago' ? 'Mercado Pago' : 'Efectivo'
+                    paymentMethod: paymentMethod === 'mercadopago' ? 'Mercado Pago' : paymentMethod === 'transfer' ? 'Transferencia' : 'Efectivo'
                 }}
                 onConfirm={() => {
                     setShowConfirmModal(false)

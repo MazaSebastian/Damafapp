@@ -69,15 +69,26 @@ const CashManager = () => {
         setMovements(data)
 
         // Calculate Stats
-        const sales = data.filter(m => m.type === 'sale').reduce((sum, m) => sum + Number(m.amount), 0)
+        // Calculate Stats
+        // Sales split by type (detecting from description for now as 'type' column is generic 'sale')
+        const salesCash = data.filter(m => m.type === 'sale' && !m.description?.includes('Transf')).reduce((sum, m) => sum + Number(m.amount), 0)
+        const salesTransfer = data.filter(m => m.type === 'sale' && m.description?.includes('Transf')).reduce((sum, m) => sum + Number(m.amount), 0)
+
         const expenses = data.filter(m => m.type === 'expense').reduce((sum, m) => sum + Number(m.amount), 0)
         const withdrawals = data.filter(m => m.type === 'withdrawal').reduce((sum, m) => sum + Number(m.amount), 0)
         const deposits = data.filter(m => m.type === 'deposit').reduce((sum, m) => sum + Number(m.amount), 0)
 
-        const calculated = Number(opening) + sales + deposits - expenses - withdrawals
+        // Total Theoretical = Initial + Cash Sales + Deposits - Expenses - Withdrawals
+        // (Transfer sales depend on if we want to count them in the DRAWER money or just as daily revenue)
+        // User said: "sumarse al arqueo, y luego logica que discrimine".
+        // Usually, 'Arqueo de Caja' matches PHYSICAL money. Transfer is digital.
+        // If we add Transfer to 'CalculatedTotal', the closing count (physical) will never match.
+        // SO: We show Transfer as a separate revenue stat, but NOT added to the "Effective Cash in Drawer".
+
+        const calculated = Number(opening) + salesCash + deposits - expenses - withdrawals
 
         setStats({
-            sales, expenses, withdrawals, deposits, calculatedTotal: calculated
+            salesCash, salesTransfer, expenses, withdrawals, deposits, calculatedTotal: calculated
         })
     }
 
@@ -217,11 +228,15 @@ const CashManager = () => {
                         <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/10">
                             <div>
                                 <p className="text-xs text-[var(--color-text-muted)]">Inicio</p>
-                                <p className="font-mono text-lg">${Number(currentRegister.opening_amount).toFixed(2)}</p>
+                                <p className="font-mono text-lg text-white">${Number(currentRegister.opening_amount).toFixed(2)}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-[var(--color-text-muted)]">Ventas Efectivo</p>
-                                <p className="font-mono text-lg text-green-400">+${stats.sales.toFixed(2)}</p>
+                                <p className="font-mono text-lg text-green-400">+${stats.salesCash.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-[var(--color-text-muted)]">Transferencias</p>
+                                <p className="font-mono text-lg text-purple-400">+${stats.salesTransfer.toFixed(2)}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-[var(--color-text-muted)]">Gastos/Retiros</p>
