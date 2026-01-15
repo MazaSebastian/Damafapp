@@ -70,20 +70,22 @@ const KDSPage = () => {
     if (loading) return <div className="h-screen flex items-center justify-center bg-gray-900 text-white"><Loader2 className="animate-spin w-10 h-10 text-orange-500" /></div>
 
     return (
-        <div className="h-screen bg-gray-900 text-white flex flex-col overflow-hidden">
+        <div className="h-screen bg-[var(--color-background)] text-white flex flex-col overflow-hidden font-[var(--font-sans)]">
             {/* Simple Top Bar */}
-            <div className="bg-black/40 backdrop-blur-md p-4 flex justify-between items-center border-b border-white/5 z-10">
+            <div className="bg-[var(--color-surface)]/80 backdrop-blur-xl p-4 flex justify-between items-center border-b border-white/10 z-10 shadow-lg">
                 <div className="flex items-center gap-4">
-                    <Link to="/admin" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                    <Link to="/admin" className="p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/5">
                         <ArrowLeft className="w-6 h-6" />
                     </Link>
-                    <h1 className="text-2xl font-black uppercase tracking-widest text-[var(--color-secondary)]">KDS Cocina</h1>
+                    <h1 className="text-2xl font-black uppercase tracking-widest text-white drop-shadow-md">
+                        KDS <span className="text-[var(--color-secondary)]">Cocina</span>
+                    </h1>
                 </div>
                 <div className="flex gap-4">
-                    <div className="px-4 py-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20 text-yellow-500 font-bold">
+                    <div className="px-4 py-2 bg-yellow-500/20 rounded-xl border border-yellow-500/30 text-yellow-400 font-bold shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                         Pendientes: {orders.filter(o => o.status === 'pending').length}
                     </div>
-                    <div className="px-4 py-2 bg-orange-500/10 rounded-lg border border-orange-500/20 text-orange-500 font-bold">
+                    <div className="px-4 py-2 bg-[var(--color-secondary)]/20 rounded-xl border border-[var(--color-secondary)]/30 text-[var(--color-secondary)] font-bold shadow-[0_0_15px_rgba(214,67,34,0.1)]">
                         En Marcha: {orders.filter(o => o.status === 'cooking').length}
                     </div>
                 </div>
