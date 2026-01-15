@@ -20,21 +20,23 @@ import CouponsPage from './pages/CouponsPage'
 import ProfilePage from './pages/ProfilePage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
-import AreaSelector from './pages/AreaSelector'
+import DeliveryDashboard from './components/DeliveryDashboard'
+import RiderInterface from './components/RiderInterface'
+import { CartProvider } from './context/CartContext'
 import KDSPage from './pages/KDSPage'
 
-// ... (in AnimatedRoutes)
-        <Route path="/areas" element={
-          <ProtectedRoute role="admin">
-            <PageTransition><AreaSelector /></PageTransition>
-          </ProtectedRoute>
-        } />
+const AnimatedRoutes = () => {
+  const location = useLocation()
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/kds" element={
           <ProtectedRoute role="admin">
-             <KDSPage />
+            <KDSPage />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />

@@ -74,7 +74,7 @@ const KDSPage = () => {
             {/* Simple Top Bar */}
             <div className="bg-black/40 backdrop-blur-md p-4 flex justify-between items-center border-b border-white/5 z-10">
                 <div className="flex items-center gap-4">
-                    <Link to="/areas" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                    <Link to="/admin" className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
                         <ArrowLeft className="w-6 h-6" />
                     </Link>
                     <h1 className="text-2xl font-black uppercase tracking-widest text-[var(--color-secondary)]">KDS Cocina</h1>
