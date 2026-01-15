@@ -15,6 +15,7 @@ const OrderModal = ({ isOpen, onClose }) => {
 
     const [selectedBurger, setSelectedBurger] = useState(null)
     const [selectedModifiers, setSelectedModifiers] = useState({}) // { modifierId: quantity }
+    const [removedIngredients, setRemovedIngredients] = useState([]) // List of strings
     const [selectedSide, setSelectedSide] = useState(null)
 
     const [loading, setLoading] = useState(true)
@@ -26,7 +27,7 @@ const OrderModal = ({ isOpen, onClose }) => {
         if (isOpen) {
             resetModal()
             fetchBurgers()
-            fetchModifiers()
+            // fetchModifiers() removed, we fetch on burger select
         }
     }, [isOpen])
 
@@ -34,6 +35,7 @@ const OrderModal = ({ isOpen, onClose }) => {
         setStep(1)
         setSelectedBurger(null)
         setSelectedModifiers({})
+        setRemovedIngredients([])
         setSelectedSide(null)
         setProducts([])
         setModifiers([])
@@ -51,9 +53,28 @@ const OrderModal = ({ isOpen, onClose }) => {
         setLoading(false)
     }
 
-    const fetchModifiers = async () => {
-        const { data } = await supabase.from('modifiers').select('*').eq('is_available', true).order('name')
-        if (data) setModifiers(data)
+    const fetchProductModifiers = async (productId) => {
+        // Fetch modifiers linked to this product via product_modifiers table
+        const { data, error } = await supabase
+            .from('product_modifiers')
+            .select(`
+                modifier_id,
+                modifiers ( * )
+            `)
+            .eq('product_id', productId)
+
+        if (data) {
+            // Filter out unavailable ones and map properties
+            const activeModifiers = data
+                .map(item => item.modifiers)
+                .filter(m => m && m.is_available)
+                .sort((a, b) => a.name.localeCompare(b.name))
+
+            setModifiers(activeModifiers)
+        } else {
+            console.error(error)
+            setModifiers([])
+        }
     }
 
     const fetchSides = async () => {
@@ -78,6 +99,7 @@ const OrderModal = ({ isOpen, onClose }) => {
 
     const handleSelectBurger = (burger) => {
         setSelectedBurger(burger)
+        fetchProductModifiers(burger.id)
         setStep(1.5) // Go to modifiers
     }
 
@@ -101,11 +123,18 @@ const OrderModal = ({ isOpen, onClose }) => {
             return { ...mod, quantity: qty }
         }).filter(m => m.quantity > 0)
 
+        // Construct notes including removable ingredients
+        let notesParts = ['Desde modal rápido']
+        if (removedIngredients.length > 0) {
+            notesParts.push(`SIN: ${removedIngredients.join(', ')}`)
+        }
+
         const comboItem = {
-            main: { ...selectedBurger, notes: 'Desde modal rápido' },
+            main: { ...selectedBurger, notes: notesParts.join('. ') },
             modifiers: modifiersList,
             side: selectedSide ? { ...selectedSide } : null,
             drink: drink ? { ...drink } : null,
+            removed_ingredients: removedIngredients // Also store structured
         }
 
         addToCart(comboItem)
@@ -120,6 +149,7 @@ const OrderModal = ({ isOpen, onClose }) => {
         else if (step === 1.5) {
             setStep(1)
             setSelectedModifiers({})
+            setRemovedIngredients([])
         }
     }
 
@@ -132,6 +162,16 @@ const OrderModal = ({ isOpen, onClose }) => {
                 return rest
             }
             return { ...prev, [modId]: next }
+        })
+    }
+
+    const toggleIngredientRemoval = (ingredient) => {
+        setRemovedIngredients(prev => {
+            if (prev.includes(ingredient)) {
+                return prev.filter(i => i !== ingredient)
+            } else {
+                return [...prev, ingredient]
+            }
         })
     }
 
@@ -223,7 +263,35 @@ const OrderModal = ({ isOpen, onClose }) => {
                                                 </div>
                                             </div>
 
+                                            {/* Removable Ingredients Section */}
+                                            {selectedBurger?.removable_ingredients?.length > 0 && (
+                                                <div className="bg-[var(--color-surface)] p-4 rounded-xl border border-white/5">
+                                                    <h4 className="font-bold text-white mb-3 text-sm flex items-center gap-2">
+                                                        🚫 ¿Le sacamos algo?
+                                                    </h4>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {selectedBurger.removable_ingredients.map(ing => (
+                                                            <label key={ing} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${removedIngredients.includes(ing) ? 'bg-red-500/10 border-red-500/50' : 'bg-black/20 border-transparent hover:bg-white/5'}`}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={removedIngredients.includes(ing)}
+                                                                    onChange={() => toggleIngredientRemoval(ing)}
+                                                                    className="accent-red-500 w-4 h-4"
+                                                                />
+                                                                <span className={`text-sm font-medium ${removedIngredients.includes(ing) ? 'text-red-400' : 'text-gray-300'}`}>
+                                                                    Sin {ing}
+                                                                </span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Extras Section */}
                                             <div className="space-y-3">
+                                                <h4 className="font-bold text-white text-sm flex items-center gap-2 px-1">
+                                                    🥓 ¿Algún extra?
+                                                </h4>
                                                 {modifiers.map(mod => {
                                                     const qty = selectedModifiers[mod.id] || 0
                                                     return (
@@ -251,7 +319,7 @@ const OrderModal = ({ isOpen, onClose }) => {
                                                         </div>
                                                     )
                                                 })}
-                                                {modifiers.length === 0 && <p className="text-center text-[var(--color-text-muted)] py-4">No hay extras disponibles.</p>}
+                                                {modifiers.length === 0 && <p className="text-center text-[var(--color-text-muted)] py-4 text-sm">No hay extras disponibles para este combo.</p>}
                                             </div>
 
                                             <button
