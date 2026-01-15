@@ -20,16 +20,21 @@ import CouponsPage from './pages/CouponsPage'
 import ProfilePage from './pages/ProfilePage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
-import DeliveryDashboard from './components/DeliveryDashboard'
-import RiderInterface from './components/RiderInterface'
-import { CartProvider } from './context/CartContext'
+import AreaSelector from './pages/AreaSelector'
+import KDSPage from './pages/KDSPage'
 
-const AnimatedRoutes = () => {
-  const location = useLocation()
-
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+// ... (in AnimatedRoutes)
+        <Route path="/areas" element={
+          <ProtectedRoute role="admin">
+            <PageTransition><AreaSelector /></PageTransition>
+          </ProtectedRoute>
+        } />
+        <Route path="/kds" element={
+          <ProtectedRoute role="admin">
+             <KDSPage />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
@@ -51,8 +56,8 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><PrivacyPolicyPage /></PageTransition>} />
         <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
+      </Routes >
+    </AnimatePresence >
   )
 }
 
