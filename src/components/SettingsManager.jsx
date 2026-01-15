@@ -125,13 +125,13 @@ const SettingsManager = () => {
                         <p className="font-bold mb-1">Variables disponibles:</p>
                         <p className="opacity-80">
                             Use estas etiquetas y el sistema las reemplazará automáticamente:<br />
-                            <code className="bg-black/30 px-1 rounded">{{ id }}</code> (ID Pedido),
-                            <code className="bg-black/30 px-1 rounded ml-1">{{ cliente }}</code> (Nombre),
-                            <code className="bg-black/30 px-1 rounded ml-1">{{ fecha }}</code>,
-                            <code className="bg-black/30 px-1 rounded ml-1">{{ entrega }}</code> (Dirección/Retiro),
-                            <code className="bg-black/30 px-1 rounded ml-1">{{ pago }}</code> (Método),
-                            <code className="bg-black/30 px-1 rounded ml-1">{{ items }}</code> (Lista productos),
-                            <code className="bg-black/30 px-1 rounded ml-1">{{ total }}</code>
+                            <code className="bg-black/30 px-1 rounded">{`{{id}}`}</code> (ID Pedido),
+                            <code className="bg-black/30 px-1 rounded ml-1">{`{{cliente}}`}</code> (Nombre),
+                            <code className="bg-black/30 px-1 rounded ml-1">{`{{fecha}}`}</code>,
+                            <code className="bg-black/30 px-1 rounded ml-1">{`{{entrega}}`}</code> (Dirección/Retiro),
+                            <code className="bg-black/30 px-1 rounded ml-1">{`{{pago}}`}</code> (Método),
+                            <code className="bg-black/30 px-1 rounded ml-1">{`{{items}}`}</code> (Lista productos),
+                            <code className="bg-black/30 px-1 rounded ml-1">{`{{total}}`}</code>
                         </p>
                     </div>
                 </div>
