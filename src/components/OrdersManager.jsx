@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { Loader2, Check, Clock, X, ChefHat, Bell, Trash2 } from 'lucide-react'
+import { Loader2, Check, Clock, X, ChefHat, Bell, Trash2, Banknote, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 
 const OrdersManager = () => {
@@ -224,6 +224,13 @@ const OrdersManager = () => {
                                         📍 {order.delivery_address}
                                     </div>
                                 )}
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-1 mt-1 text-xs font-medium text-[var(--color-primary)]">
+                                    {order.payment_method === 'cash' && <><Banknote className="w-3 h-3" /> Efectivo</>}
+                                    {order.payment_method === 'transfer' && <><Banknote className="w-3 h-3" /> Transferencia</>}
+                                    {order.payment_method === 'mercadopago' && <><CreditCard className="w-3 h-3" /> MercadoPago</>}
+                                </div>
                             </div>
                             <div className="text-right">
                                 <span className="font-bold text-lg block">${order.total}</span>
