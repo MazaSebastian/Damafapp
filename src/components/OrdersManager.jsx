@@ -73,7 +73,7 @@ const OrdersManager = () => {
     }
 
     const deleteOrder = (orderId) => {
-        toast('¿Eliminar pedido permanentemente?', {
+        toast.warning('¿Eliminar pedido permanentemente?', {
             description: 'Esta acción no se puede deshacer.',
             action: {
                 label: 'Eliminar',
@@ -99,7 +99,7 @@ const OrdersManager = () => {
     }
 
     const clearHistory = () => {
-        toast('¿Limpiar historial completo?', {
+        toast.warning('¿Limpiar historial completo?', {
             description: 'Se borrarán todos los pedidos finalizados y cancelados.',
             action: {
                 label: 'Confirmar Limpieza',
@@ -127,7 +127,7 @@ const OrdersManager = () => {
     }
 
     const clearAllOrders = () => {
-        toast('¿BORRAR ABSOLUTAMENTE TODO?', {
+        toast.error('¿BORRAR ABSOLUTAMENTE TODO?', {
             description: '¡Cuidado! Esto eliminará TODOS los pedidos, incluidos los que están EN CURSO (Pendientes, Cocinando...).',
             action: {
                 label: 'SÍ, BORRAR TODO',

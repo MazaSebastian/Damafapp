@@ -79,7 +79,7 @@ const RiderInterface = () => {
         }
         setIsTracking(false)
         setActiveOrderId(null)
-        toast('🛑 Transmisión detenida')
+        toast.info('🛑 Transmisión detenida')
     }
 
     const markDelivered = async (orderId) => {

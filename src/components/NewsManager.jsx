@@ -30,7 +30,7 @@ const NewsManager = () => {
     }
 
     const handleDelete = (id) => {
-        toast('¿Eliminar esta noticia?', {
+        toast.info('¿Eliminar esta noticia?', {
             description: 'Esta acción no se puede deshacer.',
             action: {
                 label: 'Eliminar',

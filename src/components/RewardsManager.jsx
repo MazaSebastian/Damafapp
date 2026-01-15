@@ -29,7 +29,7 @@ const RewardsManager = () => {
     }
 
     const handleDelete = (id) => {
-        toast('¿Eliminar este premio?', {
+        toast.info('¿Eliminar este premio?', {
             description: 'Esta acción no se puede deshacer.',
             action: {
                 label: 'Eliminar',
