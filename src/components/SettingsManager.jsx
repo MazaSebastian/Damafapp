@@ -61,9 +61,9 @@ const SettingsManager = () => {
         'store_lat': 'Latitud del Local',
         'store_lng': 'Longitud del Local',
         'store_schedule_text': 'Texto Horarios (Footer)',
-        'store_schedule_text': 'Texto Horarios (Footer)',
         'store_slogan': 'Slogan del Local',
         'store_phone': 'Teléfono / WhatsApp (549...)',
+        'store_whatsapp_template': 'Plantilla de Mensaje',
         'store_schedule': 'Configuración de Horarios Automáticos',
         'loyalty_earning_divisor': 'Divisor de Puntos (Monto para 1 estrella)',
         'loyalty_level_green': 'Nivel Green (Estrellas necesarias)',
@@ -79,7 +79,8 @@ const SettingsManager = () => {
     const getSettingsByCategory = (category) => {
         return settings.filter(s => {
             // Updated to exclude legacy settings if they still exist in DB
-            if (category === 'tienda') return s.key.startsWith('store_') && s.key !== 'store_mode' && s.key !== 'store_status'
+            if (category === 'tienda') return s.key.startsWith('store_') && s.key !== 'store_mode' && s.key !== 'store_status' && s.key !== 'store_phone' && s.key !== 'store_whatsapp_template'
+            if (category === 'whatsapp') return s.key === 'store_phone' || s.key === 'store_whatsapp_template'
             if (category === 'delivery') return s.key.startsWith('delivery_')
             if (category === 'loyalty') return s.key.startsWith('loyalty_') || s.key.startsWith('stars_')
             return false
@@ -88,6 +89,7 @@ const SettingsManager = () => {
 
     const tabs = [
         { id: 'tienda', label: 'Tienda' },
+        { id: 'whatsapp', label: 'WhatsApp' },
         { id: 'delivery', label: 'Delivery' },
         { id: 'loyalty', label: 'Fidelización' }
     ]
@@ -105,6 +107,33 @@ const SettingsManager = () => {
                         value={setting.value}
                         onChange={(newValue) => handleChange(setting.key, newValue)}
                     />
+                </div>
+            )
+        }
+
+        // WhatsApp Template Special UI
+        if (setting.key === 'store_whatsapp_template') {
+            return (
+                <div className="space-y-2">
+                    <textarea
+                        value={setting.value}
+                        onChange={(e) => handleChange(setting.key, e.target.value)}
+                        rows={10}
+                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[var(--color-primary)] resize-y font-mono text-sm leading-relaxed"
+                    />
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-200">
+                        <p className="font-bold mb-1">Variables disponibles:</p>
+                        <p className="opacity-80">
+                            Use estas etiquetas y el sistema las reemplazará automáticamente:<br />
+                            <code className="bg-black/30 px-1 rounded">{{ id }}</code> (ID Pedido),
+                            <code className="bg-black/30 px-1 rounded ml-1">{{ cliente }}</code> (Nombre),
+                            <code className="bg-black/30 px-1 rounded ml-1">{{ fecha }}</code>,
+                            <code className="bg-black/30 px-1 rounded ml-1">{{ entrega }}</code> (Dirección/Retiro),
+                            <code className="bg-black/30 px-1 rounded ml-1">{{ pago }}</code> (Método),
+                            <code className="bg-black/30 px-1 rounded ml-1">{{ items }}</code> (Lista productos),
+                            <code className="bg-black/30 px-1 rounded ml-1">{{ total }}</code>
+                        </p>
+                    </div>
                 </div>
             )
         }

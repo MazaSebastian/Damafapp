@@ -229,27 +229,38 @@ const CheckoutPage = () => {
                 window.location.href = paymentData.init_point
             } else {
                 // CASH OR TRANSFER FLOW -> WHATSAPP REDIRECT
+                // CASH OR TRANSFER FLOW -> WHATSAPP REDIRECT
                 const waNumber = deliverySettings.store_phone || '5491100000000' // Fallback
+                const waTemplate = deliverySettings.store_whatsapp_template ||
+                    "Hola! Quiero confirmar mi pedido *#{{id}}* 🍔\n\n📅 *Fecha:* {{fecha}}\n👤 *Cliente:* {{cliente}}\n📍 *Entrega:* {{entrega}}\n💵 *Pago:* {{pago}}\n\n📝 *Pedido:*\n{{items}}\n\n💰 *Total a Pagar:* ${{total}}"
+
                 const orderDate = new Date().toLocaleDateString()
+                const customerName = user?.user_metadata?.name || 'Invitado' // Fallback handled later if needed
+                const deliveryInfo = orderType === 'delivery' ? `Delivery (${address})` : 'Retiro en Local'
+                const paymentInfo = paymentMethod === 'transfer' ? 'Transferencia Bancaria' : 'Efectivo'
 
-                let message = `Hola! Quiero confirmar mi pedido *#${order.id.slice(0, 8)}* 🍔\n\n`
-                message += `📅 *Fecha:* ${orderDate}\n`
-                message += `👤 *Cliente:* ${user?.user_metadata?.name || 'Invitado'}\n`
-                message += `📍 *Entrega:* ${orderType === 'delivery' ? 'Delivery (' + address + ')' : 'Retiro en Local'}\n`
-                message += `💵 *Pago:* ${paymentMethod === 'transfer' ? 'Transferencia Bancaria' : 'Efectivo'}\n\n`
-
-                if (paymentMethod === 'transfer') {
-                    message += `ℹ️ *Solicito datos bancarios para transferir.*\n\n`
-                }
-
-                message += `📝 *Pedido:*\n`
+                // Build Items String
+                let itemsList = ''
                 cart.forEach(item => {
-                    message += `- ${item.main.name} x1`
-                    if (item.modifiers?.length) message += ` (${item.modifiers.map(m => m.name).join(', ')})`
-                    message += '\n'
+                    itemsList += `- ${item.main.name} x1`
+                    if (item.modifiers?.length) itemsList += ` (${item.modifiers.map(m => m.name).join(', ')})`
+                    itemsList += '\n'
                 })
 
-                message += `\n💰 *Total a Pagar:* $${finalTotal}`
+                // Replace Variables
+                let message = waTemplate
+                    .replace('{{id}}', order.id.slice(0, 8))
+                    .replace('{{fecha}}', orderDate)
+                    .replace('{{cliente}}', customerName)
+                    .replace('{{entrega}}', deliveryInfo)
+                    .replace('{{pago}}', paymentInfo)
+                    .replace('{{items}}', itemsList)
+                    .replace('{{total}}', finalTotal)
+
+                // Append Transfer Info if needed and not present in template (optional check, but usually good to force it)
+                if (paymentMethod === 'transfer' && !message.includes('datos bancarios')) {
+                    message += `\n\nℹ️ *Solicito datos bancarios para transferir.*`
+                }
 
                 const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`
 
