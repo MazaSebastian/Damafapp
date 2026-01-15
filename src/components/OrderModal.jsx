@@ -7,12 +7,14 @@ import { useCart } from '../context/CartContext'
 import { toast } from 'sonner'
 
 const OrderModal = ({ isOpen, onClose }) => {
-    const [step, setStep] = useState(1) // 1: Burger, 2: Sides, 3: Drinks
+    const [step, setStep] = useState(1) // 1: Burger, 1.5: Modifiers, 2: Sides, 3: Drinks
     const [products, setProducts] = useState([])
+    const [modifiers, setModifiers] = useState([])
     const [sides, setSides] = useState([])
     const [drinks, setDrinks] = useState([])
 
     const [selectedBurger, setSelectedBurger] = useState(null)
+    const [selectedModifiers, setSelectedModifiers] = useState({}) // { modifierId: quantity }
     const [selectedSide, setSelectedSide] = useState(null)
 
     const [loading, setLoading] = useState(true)
@@ -24,14 +26,17 @@ const OrderModal = ({ isOpen, onClose }) => {
         if (isOpen) {
             resetModal()
             fetchBurgers()
+            fetchModifiers()
         }
     }, [isOpen])
 
     const resetModal = () => {
         setStep(1)
         setSelectedBurger(null)
+        setSelectedModifiers({})
         setSelectedSide(null)
         setProducts([])
+        setModifiers([])
         setSides([])
         setDrinks([])
     }
@@ -46,9 +51,13 @@ const OrderModal = ({ isOpen, onClose }) => {
         setLoading(false)
     }
 
+    const fetchModifiers = async () => {
+        const { data } = await supabase.from('modifiers').select('*').eq('is_available', true).order('name')
+        if (data) setModifiers(data)
+    }
+
     const fetchSides = async () => {
         setLoading(true)
-        // Find categories like Papas or Acompañamientos
         const { data: catData } = await supabase.from('categories').select('id').or('name.ilike.%papa%,name.ilike.%acompañamiento%').limit(1).single()
         if (catData) {
             const { data } = await supabase.from('products').select('*').eq('category_id', catData.id).eq('is_available', true).order('price', { ascending: true })
@@ -69,6 +78,10 @@ const OrderModal = ({ isOpen, onClose }) => {
 
     const handleSelectBurger = (burger) => {
         setSelectedBurger(burger)
+        setStep(1.5) // Go to modifiers
+    }
+
+    const handleModifiersNext = () => {
         setStep(2)
         fetchSides()
     }
@@ -80,34 +93,60 @@ const OrderModal = ({ isOpen, onClose }) => {
     }
 
     const handleSelectDrink = (drink) => {
-        // Finalize Order
         if (!selectedBurger) return
 
-        // Create a single Combo item for the cart
-        // CartContext expects structure: { main: product, modifiers: [], side: product, drink: product }
+        // Format modifiers for cart
+        const modifiersList = Object.entries(selectedModifiers).map(([modId, qty]) => {
+            const mod = modifiers.find(m => m.id === modId)
+            return { ...mod, quantity: qty }
+        }).filter(m => m.quantity > 0)
+
         const comboItem = {
             main: { ...selectedBurger, notes: 'Desde modal rápido' },
-            modifiers: [], // Initialize modifiers for the burger
+            modifiers: modifiersList,
             side: selectedSide ? { ...selectedSide } : null,
             drink: drink ? { ...drink } : null,
-            // You can add a specific type or ID if needed by your CartContext logic, 
-            // usually CartContext handles ID generation.
         }
 
         addToCart(comboItem)
-
         toast.success('¡Combo completo agregado!')
         onClose()
         navigate('/checkout')
     }
 
     const handleBack = () => {
-        if (step === 3) {
-            setStep(2)
-            // Sides are already fetched, just need to ensure they render
-        } else if (step === 2) {
+        if (step === 3) setStep(2)
+        else if (step === 2) setStep(1.5)
+        else if (step === 1.5) {
             setStep(1)
+            setSelectedModifiers({})
         }
+    }
+
+    const updateModifierQuantity = (modId, delta) => {
+        setSelectedModifiers(prev => {
+            const current = prev[modId] || 0
+            const next = Math.max(0, current + delta)
+            if (next === 0) {
+                const { [modId]: _, ...rest } = prev
+                return rest
+            }
+            return { ...prev, [modId]: next }
+        })
+    }
+
+    // Calculation helper
+    const getCurrentTotal = () => {
+        let total = selectedBurger?.price || 0
+
+        // Add modifiers
+        Object.entries(selectedModifiers).forEach(([modId, qty]) => {
+            const mod = modifiers.find(m => m.id === modId)
+            if (mod) total += mod.price * qty
+        })
+
+        if (selectedSide) total += selectedSide.price
+        return total
     }
 
     // Helper to get current list based on step
@@ -124,7 +163,6 @@ const OrderModal = ({ isOpen, onClose }) => {
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -133,7 +171,6 @@ const OrderModal = ({ isOpen, onClose }) => {
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
                     />
 
-                    {/* Modal Content */}
                     <motion.div
                         initial={{ y: "100%" }}
                         animate={{ y: 0 }}
@@ -152,10 +189,12 @@ const OrderModal = ({ isOpen, onClose }) => {
                                 <div>
                                     <h2 className="text-xl md:text-2xl font-bold text-white italic leading-tight">
                                         {step === 1 && <>¡Elegí tu burga, <span className="text-[var(--color-secondary)]">campeón!</span> 🍔</>}
+                                        {step === 1.5 && <>¡Hacetela <span className="text-[var(--color-secondary)]">gigante!</span> 🥓</>}
                                         {step === 2 && <>¿Con qué la vas a <span className="text-[var(--color-secondary)]">acompañar</span>, rey? 🍟</>}
                                         {step === 3 && <>¿Y para <span className="text-[var(--color-secondary)]">bajarla</span>? 🥤</>}
                                     </h2>
                                     {step === 1 && <p className="text-[var(--color-text-muted)] text-sm">Las mejores de la ciudad</p>}
+                                    {step === 1.5 && <p className="text-[var(--color-text-muted)] text-sm">Agregale lo que quieras</p>}
                                 </div>
                             </div>
                             <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
@@ -170,76 +209,127 @@ const OrderModal = ({ isOpen, onClose }) => {
                                     <Loader2 className="w-8 h-8 text-[var(--color-secondary)] animate-spin" />
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-3">
-                                    {currentList.map(product => (
-                                        <div
-                                            key={product.id}
-                                            onClick={() => {
-                                                if (step === 1) handleSelectBurger(product)
-                                                else if (step === 2) handleSelectSide(product)
-                                                else if (step === 3) handleSelectDrink(product)
-                                            }}
-                                            className="bg-[var(--color-surface)] rounded-xl overflow-hidden border border-white/5 active:scale-95 transition-transform cursor-pointer relative group"
-                                        >
-                                            <div className="aspect-square bg-white/5 relative">
-                                                {product.image_url ? (
-                                                    product.media_type === 'video' ? (
-                                                        <video src={product.image_url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-                                                    ) : (
-                                                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                <>
+                                    {step === 1.5 ? (
+                                        // MODIFIERS VIEW
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
+                                                <div className="w-16 h-16 rounded-lg bg-black/20 overflow-hidden">
+                                                    {selectedBurger?.image_url && <img src={selectedBurger.image_url} className="w-full h-full object-cover" />}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-white mb-1">{selectedBurger?.name}</h3>
+                                                    <p className="text-[var(--color-secondary)] font-bold text-lg">${getCurrentTotal().toLocaleString()}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {modifiers.map(mod => {
+                                                    const qty = selectedModifiers[mod.id] || 0
+                                                    return (
+                                                        <div key={mod.id} className="bg-[var(--color-surface)] p-3 rounded-xl border border-white/5 flex items-center justify-between">
+                                                            <div>
+                                                                <p className="font-bold text-white">{mod.name}</p>
+                                                                <p className="text-[var(--color-secondary)] text-sm font-bold">+${mod.price}</p>
+                                                            </div>
+                                                            <div className="flex items-center gap-3 bg-black/30 rounded-lg p-1">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); updateModifierQuantity(mod.id, -1) }}
+                                                                    className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${qty > 0 ? 'bg-white/10 hover:bg-white/20 text-white' : 'text-gray-600'}`}
+                                                                    disabled={qty === 0}
+                                                                >
+                                                                    -
+                                                                </button>
+                                                                <span className="w-6 text-center font-bold text-white">{qty}</span>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); updateModifierQuantity(mod.id, 1) }}
+                                                                    className="w-8 h-8 rounded-md bg-[var(--color-secondary)] text-white flex items-center justify-center hover:bg-orange-600"
+                                                                >
+                                                                    +
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     )
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-4xl">
-                                                        {step === 1 ? '🍔' : step === 2 ? '🍟' : '🥤'}
-                                                    </div>
-                                                )}
-
-                                                {/* Hover Description - ONLY FOR STEP 1 */}
-                                                {step === 1 && (
-                                                    <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] flex items-center justify-center p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                                                        <p className="text-white text-xs text-center font-medium leading-relaxed line-clamp-5">
-                                                            {product.description || "¡Una verdadera delicia!"}
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                <button className="absolute bottom-2 right-2 bg-[var(--color-secondary)] p-1.5 rounded-full text-white shadow-lg z-20">
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
+                                                })}
+                                                {modifiers.length === 0 && <p className="text-center text-[var(--color-text-muted)] py-4">No hay extras disponibles.</p>}
                                             </div>
-                                            <div className="p-3">
-                                                <h3 className="font-bold text-sm text-white leading-tight mb-1">{product.name}</h3>
-                                                <p className="text-[var(--color-secondary)] font-bold text-sm">${product.price}</p>
-                                            </div>
+
+                                            <button
+                                                onClick={handleModifiersNext}
+                                                className="w-full bg-[var(--color-secondary)] text-white py-4 rounded-xl font-bold hover:bg-orange-600 transition-colors mt-4 shadow-lg active:scale-95 transform duration-100"
+                                            >
+                                                Siguiente Paso
+                                            </button>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        // PRODUCT LIST VIEW (Step 1, 2, 3)
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {currentList.map(product => (
+                                                <div
+                                                    key={product.id}
+                                                    onClick={() => {
+                                                        if (step === 1) handleSelectBurger(product)
+                                                        else if (step === 2) handleSelectSide(product)
+                                                        else if (step === 3) handleSelectDrink(product)
+                                                    }}
+                                                    className="bg-[var(--color-surface)] rounded-xl overflow-hidden border border-white/5 active:scale-95 transition-transform cursor-pointer relative group"
+                                                >
+                                                    <div className="aspect-square bg-white/5 relative">
+                                                        {product.image_url ? (
+                                                            product.media_type === 'video' ? (
+                                                                <video src={product.image_url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                                                            ) : (
+                                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                                            )
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-4xl">
+                                                                {step === 1 ? '🍔' : step === 2 ? '🍟' : '🥤'}
+                                                            </div>
+                                                        )}
 
-                                    {/* Option to skip side (Step 2) or drink (Step 3) */}
-                                    {(step === 2 || step === 3) && (
-                                        <div
-                                            onClick={() => step === 2 ? handleSelectSide(null) : handleSelectDrink(null)}
-                                            className="bg-[var(--color-surface)]/50 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-white/5 transition-colors"
-                                        >
-                                            <span className="text-2xl mb-2">👋</span>
-                                            <p className="text-white font-bold text-sm text-center">
-                                                {step === 2 ? 'Sin acompañamiento' : 'Sin bebida'}
-                                            </p>
-                                            <p className="text-[var(--color-text-muted)] text-xs">
-                                                {step === 2 ? 'Solo la burga' : 'Tengo sed igual'}
-                                            </p>
+                                                        {step === 1 && (
+                                                            <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] flex items-center justify-center p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                                                <p className="text-white text-xs text-center font-medium leading-relaxed line-clamp-5">
+                                                                    {product.description || "¡Una verdadera delicia!"}
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        <button className="absolute bottom-2 right-2 bg-[var(--color-secondary)] p-1.5 rounded-full text-white shadow-lg z-20">
+                                                            <Plus className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="p-3">
+                                                        <h3 className="font-bold text-sm text-white leading-tight mb-1">{product.name}</h3>
+                                                        <p className="text-[var(--color-secondary)] font-bold text-sm">${product.price}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {(step === 2 || step === 3) && (
+                                                <div
+                                                    onClick={() => step === 2 ? handleSelectSide(null) : handleSelectDrink(null)}
+                                                    className="bg-[var(--color-surface)]/50 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-white/5 transition-colors text-center"
+                                                >
+                                                    <span className="text-2xl mb-2">👋</span>
+                                                    <p className="text-white font-bold text-sm">
+                                                        {step === 2 ? 'Sin acompañamiento' : 'Sin bebida'}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
-                                </div>
-                            )}
 
-                            {(currentList.length === 0 && !loading) && (
-                                <p className="text-center text-[var(--color-text-muted)] py-10">No encontramos productos :(</p>
-                            )}
+                                    {(currentList.length === 0 && !loading && step !== 1.5) && (
+                                        <p className="text-center text-[var(--color-text-muted)] py-10">No encontramos productos :(</p>
+                                    )}
 
-                            {step === 1 && (
-                                <button onClick={() => { onClose(); navigate('/menu') }} className="w-full py-4 text-center text-[var(--color-text-muted)] text-sm underline mt-4">
-                                    Ver menú completo
-                                </button>
+                                    {step === 1 && (
+                                        <button onClick={() => { onClose(); navigate('/menu') }} className="w-full py-4 text-center text-[var(--color-text-muted)] text-sm underline mt-4">
+                                            Ver menú completo
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </motion.div>
