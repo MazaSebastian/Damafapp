@@ -255,7 +255,13 @@ const OrderModal = ({ isOpen, onClose }) => {
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
                                                 <div className="w-16 h-16 rounded-lg bg-black/20 overflow-hidden">
-                                                    {selectedBurger?.image_url && <img src={selectedBurger.image_url} className="w-full h-full object-cover" />}
+                                                    {selectedBurger?.image_url && (
+                                                        selectedBurger.media_type === 'video' ? (
+                                                            <video src={selectedBurger.image_url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                                                        ) : (
+                                                            <img src={selectedBurger.image_url} className="w-full h-full object-cover" />
+                                                        )
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <h3 className="font-bold text-white mb-1">{selectedBurger?.name}</h3>
