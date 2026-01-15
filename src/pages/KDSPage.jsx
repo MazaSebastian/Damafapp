@@ -19,7 +19,7 @@ const KDSPage = () => {
                 event: '*',
                 schema: 'public',
                 table: 'orders',
-                filter: 'status=in.(pending,cooking)'
+                filter: 'status=in.(cooking)'
             }, () => {
                 // Ideally we check payload to play sound if INSERT
                 // For now, simple refetch
@@ -44,7 +44,7 @@ const KDSPage = () => {
                 ),
                 profiles:user_id (full_name)
             `)
-            .in('status', ['pending', 'cooking'])
+            .in('status', ['cooking'])
             .order('created_at', { ascending: true }) // Oldest first (FIFO)
 
         if (data) setOrders(data)
