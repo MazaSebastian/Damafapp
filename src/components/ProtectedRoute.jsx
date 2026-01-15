@@ -17,9 +17,23 @@ const ProtectedRoute = ({ children, role }) => {
         return <Navigate to="/login" replace />
     }
 
-    if (role && userRole !== role && userRole !== 'owner') {
-        // Allow owner to access everything admin can
-        return <Navigate to="/" replace />
+    if (role) {
+        const allowedRoles = Array.isArray(role) ? role : [role]
+        // Owner always has access to everything
+        if (!allowedRoles.includes(userRole) && userRole !== 'owner' && userRole !== 'admin') {
+            // Logic update: 'admin' implies 'owner' privileges level usually, but if we restrict KDS strictly to kitchen... 
+            // Actually, usually Admin should see everything. 
+            // Let's make it simple: if userRole is owner/admin, allow.
+            // OR if userRole is in allowedRoles.
+            // But if allowedRoles=['kitchen'], and I am admin, I should probably see it? 
+            // Let's stick to strict role check unless 'owner'. Admin usually has role='admin'.
+
+            // If we want admin to access kitchen route, we pass role=['admin', 'kitchen'] to the route.
+
+            if (!allowedRoles.includes(userRole) && userRole !== 'owner') {
+                return <Navigate to="/" replace />
+            }
+        }
     }
 
     return children

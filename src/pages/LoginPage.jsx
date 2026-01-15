@@ -34,6 +34,8 @@ const LoginPage = () => {
 
             if (role === 'admin' || role === 'owner') {
                 navigate('/admin')
+            } else if (role === 'kitchen') {
+                navigate('/kds')
             } else if (role === 'rider' || role === 'driver') {
                 navigate('/rider')
             } else {
