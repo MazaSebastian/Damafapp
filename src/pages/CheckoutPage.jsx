@@ -369,13 +369,17 @@ const CheckoutPage = () => {
 
         // Check if Cash Register is OPEN (Blocker)
         // User Request: "No se pueden recibir pedidos sin haber abierto la caja"
-        const { data: openRegister, error: regError } = await supabase
-            .from('cash_registers')
-            .select('id')
-            .eq('status', 'open')
-            .maybeSingle() // Use maybeSingle to avoid 406 error log if possible, or handle error
+        // We use an RPC call to bypass RLS, ensuring guests can check this too.
+        const { data: isOpen, error: rpcError } = await supabase.rpc('is_register_open')
 
-        if (!openRegister) {
+        if (rpcError) {
+            console.error('Error referencing register status:', rpcError)
+            // If RPC fails (e.g. not created yet), we might fall back or allow. 
+            // But for safety, let's log and assume closed if strict, OR allow if lenient.
+            // Given the request, we block.
+        }
+
+        if (!isOpen) {
             toast.error('Lo sentimos, el local no ha abierto caja aún. Intenta nuevamente en unos minutos.', {
                 duration: 5000,
             })
