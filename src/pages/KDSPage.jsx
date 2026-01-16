@@ -48,37 +48,43 @@ const KDSPage = () => {
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'orders',
-                filter: 'status=in.(cooking)'
+                table: 'orders'
             }, async (payload) => {
-                // Play sound when new order arrives to kitchen or status changes to cooking
-                if (payload.eventType === 'INSERT' || (payload.eventType === 'UPDATE' && payload.new.status === 'cooking')) {
-                    playNewOrderSound()
+                console.log('KDS: Order event received', payload.eventType, payload.new?.status)
 
-                    // Fetch full order details for the alert
-                    const { data: fullOrder } = await supabase
-                        .from('orders')
-                        .select(`
-                            *,
-                            order_items (
+                // Only process if the order is now in cooking status
+                if (payload.new?.status === 'cooking') {
+                    // Play sound when new order arrives to kitchen or status changes to cooking
+                    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                        playNewOrderSound()
+
+                        // Fetch full order details for the alert
+                        const { data: fullOrder } = await supabase
+                            .from('orders')
+                            .select(`
                                 *,
-                                products (name)
-                            ),
-                            profiles:user_id (full_name)
-                        `)
-                        .eq('id', payload.new.id)
-                        .single()
+                                order_items (
+                                    *,
+                                    products (name)
+                                ),
+                                profiles:user_id (full_name)
+                            `)
+                            .eq('id', payload.new.id)
+                            .single()
 
-                    if (fullOrder) {
-                        setNewOrderAlert(fullOrder)
-                        // Auto-close after 10 seconds
-                        setTimeout(() => setNewOrderAlert(null), 10000)
+                        if (fullOrder) {
+                            setNewOrderAlert(fullOrder)
+                            // Auto-close after 10 seconds
+                            setTimeout(() => setNewOrderAlert(null), 10000)
+                        }
+
+                        toast.success('🔥 Nueva comanda en cocina!', {
+                            description: `Pedido #${payload.new.id.slice(0, 4)}`
+                        })
                     }
-
-                    toast.success('🔥 Nueva comanda en cocina!', {
-                        description: `Pedido #${payload.new.id.slice(0, 4)}`
-                    })
                 }
+
+                // Always refresh the list to catch status changes
                 fetchKDSOrders()
             })
             .subscribe()
