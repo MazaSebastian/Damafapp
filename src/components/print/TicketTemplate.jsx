@@ -1,8 +1,10 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { createPortal } from 'react-dom'
 
 const TicketTemplate = ({ order }) => {
     if (!order) return null
+    if (typeof window === 'undefined') return null
 
     // Calculate delivery cost if not explicitly stored (assuming simple diff for now or 0 if pickup)
     // Ideally we should store delivery_cost in orders table. 
@@ -13,7 +15,7 @@ const TicketTemplate = ({ order }) => {
     // Sample format uses YYYY-MM-DD
     const orderDate = new Date(order.created_at)
 
-    return (
+    return createPortal(
         <div id="ticket-print-area" className="hidden print:block bg-white text-black font-sans text-xs w-[80mm] leading-tight mx-auto">
             {/* Header timestamp - small top left in sample */}
             <div className="text-[10px] mb-2 font-mono">
@@ -101,16 +103,6 @@ const TicketTemplate = ({ order }) => {
 
             {/* Financials */}
             <div className="space-y-1 font-bold text-base mb-6">
-                {/* Ideally we separate delivery cost here if we stored it */}
-                {/* <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>${order.subtotal}</span>
-                </div> 
-                <div className="flex justify-between">
-                    <span>Delivery:</span>
-                    <span>${order.shipping}</span>
-                </div> */}
-
                 <div className="flex justify-between items-end mt-4">
                     <span className="uppercase text-xl tracking-widest">TOTAL</span>
                 </div>
@@ -122,9 +114,6 @@ const TicketTemplate = ({ order }) => {
             {/* Cash Change info - mocked if we don't have it yet */}
             {order.payment_method === 'cash' && (
                 <div className="space-y-1 font-bold text-sm mb-6">
-                    {/* Logic for "Paga con" would normally come from checkout, for now hidden unless we add that field */}
-                    {/* <div>Paga con: $-----</div>
-                   <div>Vuelto: $-----</div> */}
                 </div>
             )}
 
