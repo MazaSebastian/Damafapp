@@ -313,26 +313,50 @@ const OrdersManager = () => {
                         {/* Actions */}
                         <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
                             {order.status === 'pending' && (
-                                !order.is_paid ? (
+                                <div className="col-span-3 grid grid-cols-2 gap-2">
                                     <button
-                                        onClick={async () => {
-                                            const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
-                                            if (!error) {
-                                                setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
-                                                toast.success('Pago confirmado')
-                                            } else {
-                                                toast.error('Error al confirmar pago')
-                                            }
+                                        onClick={() => {
+                                            toast('¿Rechazar pedido?', {
+                                                action: {
+                                                    label: 'Sí, Rechazar',
+                                                    onClick: () => updateStatus(order.id, 'rejected')
+                                                },
+                                            })
                                         }}
-                                        className="col-span-3 bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2"
+                                        className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
                                     >
-                                        <Banknote className="w-4 h-4" /> Confirmar Pago ({order.payment_method === 'mercadopago' ? 'MP' : order.payment_method === 'transfer' ? 'Transf.' : 'Efvo.'})
+                                        <X className="w-4 h-4" /> Rechazar
                                     </button>
-                                ) : (
-                                    <button onClick={() => updateStatus(order.id, 'cooking')} className="col-span-3 bg-orange-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-orange-500 transition-colors flex items-center justify-center gap-2">
-                                        <ChefHat className="w-4 h-4" /> Empezar a Cocinar
-                                    </button>
-                                )
+
+                                    {!order.is_paid && order.payment_method !== 'cash' ? (
+                                        <button
+                                            onClick={async () => {
+                                                const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
+                                                if (!error) {
+                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
+                                                    toast.success('Pago confirmado')
+                                                    // Auto-accept after payment confirmation? Or let admin click accept separately?
+                                                    // Better to keep separate: Confirm Payment -> Then the "Accept/Start Cooking" button appears or is enabled.
+                                                    // Actually, let's keep the user flow simpler:
+                                                    // "Confirmar y Aceptar" if un-paid transfer?
+                                                    // Let's stick to the gate: First Confirm Payment (if needed), THEN Accept to Kitchen.
+                                                } else {
+                                                    toast.error('Error al confirmar pago')
+                                                }
+                                            }}
+                                            className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Banknote className="w-4 h-4" /> Confirmar Pago
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => updateStatus(order.id, 'cooking')}
+                                            className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Check className="w-4 h-4" /> Aceptar Pedido
+                                        </button>
+                                    )}
+                                </div>
                             )}
                             {order.status === 'cooking' && (
                                 <button onClick={() => updateStatus(order.id, 'packaging')} className="col-span-3 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
