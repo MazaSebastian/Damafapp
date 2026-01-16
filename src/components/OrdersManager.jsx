@@ -370,7 +370,10 @@ const OrdersManager = () => {
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={() => updateStatus(order.id, 'cooking')}
+                                            onClick={() => {
+                                                handlePrint(order)
+                                                updateStatus(order.id, 'cooking')
+                                            }}
                                             className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2"
                                         >
                                             <Check className="w-4 h-4" /> Aceptar Pedido
