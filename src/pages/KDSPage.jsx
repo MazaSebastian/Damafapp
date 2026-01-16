@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { Loader2, ArrowLeft, X } from 'lucide-react'
+import { Loader2, ArrowLeft, X, LogOut } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import KDSTicket from '../components/kds/KDSTicket'
 import useSound from 'use-sound' // Optional: Install if we want sounds, generic notification for now
+import { useAuth } from '../context/AuthContext'
 
 const KDSPage = () => {
+    const { signOut } = useAuth()
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [newOrderAlert, setNewOrderAlert] = useState(null) // For visual alert modal
@@ -271,6 +273,13 @@ const KDSPage = () => {
                     <div className="px-5 py-2.5 bg-[var(--color-secondary)]/10 rounded-2xl border border-[var(--color-secondary)]/20 text-[var(--color-secondary)] font-bold text-sm shadow-[0_0_20px_rgba(214,67,34,0.05)] hover:bg-[var(--color-secondary)]/15 transition-all">
                         En Marcha: {orders.filter(o => o.status === 'cooking').length}
                     </div>
+                    <button
+                        onClick={() => signOut()}
+                        className="p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl border border-red-500/20 transition-all hover:scale-105"
+                        title="Cerrar Sesión"
+                    >
+                        <LogOut className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
 
