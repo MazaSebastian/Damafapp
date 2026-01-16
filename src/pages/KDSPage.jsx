@@ -71,7 +71,10 @@ const KDSPage = () => {
                                 *,
                                 order_items (
                                     *,
-                                    products (name)
+                                    products (name),
+                                    modifiers,
+                                    side_info,
+                                    drink_info
                                 ),
                                 profiles:user_id (full_name)
                             `)
@@ -104,10 +107,19 @@ const KDSPage = () => {
         try {
             console.log('KDS: Fetching orders with status=cooking...')
 
-            // TEMPORARY: Simplified query without JOINs to test
+            // Fetch full order details including items and customer info
             const { data, error } = await supabase
                 .from('orders')
-                .select('*')
+                .select(`
+                    *,
+                    order_items (
+                        *,
+                        products (name),
+                        modifiers,
+                        side_info,
+                        drink_info
+                    )
+                `)
                 .eq('status', 'cooking')
                 .order('created_at', { ascending: true })
 

@@ -201,7 +201,7 @@ const OrdersManager = () => {
         switch (status) {
             case 'pending': return 'bg-yellow-500/20 text-yellow-500'
             case 'cooking': return 'bg-orange-500/20 text-orange-500'
-            case 'packaging': return 'bg-blue-500/20 text-blue-500'
+            case 'packaging': return 'bg-red-500/20 text-red-500 font-black animate-bounce' // Updated for emphasis
             case 'sent': return 'bg-purple-500/20 text-purple-500'
             case 'completed': return 'bg-gray-500/20 text-gray-400'
             case 'cancelled':
@@ -239,7 +239,10 @@ const OrdersManager = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {orders.map(order => (
-                    <div key={order.id} className="bg-[var(--color-surface)] rounded-2xl border border-white/5 overflow-hidden flex flex-col">
+                    <div key={order.id} className={`bg-[var(--color-surface)] rounded-2xl border overflow-hidden flex flex-col transition-all duration-300 ${order.status === 'packaging'
+                        ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'
+                        : 'border-white/5'
+                        }`}>
                         {/* Header */}
                         <div className="p-4 border-b border-white/5 bg-[var(--color-background)]/50 flex justify-between items-start">
                             <div>

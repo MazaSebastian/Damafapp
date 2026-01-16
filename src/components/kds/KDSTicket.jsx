@@ -57,58 +57,58 @@ const KDSTicket = ({ order, onAdvanceStatus }) => {
 
     return (
         <div className={`bg-[var(--color-surface)] rounded-2xl border-l-4 flex flex-col h-full min-w-[400px] max-w-[420px] flex-shrink-0 snap-start transition-all duration-300 hover:scale-[1.02] ${isCompleting
-                ? 'animate-fade-to-green border-green-500'
-                : order.status === 'cooking'
-                    ? 'animate-pulse-red animate-glow-red border-red-500'
-                    : borderColor + ' shadow-[0_4px_20px_rgba(0,0,0,0.15)]'
+            ? 'animate-fade-to-green border-green-500'
+            : order.status === 'cooking'
+                ? 'animate-pulse-red animate-glow-red border-red-500'
+                : borderColor + ' shadow-[0_4px_20px_rgba(0,0,0,0.15)]'
             }`}>
             {/* Header */}
             <div className="p-5 border-b border-white/5 flex justify-between items-start">
                 <div>
                     <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-2xl font-black text-white">{order.id.slice(0, 4)}</span>
+                        <span className="text-4xl font-black text-white">{order.id.slice(0, 4)}</span>
                         {order.status === 'cooking' && (
-                            <span className="bg-orange-500/15 text-orange-400 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border border-orange-500/20 animate-pulse shadow-[0_0_10px_rgba(251,146,60,0.1)]">
+                            <span className="bg-orange-500/15 text-orange-400 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border border-orange-500/20 animate-pulse shadow-[0_0_10px_rgba(251,146,60,0.1)]">
                                 Cocinando
                             </span>
                         )}
                     </div>
-                    <div className="text-xs text-[var(--color-text-muted)] font-medium">
+                    <div className="text-lg text-[var(--color-text-muted)] font-medium">
                         {order.profiles?.full_name || 'Invitado'}
                     </div>
                 </div>
-                <div className={`font-mono text-xl font-bold flex items-center gap-1.5 ${timerColor}`}>
-                    <Clock className="w-4 h-4" />
+                <div className={`font-mono text-2xl font-bold flex items-center gap-2 ${timerColor}`}>
+                    <Clock className="w-6 h-6" />
                     {elapsedMinutes}m
                 </div>
             </div>
 
             {/* Items */}
-            <div className="p-4 flex-1 overflow-y-auto space-y-2.5 kds-scrollbar">
+            <div className="p-4 flex-1 overflow-y-auto space-y-3 kds-scrollbar">
                 {order.order_items?.map(item => (
                     <div
                         key={item.id}
                         onClick={() => toggleItem(item.id)}
-                        className={`p-3.5 rounded-xl border cursor-pointer transition-all duration-200 ${checkedItems[item.id]
+                        className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${checkedItems[item.id]
                             ? 'bg-green-500/10 border-green-500/30 opacity-60 scale-[0.98]'
                             : 'bg-[var(--color-background)] border-white/5 hover:border-white/20 hover:bg-[var(--color-background)]/80'
                             }`}
                     >
-                        <div className="flex justify-between items-center mb-1">
-                            <span className={`font-bold text-base leading-tight ${checkedItems[item.id] ? 'line-through text-white/40' : 'text-white'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                            <span className={`font-black text-2xl leading-tight ${checkedItems[item.id] ? 'line-through text-white/40' : 'text-white'}`}>
                                 1x {item.products.name}
                             </span>
-                            {checkedItems[item.id] && <Check className="w-5 h-5 text-green-400" />}
+                            {checkedItems[item.id] && <Check className="w-6 h-6 text-green-400 flex-shrink-0" />}
                         </div>
                         {/* Variations */}
                         {item.modifiers?.length > 0 && (
-                            <div className="text-xs text-[var(--color-text-muted)] pl-2.5 border-l-2 border-white/10 mt-1.5 space-y-0.5">
+                            <div className="text-lg text-white/90 pl-3 border-l-4 border-white/10 mt-2 space-y-1">
                                 {item.modifiers.map((m, idx) => (
                                     <div key={idx}>• {m.name}</div>
                                 ))}
                             </div>
                         )}
-                        {item.side_info && <div className="text-xs text-yellow-400/90 font-medium pl-2.5 mt-1.5 flex items-center gap-1">🍟 {item.side_info.name}</div>}
+                        {item.side_info && <div className="text-lg text-yellow-400/90 font-medium pl-3 mt-2 flex items-center gap-2">🍟 {item.side_info.name}</div>}
                     </div>
                 ))}
             </div>
