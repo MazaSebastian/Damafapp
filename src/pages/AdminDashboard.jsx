@@ -16,6 +16,7 @@ import CashManager from '../components/CashManager'
 import ModifiersManager from '../components/ModifiersManager'
 import AnalyticsManager from '../components/AnalyticsManager'
 import SlotManager from '../components/admin/SlotManager'
+import IngredientManager from '../components/admin/IngredientManager'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
 
