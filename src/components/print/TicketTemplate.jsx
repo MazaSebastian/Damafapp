@@ -131,7 +131,8 @@ const TicketTemplate = ({ order }) => {
             <div className="text-center font-mono text-xs mt-8">
                 --
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
 
