@@ -8,53 +8,18 @@ const OrdersManager = () => {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
 
-    // Sound notification function - Bell sound (3 rings)
-    const playNewOrderSound = () => {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-
-        const playBell = (startTime) => {
-            const oscillator = audioContext.createOscillator()
-            const gainNode = audioContext.createGain()
-
-            oscillator.connect(gainNode)
-            gainNode.connect(audioContext.destination)
-
-            // Bell-like sound (higher frequency with harmonics)
-            oscillator.frequency.setValueAtTime(800, startTime)
-            oscillator.frequency.exponentialRampToValueAtTime(600, startTime + 0.1)
-
-            // Sharp attack and quick decay like a bell
-            gainNode.gain.setValueAtTime(0.6, startTime)
-            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3)
-
-            oscillator.start(startTime)
-            oscillator.stop(startTime + 0.3)
-        }
-
-        // Play bell 3 times
-        playBell(audioContext.currentTime)
-        playBell(audioContext.currentTime + 0.4)
-        playBell(audioContext.currentTime + 0.8)
-    }
-
     useEffect(() => {
         fetchOrders()
 
-        // Subscription for real-time updates
+        // Subscription for real-time updates (Silent refresh)
         const channel = supabase
-            .channel('orders_channel')
+            .channel('orders_visual_refresh')
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
                 table: 'orders'
-            }, (payload) => {
-                // Play sound only on INSERT (new order)
-                if (payload.eventType === 'INSERT') {
-                    playNewOrderSound()
-                    toast.success('🔔 Nuevo pedido recibido!', {
-                        description: `Pedido #${payload.new.id.slice(0, 8)}`
-                    })
-                }
+            }, () => {
+                // Just refresh data, global alert handles the sound/toast
                 fetchOrders()
             })
             .subscribe()
@@ -338,22 +303,36 @@ const OrdersManager = () => {
                         {/* Actions */}
                         <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
                             {order.status === 'pending' && (
-                                <div className="col-span-3 grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={() => {
-                                            toast('¿Rechazar pedido?', {
-                                                action: {
-                                                    label: 'Sí, Rechazar',
-                                                    onClick: () => updateStatus(order.id, 'rejected')
-                                                },
-                                            })
-                                        }}
-                                        className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <X className="w-4 h-4" /> Rechazar
-                                    </button>
+                                <div className="col-span-3 space-y-2">
+                                    {/* Primary Actions: Accept / Reject */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => {
+                                                handlePrint(order)
+                                                updateStatus(order.id, 'cooking')
+                                            }}
+                                            className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+                                        >
+                                            <Check className="w-4 h-4" /> Aceptar
+                                        </button>
 
-                                    {!order.is_paid && order.payment_method !== 'cash' ? (
+                                        <button
+                                            onClick={() => {
+                                                toast('¿Rechazar pedido?', {
+                                                    action: {
+                                                        label: 'Sí, Rechazar',
+                                                        onClick: () => updateStatus(order.id, 'rejected')
+                                                    },
+                                                })
+                                            }}
+                                            className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <X className="w-4 h-4" /> Rechazar
+                                        </button>
+                                    </div>
+
+                                    {/* Secondary Action: Confirm Payment (if needed) */}
+                                    {!order.is_paid && order.payment_method !== 'cash' && (
                                         <button
                                             onClick={async () => {
                                                 const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
@@ -364,27 +343,37 @@ const OrdersManager = () => {
                                                     toast.error('Error al confirmar pago')
                                                 }
                                             }}
-                                            className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2"
+                                            className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <Banknote className="w-4 h-4" /> Confirmar Pago
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => {
-                                                handlePrint(order)
-                                                updateStatus(order.id, 'cooking')
-                                            }}
-                                            className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <Check className="w-4 h-4" /> Aceptar Pedido
+                                            <Banknote className="w-3 h-3" /> Confirmar recepción del pago
                                         </button>
                                     )}
                                 </div>
                             )}
                             {order.status === 'cooking' && (
-                                <button onClick={() => updateStatus(order.id, 'packaging')} className="col-span-3 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
-                                    <Check className="w-4 h-4" /> Preparar Envío
-                                </button>
+                                <div className="col-span-3 space-y-2">
+                                    <button onClick={() => updateStatus(order.id, 'packaging')} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
+                                        <Check className="w-4 h-4" /> Preparar Envío
+                                    </button>
+
+                                    {/* Still show Confirm Payment if enabled and not paid */}
+                                    {!order.is_paid && order.payment_method !== 'cash' && (
+                                        <button
+                                            onClick={async () => {
+                                                const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
+                                                if (!error) {
+                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
+                                                    toast.success('Pago confirmado')
+                                                } else {
+                                                    toast.error('Error al confirmar pago')
+                                                }
+                                            }}
+                                            className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Banknote className="w-3 h-3" /> Confirmar recepción del pago
+                                        </button>
+                                    )}
+                                </div>
                             )}
                             {order.status === 'packaging' && (
                                 <button onClick={() => updateStatus(order.id, 'sent')} className="col-span-3 bg-purple-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-purple-500 transition-colors flex items-center justify-center gap-2">

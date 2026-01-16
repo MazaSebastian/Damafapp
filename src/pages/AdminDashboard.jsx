@@ -1,27 +1,62 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed, Ticket, Menu, X, Loader2, LogOut, DollarSign, ChefHat, Layers, TrendingUp } from 'lucide-react'
-import NewsManager from '../components/NewsManager'
-import RewardsManager from '../components/RewardsManager'
-import ProductManager from '../components/ProductManager'
-import OrdersManager from '../components/OrdersManager'
-import SettingsManager from '../components/SettingsManager'
-import AdminOverview from '../components/AdminOverview'
-import CouponsManager from '../components/CouponsManager'
-import InventoryManager from '../components/InventoryManager'
-import CustomersManager from '../components/CustomersManager'
-import DebugConnection from '../components/DebugConnection'
-import CashManager from '../components/CashManager'
-import ModifiersManager from '../components/ModifiersManager'
-import AnalyticsManager from '../components/AnalyticsManager'
-
+import { supabase } from '../supabaseClient'
+import { toast } from 'sonner'
+// ... existing imports ...
 
 const AdminDashboard = () => {
     const { user, role, loading, signOut } = useAuth()
     const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('Overview')
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+    // Global Sound Notification
+    const playNewOrderSound = () => {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        const playBell = (startTime) => {
+            const oscillator = audioContext.createOscillator()
+            const gainNode = audioContext.createGain()
+            oscillator.connect(gainNode)
+            gainNode.connect(audioContext.destination)
+            oscillator.frequency.setValueAtTime(800, startTime)
+            oscillator.frequency.exponentialRampToValueAtTime(600, startTime + 0.1)
+            gainNode.gain.setValueAtTime(0.6, startTime)
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3)
+            oscillator.start(startTime)
+            oscillator.stop(startTime + 0.3)
+        }
+        playBell(audioContext.currentTime) // 1
+        playBell(audioContext.currentTime + 0.4) // 2
+        playBell(audioContext.currentTime + 0.8) // 3
+    }
+
+    // Global Real-time Subscription
+    useEffect(() => {
+        if (!user) return
+
+        const channel = supabase
+            .channel('global_admin_alerts')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'orders'
+            }, (payload) => {
+                // Determine if we should alert (e.g. ignore if simple status update? logic says event=INSERT so only new)
+                playNewOrderSound()
+                toast.success('🔔 ¡NUEVO PEDIDO RECIBIDO!', {
+                    description: `Orden #${payload.new.id.slice(0, 8)}`,
+                    duration: 8000,
+                    action: {
+                        label: 'Ver Pedidos',
+                        onClick: () => setActiveTab('Orders')
+                    }
+                })
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [user])
+
 
     useEffect(() => {
         if (!loading) {
