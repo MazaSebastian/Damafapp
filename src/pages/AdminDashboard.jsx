@@ -1,6 +1,22 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed, Ticket, Menu, X, Loader2, LogOut, DollarSign, ChefHat, Layers, TrendingUp } from 'lucide-react'
+import NewsManager from '../components/NewsManager'
+import RewardsManager from '../components/RewardsManager'
+import ProductManager from '../components/ProductManager'
+import OrdersManager from '../components/OrdersManager'
+import SettingsManager from '../components/SettingsManager'
+import AdminOverview from '../components/AdminOverview'
+import CouponsManager from '../components/CouponsManager'
+import InventoryManager from '../components/InventoryManager'
+import CustomersManager from '../components/CustomersManager'
+import DebugConnection from '../components/DebugConnection'
+import CashManager from '../components/CashManager'
+import ModifiersManager from '../components/ModifiersManager'
+import AnalyticsManager from '../components/AnalyticsManager'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
-// ... existing imports ...
 
 const AdminDashboard = () => {
     const { user, role, loading, signOut } = useAuth()
