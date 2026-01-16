@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { Plus, Trash2, Edit2, Save, X, ChevronRight, Loader2, Image, List, Settings } from 'lucide-react'
+import { Plus, Trash2, Edit2, Save, X, ChevronRight, Loader2, Image, List, Settings, Scale } from 'lucide-react'
 import { toast } from 'sonner'
 
 const ProductManager = () => {
@@ -54,9 +54,22 @@ const ProductManager = () => {
     const [allModifiers, setAllModifiers] = useState([])
     const [productModifiers, setProductModifiers] = useState([]) // IDs of modifiers linked to editingProduct
 
+    const [allModifiers, setAllModifiers] = useState([])
+    const [productModifiers, setProductModifiers] = useState([]) // IDs of modifiers linked to editingProduct
+
+    // RECIPES STATE
+    const [allIngredients, setAllIngredients] = useState([])
+    const [productRecipe, setProductRecipe] = useState([]) // Array of { ingredient_id, quantity }
+
     useEffect(() => {
         fetchModifiers()
+        fetchIngredients()
     }, [])
+
+    const fetchIngredients = async () => {
+        const { data } = await supabase.from('ingredients').select('*').order('name')
+        if (data) setAllIngredients(data)
+    }
 
     const fetchModifiers = async () => {
         const { data } = await supabase.from('modifiers').select('*').order('name')
@@ -67,6 +80,12 @@ const ProductManager = () => {
         const { data } = await supabase.from('product_modifiers').select('modifier_id').eq('product_id', productId)
         if (data) setProductModifiers(data.map(pm => pm.modifier_id))
         else setProductModifiers([])
+    }
+
+    const fetchProductRecipe = async (productId) => {
+        const { data } = await supabase.from('product_recipes').select('*').eq('product_id', productId)
+        if (data) setProductRecipe(data.map(r => ({ ingredient_id: r.ingredient_id, quantity: r.quantity })))
+        else setProductRecipe([])
     }
 
     // --- Product Handlers ---
@@ -136,20 +155,39 @@ const ProductManager = () => {
             if (linkError) console.error('Error linking modifiers:', linkError)
         }
 
+        // --- Handle Product Recipe Link ---
+        // 1. Delete existing recipe
+        if (editingProduct) {
+            await supabase.from('product_recipes').delete().eq('product_id', productId)
+        }
+        // 2. Insert new recipe
+        if (productRecipe.length > 0) {
+            const recipeLinks = productRecipe.map(item => ({
+                product_id: productId,
+                ingredient_id: item.ingredient_id,
+                quantity: parseFloat(item.quantity)
+            }))
+            const { error: recipeError } = await supabase.from('product_recipes').insert(recipeLinks)
+            if (recipeError) console.error('Error saving recipe:', recipeError)
+        }
+
         setEditingProduct(null)
         setIsModalOpen(false)
     }
 
     const startEditing = (product) => {
         setEditingProduct(product)
-        // Pre-fill modifiers
+        setEditingProduct(product)
+        // Pre-fill modifiers & recipe
         fetchProductModifiers(product.id)
+        fetchProductRecipe(product.id)
         setIsModalOpen(true)
     }
 
     const startCreating = () => {
         setEditingProduct(null)
         setProductModifiers([]) // Reset for new
+        setProductRecipe([]) // Reset recipe
         setIsModalOpen(true)
     }
 
@@ -158,6 +196,24 @@ const ProductManager = () => {
             setProductModifiers(productModifiers.filter(id => id !== modId))
         } else {
             setProductModifiers([...productModifiers, modId])
+        }
+    }
+
+    // Recipe Handling
+    const handleRecipeChange = (ingredientId, quantity) => {
+        // If qty is 0/empty, remove it
+        if (!quantity || quantity <= 0) {
+            setProductRecipe(productRecipe.filter(r => r.ingredient_id !== ingredientId))
+            return
+        }
+
+        const existing = productRecipe.find(r => r.ingredient_id === ingredientId)
+        if (existing) {
+            // Update
+            setProductRecipe(productRecipe.map(r => r.ingredient_id === ingredientId ? { ...r, quantity } : r))
+        } else {
+            // Add
+            setProductRecipe([...productRecipe, { ingredient_id: ingredientId, quantity }])
         }
     }
 
@@ -395,6 +451,35 @@ const ProductManager = () => {
                                         ))}
                                         {allModifiers.length === 0 && <span className="text-xs text-[var(--color-text-muted)] col-span-2">No hay extras creados.</span>}
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-[var(--color-surface)] rounded-xl border border-white/5 space-y-4">
+                                <h5 className="font-bold text-sm text-[var(--color-primary)] flex items-center gap-2">
+                                    <Scale className="w-4 h-4" /> Receta / Composición
+                                </h5>
+                                <p className="text-xs text-[var(--color-text-muted)]">Define los ingredientes base que se descontarán del stock al vender este producto.</p>
+
+                                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar p-2">
+                                    {allIngredients.map(ing => {
+                                        const current = productRecipe.find(r => r.ingredient_id === ing.id)
+                                        return (
+                                            <div key={ing.id} className={`flex items-center justify-between p-2 rounded-lg border ${current ? 'bg-green-500/10 border-green-500/30' : 'bg-black/20 border-white/5'}`}>
+                                                <div className="flex-1">
+                                                    <span className="font-bold text-sm">{ing.name}</span>
+                                                    <span className="text-xs text-[var(--color-text-muted)] ml-1">({ing.unit})</span>
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={current?.quantity || ''}
+                                                    onChange={(e) => handleRecipeChange(ing.id, parseFloat(e.target.value))}
+                                                    className={`w-20 text-center bg-[var(--color-background)] rounded border p-1 outline-none text-sm font-bold ${current ? 'text-green-400 border-green-500' : 'text-gray-500 border-white/10'}`}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+                                    {allIngredients.length === 0 && <span className="text-xs text-yellow-500">Primero crea ingredientes en "Materia Prima"</span>}
                                 </div>
                             </div>
 
