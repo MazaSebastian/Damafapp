@@ -11,6 +11,167 @@ const OrdersManager = () => {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [usbConnected, setUsbConnected] = useState(false)
+    const [printingOrder, setPrintingOrder] = useState(null)
+
+    useEffect(() => {
+        fetchOrders()
+
+        // Subscription for real-time updates (Silent refresh)
+        const channel = supabase
+            .channel('orders_visual_refresh')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'orders'
+            }, () => {
+                // Just refresh data, global alert handles the sound/toast
+                fetchOrders()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [])
+
+    const fetchOrders = async () => {
+        const { data: ordersData, error } = await supabase
+            .from('orders')
+            .select(`
+                *,
+                order_items (
+                    *,
+                    products (name) 
+                )
+            `)
+            .order('created_at', { ascending: false })
+
+        if (ordersData) setOrders(ordersData)
+        setLoading(false)
+    }
+
+    const updateStatus = async (orderId, newStatus) => {
+        const order = orders.find(o => o.id === orderId)
+
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: newStatus })
+            .eq('id', orderId)
+
+        if (!error) {
+            setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+            toast.success(`Pedido actualizado a: ${newStatus}`)
+
+            // Log Cash Sale if Completed
+            if (newStatus === 'completed' || newStatus === 'paid') {
+                const { logCashSale } = await import('../utils/cashUtils')
+                const result = await logCashSale(orderId, order.total, order.payment_method, supabase)
+                if (result.message && newStatus === 'completed' && order.payment_method === 'cash') {
+                    if (result.success) toast.success(result.message)
+                    else toast.warning(result.message)
+                }
+            }
+
+        } else {
+            console.error('Error updating status:', error)
+            toast.error('Error al actualizar estado')
+        }
+    }
+
+    const deleteOrder = (orderId) => {
+        toast.warning('¿Eliminar pedido permanentemente?', {
+            description: 'Esta acción no se puede deshacer.',
+            action: {
+                label: 'Eliminar',
+                onClick: async () => {
+                    const { error } = await supabase
+                        .from('orders')
+                        .delete()
+                        .eq('id', orderId)
+
+                    if (!error) {
+                        setOrders(prev => prev.filter(o => o.id !== orderId))
+                        toast.success('Pedido eliminado')
+                    } else {
+                        console.error('Error deleting order:', error)
+                        toast.error('Error al eliminar pedido')
+                    }
+                }
+            },
+            cancel: {
+                label: 'Cancelar'
+            }
+        })
+    }
+
+    const clearHistory = () => {
+        toast.warning('¿Limpiar historial completo?', {
+            description: 'Se borrarán todos los pedidos finalizados y cancelados.',
+            action: {
+                label: 'Confirmar Limpieza',
+                onClick: async () => {
+                    setLoading(true)
+                    const { error } = await supabase
+                        .from('orders')
+                        .delete()
+                        .in('status', ['completed', 'cancelled', 'rejected'])
+
+                    if (!error) {
+                        await fetchOrders()
+                        toast.success('Historial limpio')
+                    } else {
+                        console.error('Error clearing history:', error)
+                        toast.error('Error al limpiar historial')
+                    }
+                    setLoading(false)
+                }
+            },
+            cancel: {
+                label: 'Cancelar'
+            }
+        })
+    }
+
+    const clearAllOrders = () => {
+        toast.error('¿BORRAR ABSOLUTAMENTE TODO?', {
+            description: '¡Cuidado! Esto eliminará TODOS los pedidos, incluidos los que están EN CURSO (Pendientes, Cocinando...).',
+            action: {
+                label: 'SÍ, BORRAR TODO',
+                onClick: async () => {
+                    setLoading(true)
+                    const { error } = await supabase
+                        .from('orders')
+                        .delete()
+                        .gt('total', -1)
+
+                    if (!error) {
+                        await fetchOrders()
+                        toast.success('Se eliminaron TODOS los pedidos')
+                    } else {
+                        console.error('Error deleting all:', error)
+                        toast.error('Error al vaciar la base de datos')
+                    }
+                    setLoading(false)
+                }
+            },
+            cancel: {
+                label: 'Cancelar'
+            }
+        })
+    }
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'pending': return 'bg-yellow-500/20 text-yellow-500'
+            case 'cooking': return 'bg-orange-500/20 text-orange-500'
+            case 'packaging': return 'bg-red-500/20 text-red-500 font-black animate-bounce'
+            case 'sent': return 'bg-purple-500/20 text-purple-500'
+            case 'completed': return 'bg-gray-500/20 text-gray-400'
+            case 'cancelled':
+            case 'rejected': return 'bg-red-500/20 text-red-500'
+            default: return 'bg-gray-500/20 text-gray-400'
+        }
+    }
 
     const connectPrinter = async () => {
         try {
