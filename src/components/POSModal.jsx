@@ -93,20 +93,22 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             setProcessLoading(true)
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
-            // 1. Create Order in DB
+            // 1. Create Order in DB (Pending)
             const { data: userData } = await supabase.auth.getUser()
+
+            const orderPayload = {
+                user_id: userData.user?.id,
+                status: 'pending', // Goes to kitchen
+                total: subtotal,
+                payment_method: method,
+                order_type: 'takeaway',
+                payment_status: method === 'cash' ? 'paid' : 'pending', // MP is pending initially
+                delivery_address: 'Retiro en Local'
+            }
 
             const { data: orderData, error: orderError } = await supabase
                 .from('orders')
-                .insert({
-                    user_id: userData.user?.id,
-                    status: 'pending', // Goes to kitchen
-                    total: subtotal,
-                    payment_method: method,
-                    order_type: 'takeaway', // Walk-in is takeaway
-                    payment_status: 'paid', // POS assumed paid instantly
-                    delivery_address: 'Retiro en Local'
-                })
+                .insert(orderPayload)
                 .select()
                 .single()
 
@@ -118,7 +120,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 product_id: item.id,
                 quantity: item.quantity,
                 unit_price: item.price,
-                price_at_time: item.price, // Important for history
+                price_at_time: item.price,
                 notes: ''
             }))
 
@@ -128,29 +130,79 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
 
             if (itemsError) throw itemsError
 
-            // 3. Update Customer Display (Success State)
-            await supabase
-                .from('checkout_sessions')
-                .update({
-                    status: 'payment_success',
-                    payment_method: method,
-                    total: subtotal
+            // 3. Handle Payment Method
+            if (method === 'cash') {
+                // Immediate Success
+                await finalizeOrder(orderData.id, 'paid', subtotal)
+                toast.success(`Pedido #${orderData.id.slice(0, 6)} completado (Efectivo) 💵`)
+                closeModalAfterDelay()
+            } else if (method === 'mercadopago') {
+                // Generate QR via Edge Function
+                toast.loading('Generando QR de pago...')
+
+                const { data: mpData, error: mpError } = await supabase.functions.invoke('create-payment-preference', {
+                    body: { order_id: orderData.id }
                 })
-                .eq('id', '00000000-0000-0000-0000-000000000000')
 
-            toast.success(`Pedido #${orderData.id.slice(0, 6)} creado y enviado a cocina 👨‍🍳`)
+                if (mpError) throw new Error('Error conectando con MP: ' + mpError.message)
+                if (!mpData?.init_point) throw new Error('No se recibió URL de pago')
 
-            // 4. Cleanup and Close
-            setTimeout(() => {
-                onSuccess?.()
-                onClose()
-            }, 2000)
+                // Show QR on Customer Display
+                await updateCustomerDisplay(cart, 'active', mpData.init_point)
+
+                toast.dismiss()
+                toast.success('¡QR generado! Cliente escaneando...')
+
+                // Keep modal open, maybe switch UI to "Waiting for payment"
+                setProcessLoading(false) // Allow admin to continue or cancel
+            }
 
         } catch (error) {
             console.error('Checkout error:', error)
-            toast.error('Error al crear el pedido: ' + error.message)
+            toast.dismiss()
+            toast.error('Error: ' + error.message)
             setProcessLoading(false)
         }
+    }
+
+    const finalizeOrder = async (orderId, paymentStatus, totalAmount) => {
+        // Update Session to Success
+        await supabase
+            .from('checkout_sessions')
+            .update({
+                status: 'payment_success',
+                payment_method: 'cash',
+                total: totalAmount,
+                qr_code_url: null
+            })
+            .eq('id', '00000000-0000-0000-0000-000000000000')
+    }
+
+    const closeModalAfterDelay = () => {
+        setTimeout(() => {
+            onSuccess?.()
+            onClose()
+        }, 2000)
+    }
+
+    // Helper to update display with optional QR
+    const updateCustomerDisplay = async (currentCart, statusOverride, qrUrl = null) => {
+        const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+        const payload = {
+            status: statusOverride || (currentCart.length > 0 ? 'active' : 'idle'),
+            cart_items: currentCart,
+            subtotal: subtotal,
+            total: subtotal,
+            qr_code_url: qrUrl, // Pass QR URL if exists
+            updated_at: new Date().toISOString()
+        }
+
+        await supabase
+            .from('checkout_sessions')
+            .update(payload)
+            .eq('id', '00000000-0000-0000-0000-000000000000')
+            .then()
     }
 
     if (!isOpen) return null

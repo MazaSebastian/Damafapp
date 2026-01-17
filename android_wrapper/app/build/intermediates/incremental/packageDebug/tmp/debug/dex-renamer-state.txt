@@ -1,4 +1,4 @@
-#Sat Jan 17 01:56:51 ART 2026
+#Sat Jan 17 02:33:40 ART 2026
 base.0=/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
 base.1=/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
 base.2=/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/dex/debug/mergeProjectDexDebug/12/classes.dex

@@ -1,0 +1,4 @@
+com.damafapp.pos.test.app-androidTest-0 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/generated/res/resValues/androidTest/debug
+com.damafapp.pos.test.app-mergeDebugAndroidTestResources-1 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.damafapp.pos.test.app-mergeDebugAndroidTestResources-2 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.damafapp.pos.test.app-merged_res-3 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/merged_res/debugAndroidTest
