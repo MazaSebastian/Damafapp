@@ -44,7 +44,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
         setLoading(false)
     }
 
-    const updateCustomerDisplay = async (currentCart, statusOverride) => {
+    const updateCustomerDisplay = async (currentCart, statusOverride, qrUrl = null) => {
         // Calculate totals
         const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
         const total = subtotal
@@ -54,6 +54,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             cart_items: currentCart,
             subtotal: subtotal,
             total: total,
+            qr_code_url: qrUrl,
             updated_at: new Date().toISOString()
         }
 
@@ -185,25 +186,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
         }, 2000)
     }
 
-    // Helper to update display with optional QR
-    const updateCustomerDisplay = async (currentCart, statusOverride, qrUrl = null) => {
-        const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
-        const payload = {
-            status: statusOverride || (currentCart.length > 0 ? 'active' : 'idle'),
-            cart_items: currentCart,
-            subtotal: subtotal,
-            total: subtotal,
-            qr_code_url: qrUrl, // Pass QR URL if exists
-            updated_at: new Date().toISOString()
-        }
-
-        await supabase
-            .from('checkout_sessions')
-            .update(payload)
-            .eq('id', '00000000-0000-0000-0000-000000000000')
-            .then()
-    }
 
     if (!isOpen) return null
 
