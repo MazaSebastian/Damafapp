@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { toast } from 'sonner'
 
-const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null }) => {
+const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null, isPOS = false }) => {
     const [step, setStep] = useState(1) // 1: Burger, 1.5: Modifiers, 2: Sides, 3: Drinks
     const [products, setProducts] = useState([])
     const [modifiers, setModifiers] = useState([])
@@ -57,7 +57,6 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
     }
 
     const fetchProductModifiers = async (productId) => {
-        // Fetch modifiers linked to this product via product_modifiers table
         const { data, error } = await supabase
             .from('product_modifiers')
             .select(`
@@ -67,7 +66,6 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
             .eq('product_id', productId)
 
         if (data) {
-            // Filter out unavailable ones and map properties
             const activeModifiers = data
                 .map(item => item.modifiers)
                 .filter(m => m && m.is_available)
@@ -120,13 +118,11 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
     const handleSelectDrink = (drink) => {
         if (!selectedBurger) return
 
-        // Format modifiers for cart
         const modifiersList = Object.entries(selectedModifiers).map(([modId, qty]) => {
             const mod = modifiers.find(m => m.id === modId)
             return { ...mod, quantity: qty }
         }).filter(m => m.quantity > 0)
 
-        // Construct notes including removable ingredients
         let notesParts = [onAddToCart ? 'Pedido por POS' : 'Desde modal rápido']
         if (removedIngredients.length > 0) {
             notesParts.push(`SIN: ${removedIngredients.join(', ')}`)
@@ -137,7 +133,7 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
             modifiers: modifiersList,
             side: selectedSide ? { ...selectedSide } : null,
             drink: drink ? { ...drink } : null,
-            removed_ingredients: removedIngredients // Also store structured
+            removed_ingredients: removedIngredients
         }
 
         if (onAddToCart) {
@@ -148,6 +144,47 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
             toast.success('¡Combo completo agregado!')
             onClose()
             navigate('/checkout')
+        }
+    }
+
+    const handlePOSAdd = () => {
+        if (!selectedBurger) return
+
+        const modifiersList = Object.entries(selectedModifiers).map(([modId, qty]) => {
+            const mod = modifiers.find(m => m.id === modId)
+            return { ...mod, quantity: qty }
+        }).filter(m => m.quantity > 0)
+
+        let notesParts = []
+        if (removedIngredients.length > 0) {
+            notesParts.push(`SIN: ${removedIngredients.join(', ')}`)
+        }
+
+        // Add Modifiers to notes for backend visibility if needed
+        if (modifiersList.length > 0) {
+            const modsString = modifiersList.map(m => `${m.name} (x${m.quantity})`).join(', ')
+            notesParts.push(`EXTRAS: ${modsString}`)
+        }
+
+        // Calculate total price for this customized item
+        let totalPrice = selectedBurger.price
+        modifiersList.forEach(mod => {
+            totalPrice += (mod.price * mod.quantity)
+        })
+
+        const customItem = {
+            ...selectedBurger,
+            unique_id: Date.now() + Math.random(),
+            quantity: 1,
+            modifiers: modifiersList,
+            notes: notesParts.join('. '),
+            price: totalPrice, // Use the full calculated price
+            original_price: selectedBurger.price // Keep original for reference if needed
+        }
+
+        if (onAddToCart) {
+            onAddToCart(customItem)
+            onClose()
         }
     }
 
@@ -183,21 +220,16 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
         })
     }
 
-    // Calculation helper
     const getCurrentTotal = () => {
         let total = selectedBurger?.price || 0
-
-        // Add modifiers
         Object.entries(selectedModifiers).forEach(([modId, qty]) => {
             const mod = modifiers.find(m => m.id === modId)
             if (mod) total += mod.price * qty
         })
-
         if (selectedSide) total += selectedSide.price
         return total
     }
 
-    // Helper to get current list based on step
     const getCurrentList = () => {
         if (step === 1) return products
         if (step === 2) return sides
@@ -337,10 +369,10 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
                                             </div>
 
                                             <button
-                                                onClick={handleModifiersNext}
-                                                className="w-full bg-[var(--color-secondary)] text-white py-4 rounded-xl font-bold hover:bg-orange-600 transition-colors mt-4 shadow-lg active:scale-95 transform duration-100"
+                                                onClick={isPOS ? handlePOSAdd : handleModifiersNext}
+                                                className={`w-full py-4 rounded-xl font-bold transition-colors mt-4 shadow-lg active:scale-95 transform duration-100 ${isPOS ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-[var(--color-secondary)] text-white hover:bg-orange-600'}`}
                                             >
-                                                Siguiente Paso
+                                                {isPOS ? 'Agregar al Pedido' : 'Siguiente Paso'}
                                             </button>
                                         </div>
                                     ) : (

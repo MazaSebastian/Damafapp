@@ -1,9 +1,30 @@
-import { ShoppingBag, CreditCard, ChevronRight } from 'lucide-react'
+import { ShoppingBag, CreditCard, ChevronRight, Landmark } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'react-qr-code'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../supabaseClient'
 
 const LiveCartView = ({ session }) => {
     const { cart_items, subtotal, total, status, payment_method, qr_code_url } = session
+    const [bankDetails, setBankDetails] = useState(null)
+
+    useEffect(() => {
+        if (payment_method === 'transfer' && status === 'active') {
+            fetchBankDetails()
+        }
+    }, [payment_method, status])
+
+    const fetchBankDetails = async () => {
+        const { data } = await supabase
+            .from('app_settings')
+            .select('key, value')
+            .in('key', ['bank_alias', 'bank_cbu', 'bank_name', 'bank_cuit'])
+
+        if (data) {
+            const details = data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), {})
+            setBankDetails(details)
+        }
+    }
 
     return (
         <div className="w-full h-screen bg-[var(--color-background)] text-white flex">
@@ -101,7 +122,7 @@ const LiveCartView = ({ session }) => {
                                     <p className="text-[var(--color-text-muted)] text-xl">Gracias por tu compra</p>
                                 </motion.div>
 
-                            ) : qr_code_url ? (
+                            ) : payment_method === 'mercadopago' && qr_code_url ? (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -115,6 +136,44 @@ const LiveCartView = ({ session }) => {
                                         Escanea para pagar
                                     </h3>
                                     <p className="text-[var(--color-text-muted)] mt-2">Aceptamos MercadoPago y tarjetas</p>
+                                </motion.div>
+
+                            ) : payment_method === 'transfer' ? (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="w-full text-center"
+                                >
+                                    <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-400">
+                                        <Landmark className="w-10 h-10" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-6">Datos para Transferencia</h3>
+
+                                    {bankDetails ? (
+                                        <div className="space-y-4 bg-[var(--color-background)] p-6 rounded-2xl text-left shadow-inner border border-white/5">
+                                            <div>
+                                                <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">CBU / CVU</p>
+                                                <p className="font-mono text-xl font-bold tracking-wide break-all text-white select-all">{bankDetails.bank_cbu}</p>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                <div className="flex-1">
+                                                    <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">Alias</p>
+                                                    <p className="font-bold text-white select-all">{bankDetails.bank_alias}</p>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">Banco</p>
+                                                    <p className="font-bold text-white">{bankDetails.bank_name}</p>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">Titular / CUIT</p>
+                                                <p className="font-bold text-white text-sm">{bankDetails.bank_cuit}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-center p-10"><div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" /></div>
+                                    )}
+                                    <p className="mt-6 text-[var(--color-text-muted)] animate-pulse">Esperando confirmación...</p>
                                 </motion.div>
 
                             ) : (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import OrderModal from './OrderModal'
 
 const POSModal = ({ isOpen, onClose, onSuccess }) => {
     const [products, setProducts] = useState([])
@@ -10,6 +11,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
     const [processLoading, setProcessLoading] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedCategory, setSelectedCategory] = useState('all')
+    const [customizingProduct, setCustomizingProduct] = useState(null)
 
     // Initial Load
     useEffect(() => {
@@ -44,7 +46,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
         setLoading(false)
     }
 
-    const updateCustomerDisplay = async (currentCart, statusOverride, qrUrl = null) => {
+    const updateCustomerDisplay = async (currentCart, statusOverride, qrUrl = null, method = null) => {
         // Calculate totals
         const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
         const total = subtotal
@@ -58,6 +60,8 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             updated_at: new Date().toISOString()
         }
 
+        if (method) payload.payment_method = method
+
         // We update the singleton row
         // We catch errors to avoid unhandled rejections if network blips
         await supabase
@@ -67,15 +71,21 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             .then()
     }
 
-    const addToCart = (product) => {
-        setCart(prev => {
-            const existing = prev.find(p => p.id === product.id)
-            if (existing) {
-                return prev.map(p => p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p)
-            }
-            return [...prev, { ...product, quantity: 1 }]
-        })
+    const initiateAddToCart = (product) => {
+        setCustomizingProduct(product)
     }
+
+    const handleAddToCartFromModal = (customItem) => {
+        setCart(prev => [...prev, customItem])
+        setCustomizingProduct(null)
+    }
+
+    /* 
+       Review: Simple add is replaced by customization flow. 
+       If we wanted to skip customization for simple products, we'd check here.
+       But for now, everything goes through customization as requested.
+    */
+
 
     const updateQuantity = (productId, delta) => {
         setCart(prev => prev.map(p => {
@@ -122,7 +132,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 quantity: item.quantity,
                 unit_price: item.price,
                 price_at_time: item.price,
-                notes: ''
+                notes: item.notes || ''
             }))
 
             const { error: itemsError } = await supabase
@@ -149,13 +159,21 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 if (!mpData?.init_point) throw new Error('No se recibió URL de pago')
 
                 // Show QR on Customer Display
-                await updateCustomerDisplay(cart, 'active', mpData.init_point)
+                await updateCustomerDisplay(cart, 'active', mpData.init_point, method)
 
                 toast.dismiss()
                 toast.success('¡QR generado! Cliente escaneando...')
+                setProcessLoading(false)
+            } else if (method === 'transfer') {
+                // Show Bank Details on Customer Display
+                toast.loading('Mostrando datos bancarios...')
 
-                // Keep modal open, maybe switch UI to "Waiting for payment"
-                setProcessLoading(false) // Allow admin to continue or cancel
+                // We pass method 'transfer' so LiveCartView knows to fetch bank details
+                await updateCustomerDisplay(cart, 'active', null, method)
+
+                toast.dismiss()
+                toast.success('Datos bancarios mostrados al cliente')
+                setProcessLoading(false)
             }
 
         } catch (error) {
@@ -236,7 +254,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                             {filteredProducts.map(product => (
                                 <button
                                     key={product.id}
-                                    onClick={() => addToCart(product)}
+                                    onClick={() => initiateAddToCart(product)}
                                     className="bg-[var(--color-surface)] p-4 rounded-xl border border-white/5 hover:border-[var(--color-primary)] transition-all text-left flex flex-col h-32 relative group"
                                 >
                                     <div className="flex-1">
@@ -260,16 +278,32 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                         {cart.map(item => (
-                            <div key={item.id} className="flex items-center justify-between bg-[var(--color-background)]/50 p-3 rounded-lg border border-white/5 animated-item">
-                                <div className="flex-1 min-w-0 mr-2">
-                                    <div className="font-medium truncate text-sm">{item.name}</div>
-                                    <div className="text-xs text-[var(--color-text-muted)]">${item.price}</div>
+                            <div key={item.unique_id || item.id} className="flex flex-col bg-[var(--color-background)]/50 p-3 rounded-lg border border-white/5 animated-item">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex-1 min-w-0 mr-2">
+                                        <div className="font-medium truncate text-sm">{item.name}</div>
+                                        <div className="text-xs text-[var(--color-text-muted)] mt-0.5">${item.price}</div>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-[var(--color-surface)] rounded-lg p-1">
+                                        {/* Removing item completely on minus if quantity is 1 or just removing, since customization makes each unique usually */}
+                                        <button onClick={() => {
+                                            setCart(prev => prev.filter(p => p.unique_id !== item.unique_id))
+                                        }} className="p-1 hover:bg-red-500/20 hover:text-red-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-[var(--color-surface)] rounded-lg p-1">
-                                    <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-white/10 rounded"><Minus className="w-3 h-3" /></button>
-                                    <span className="font-mono w-4 text-center text-sm">{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-white/10 rounded"><Plus className="w-3 h-3" /></button>
-                                </div>
+                                {/* Display Modifiers/Notes */}
+                                {item.notes && (
+                                    <div className="text-xs text-orange-400 bg-orange-500/10 p-1.5 rounded border border-orange-500/20">
+                                        {item.notes}
+                                    </div>
+                                )}
+                                {item.modifiers && item.modifiers.length > 0 && (
+                                    <div className="text-xs text-[var(--color-text-muted)] pl-2 mt-1 border-l-2 border-white/10 space-y-0.5">
+                                        {item.modifiers.map((m, idx) => (
+                                            <div key={idx}>+ {m.name} x{m.quantity}</div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ))}
                         {cart.length === 0 && (
@@ -279,6 +313,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                             </div>
                         )}
                     </div>
+
 
                     {/* Footer Actions */}
                     <div className="p-6 bg-[var(--color-background)] border-t border-white/5 space-y-4">
@@ -292,7 +327,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                                 <Loader2 className="animate-spin" /> Procesando...
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-3 gap-2">
                                 <button
                                     onClick={() => handleCheckout('cash')}
                                     className="bg-green-600 hover:bg-green-500 hover:scale-[1.02] transition-all py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1 disabled:opacity-50 disabled:hover:scale-100"
@@ -307,10 +342,26 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                                 >
                                     <div className="flex items-center gap-2"><CreditCard className="w-5 h-5" /> MP / QR</div>
                                 </button>
+                                <button
+                                    onClick={() => handleCheckout('transfer')}
+                                    className="bg-purple-600 hover:bg-purple-500 hover:scale-[1.02] transition-all py-3 rounded-xl font-bold flex flex-col items-center justify-center gap-1 disabled:opacity-50 disabled:hover:scale-100"
+                                    disabled={cart.length === 0}
+                                >
+                                    <div className="flex items-center gap-2"><Banknote className="w-5 h-5" /> Transf.</div>
+                                </button>
                             </div>
                         )}
                     </div>
                 </div>
+
+                {/* Customization Modal */}
+                <OrderModal
+                    isOpen={!!customizingProduct}
+                    onClose={() => setCustomizingProduct(null)}
+                    initialProduct={customizingProduct}
+                    onAddToCart={handleAddToCartFromModal}
+                    isPOS={true}
+                />
             </div>
         </div>
     )
