@@ -17,6 +17,7 @@ const CashManager = () => {
     const [stats, setStats] = useState({
         salesCash: 0,
         salesTransfer: 0,
+        salesMP: 0,
         expenses: 0,
         withdrawals: 0,
         deposits: 0,
@@ -71,9 +72,22 @@ const CashManager = () => {
 
         // Calculate Stats
         // Calculate Stats
-        // Sales split by type (detecting from description for now as 'type' column is generic 'sale')
-        const salesCash = data.filter(m => m.type === 'sale' && !m.description?.includes('Transf')).reduce((sum, m) => sum + Number(m.amount), 0)
-        const salesTransfer = data.filter(m => m.type === 'sale' && m.description?.includes('Transf')).reduce((sum, m) => sum + Number(m.amount), 0)
+        // Sales split by type based on description tagging from cashUtils
+        // (Efvo) -> Cash
+        // (Transf) -> Transfer
+        // (MP) -> Mercado Pago
+        const salesCash = data.filter(m => m.type === 'sale' && m.description?.includes('(Efvo)')).reduce((sum, m) => sum + Number(m.amount), 0)
+        const salesTransfer = data.filter(m => m.type === 'sale' && m.description?.includes('(Transf)')).reduce((sum, m) => sum + Number(m.amount), 0)
+        const salesMP = data.filter(m => m.type === 'sale' && m.description?.includes('(MP)')).reduce((sum, m) => sum + Number(m.amount), 0)
+
+        // Backward compatibility: If no tag found but type is sale, assume cash if not explicitly something else? 
+        // Or check previous logic: !includes('Transf'). 
+        // For new system, we rely on tags. For old data, we might need a fallback.
+        // Fallback for old data (pre-tag):
+        const salesLegacy = data.filter(m => m.type === 'sale' && !m.description?.includes('(')).reduce((sum, m) => sum + Number(m.amount), 0)
+
+        // Combine Legacy into Cash (safest assumption)
+        const totalCashSales = salesCash + salesLegacy
 
         const expenses = data.filter(m => m.type === 'expense').reduce((sum, m) => sum + Number(m.amount), 0)
         const withdrawals = data.filter(m => m.type === 'withdrawal').reduce((sum, m) => sum + Number(m.amount), 0)
@@ -86,10 +100,10 @@ const CashManager = () => {
         // If we add Transfer to 'CalculatedTotal', the closing count (physical) will never match.
         // SO: We show Transfer as a separate revenue stat, but NOT added to the "Effective Cash in Drawer".
 
-        const calculated = Number(opening) + salesCash + deposits - expenses - withdrawals
+        const calculated = Number(opening) + totalCashSales + deposits - expenses - withdrawals
 
         setStats({
-            salesCash, salesTransfer, expenses, withdrawals, deposits, calculatedTotal: calculated
+            salesCash: totalCashSales, salesTransfer, salesMP, expenses, withdrawals, deposits, calculatedTotal: calculated
         })
     }
 
@@ -226,23 +240,29 @@ const CashManager = () => {
                         <h3 className="text-[var(--color-text-muted)] text-sm uppercase tracking-wide">Saldo en Caja (Teórico)</h3>
                         <p className="text-5xl font-bold text-white mt-2">${stats.calculatedTotal.toFixed(2)}</p>
 
-                        <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/10">
-                            <div>
-                                <p className="text-xs text-[var(--color-text-muted)]">Inicio</p>
-                                <p className="font-mono text-lg text-white">${Number(currentRegister.opening_amount).toFixed(2)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-[var(--color-text-muted)]">Ventas Efectivo</p>
-                                <p className="font-mono text-lg text-green-400">+${stats.salesCash.toFixed(2)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-[var(--color-text-muted)]">Transferencias</p>
-                                <p className="font-mono text-lg text-purple-400">+${stats.salesTransfer.toFixed(2)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-[var(--color-text-muted)]">Gastos/Retiros</p>
-                                <p className="font-mono text-lg text-red-400">-${(stats.expenses + stats.withdrawals).toFixed(2)}</p>
-                            </div>
+                    </div>
+
+                    {/* Detailed Stats Grid */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10">
+                        <div className="bg-black/20 p-2 rounded-lg">
+                            <p className="text-xs text-[var(--color-text-muted)]">Inicio (Cambio)</p>
+                            <p className="font-mono text-lg text-white font-bold">${Number(currentRegister.opening_amount).toFixed(2)}</p>
+                        </div>
+                        <div className="bg-green-500/10 p-2 rounded-lg border border-green-500/20">
+                            <p className="text-xs text-green-400 font-bold mb-1">Ventas Efectivo</p>
+                            <p className="font-mono text-lg text-white font-bold">+${stats.salesCash.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-purple-500/10 p-2 rounded-lg border border-purple-500/20">
+                            <p className="text-xs text-purple-400 font-bold mb-1">Transferencias</p>
+                            <p className="font-mono text-lg text-white font-bold">+${stats.salesTransfer.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                            <p className="text-xs text-blue-400 font-bold mb-1">Mercado Pago</p>
+                            <p className="font-mono text-lg text-white font-bold">+${stats.salesMP.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-red-500/10 p-2 rounded-lg border border-red-500/20 col-span-2 lg:col-span-1">
+                            <p className="text-xs text-red-400 font-bold mb-1">Gastos / Retiros</p>
+                            <p className="font-mono text-lg text-white font-bold">-${(stats.expenses + stats.withdrawals).toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
@@ -348,7 +368,7 @@ const CashManager = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
 

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
-import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, X, Loader2 } from 'lucide-react'
+import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, X, Loader2, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import OrderModal from './OrderModal'
+import DeliverySlotSelector from './checkout/DeliverySlotSelector'
 
 const POSModal = ({ isOpen, onClose, onSuccess }) => {
     const [products, setProducts] = useState([])
@@ -11,7 +12,13 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
     const [processLoading, setProcessLoading] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedCategory, setSelectedCategory] = useState('all')
-    const [customizingProduct, setCustomizingProduct] = useState(null)
+    const [selectedCustomer, setSelectedCustomer] = useState(null)
+    const [customerIdInput, setCustomerIdInput] = useState('')
+    const [customerLoading, setCustomerLoading] = useState(false)
+    const [customizingProduct, setCustomizingProduct] = useState(null) // Restored missing state
+
+    // New: Schedule Slot
+    const [selectedSlot, setSelectedSlot] = useState(null)
 
     // Initial Load
     useEffect(() => {
@@ -19,13 +26,21 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             fetchProducts()
             // Reset session on open
             updateCustomerDisplay([], 'active')
+            // Reset customer & slot
+            setSelectedCustomer(null)
+            setCustomerIdInput('')
+            setSelectedSlot(null)
         } else {
             // Reset session on close to idle
             updateCustomerDisplay([], 'idle')
             setCart([])
             setSearchTerm('')
+            setSelectedCustomer(null)
+            setCustomerIdInput('')
+            setSelectedSlot(null)
         }
     }, [isOpen])
+
 
     // Realtime Sync to Customer Display
     useEffect(() => {
@@ -44,6 +59,31 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
 
         if (data) setProducts(data)
         setLoading(false)
+    }
+
+    const handleCustomerSearch = async () => {
+        if (!customerIdInput.trim()) {
+            setSelectedCustomer(null)
+            return
+        }
+
+        setCustomerLoading(true)
+        // Search by numeric customer_id
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('customer_id', parseInt(customerIdInput))
+            .single()
+
+        setCustomerLoading(false)
+
+        if (data) {
+            setSelectedCustomer(data)
+            toast.success(`Cliente identificado: ${data.full_name}`)
+        } else {
+            setSelectedCustomer(null)
+            toast.error('Cliente no encontrado')
+        }
     }
 
     const updateCustomerDisplay = async (currentCart, statusOverride, qrUrl = null, method = null) => {
@@ -75,17 +115,44 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
         setCustomizingProduct(product)
     }
 
+    /* ... (Rest of logic) ... */
     const handleAddToCartFromModal = (customItem) => {
         setCart(prev => [...prev, customItem])
         setCustomizingProduct(null)
     }
 
-    /* 
-       Review: Simple add is replaced by customization flow. 
-       If we wanted to skip customization for simple products, we'd check here.
-       But for now, everything goes through customization as requested.
-    */
+    // ...
 
+    const draftTimeoutRef = useRef(null)
+
+    const handleDraftChange = (draft) => {
+        if (draftTimeoutRef.current) clearTimeout(draftTimeoutRef.current)
+
+        draftTimeoutRef.current = setTimeout(() => {
+            updateLiveDraft(draft)
+        }, 300)
+    }
+
+    const updateLiveDraft = async (draft) => {
+        // We only update if modal is open, otherwise clear it
+        const payload = {
+            current_action: draft,
+            updated_at: new Date().toISOString()
+        }
+
+        await supabase
+            .from('checkout_sessions')
+            .update(payload)
+            .eq('id', '00000000-0000-0000-0000-000000000000')
+            .then()
+    }
+
+    // Clear draft on close or add
+    useEffect(() => {
+        if (!customizingProduct) {
+            updateLiveDraft(null)
+        }
+    }, [customizingProduct])
 
     const updateQuantity = (productId, delta) => {
         setCart(prev => prev.map(p => {
@@ -104,11 +171,22 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             setProcessLoading(true)
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
-            // 1. Create Order in DB (Pending)
+            // 1. Create Order in DB
+            // Use selectedCustomer.id if available (Juan Perez), otherwise null (Invitado)
+            // Or if we want to attribute to Admin, we use userData. But usually orders are linked to the Customer.
+            // If linked to Customer, Loyalty applies. 
+
             const { data: userData } = await supabase.auth.getUser()
 
+            // Logic: If Customer Selected -> user_id = customer.id
+            // If Guest -> user_id = null (Or maybe we keep tracking who CREATED it in a separate field? 
+            // For now, let's assume user_id is the customer)
+
+            const orderUserId = selectedCustomer ? selectedCustomer.id : null
+
             const orderPayload = {
-                user_id: userData.user?.id,
+                user_id: orderUserId,
+                client_name: selectedCustomer ? selectedCustomer.full_name : 'Invitado', // Explicitly store name
                 status: 'pending', // Goes to kitchen
                 total: subtotal,
                 payment_method: method,
@@ -145,6 +223,27 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             if (method === 'cash') {
                 // Immediate Success
                 await finalizeOrder(orderData.id, 'paid', subtotal)
+
+                // Print Ticket if Android Interface is available
+                if (window.AndroidPrint) {
+                    const printPayload = {
+                        id: orderData.id,
+                        created_at: orderData.created_at, // Use real creation time
+                        updated_at: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString(),
+                        total: subtotal,
+                        client_name: selectedCustomer ? selectedCustomer.full_name : 'Invitado', // Pass name for printer
+                        order_type: 'takeaway',
+                        payment_method: 'cash',
+                        cart_items: cart
+                    }
+                    try {
+                        window.AndroidPrint.printTicket(JSON.stringify(printPayload))
+                        toast.success('Imprimiendo ticket...')
+                    } catch (e) {
+                        console.error('Error sending to printer:', e)
+                    }
+                }
+
                 toast.success(`Pedido #${orderData.id.slice(0, 6)} completado (Efectivo) 💵`)
                 closeModalAfterDelay()
             } else if (method === 'mercadopago') {
@@ -229,7 +328,17 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 <div className="w-2/3 flex flex-col border-r border-white/5 bg-[var(--color-background)]">
                     {/* Header */}
                     <div className="p-6 border-b border-white/5 flex gap-4 items-center">
-                        <h2 className="text-2xl font-bold text-white">Nuevo Pedido</h2>
+                        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                            Nuevo Pedido
+                            <button
+                                onClick={() => checkPrinterStatus()}
+                                className="bg-white/5 hover:bg-white/10 p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-white transition-colors"
+                                title="Verificar Impresora"
+                            >
+                                <span className="sr-only">Verificar Impresora</span>
+                                <Printer className="w-4 h-4" />
+                            </button>
+                        </h2>
                         <div className="h-6 w-px bg-white/10 mx-2" />
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] w-4 h-4" />
@@ -241,6 +350,31 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                                 onChange={e => setSearchTerm(e.target.value)}
                                 autoFocus
                             />
+                        </div>
+
+                        {/* CUSTOMER ID INPUT */}
+                        <div className="hidden md:flex items-center gap-2 pl-4 border-l border-white/5">
+                            <div className="relative w-24">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] text-xs font-mono">#</span>
+                                <input
+                                    type="text"
+                                    placeholder="ID"
+                                    className="w-full bg-[var(--color-background)] rounded-xl py-2.5 pl-7 pr-2 text-sm outline-none focus:ring-1 ring-[var(--color-primary)] transition-all font-mono"
+                                    value={customerIdInput}
+                                    onChange={e => setCustomerIdInput(e.target.value)}
+                                    onBlur={handleCustomerSearch}
+                                    onKeyDown={e => e.key === 'Enter' && handleCustomerSearch()}
+                                />
+                            </div>
+                            {selectedCustomer ? (
+                                <div className="bg-green-500/10 text-green-400 px-3 py-1.5 rounded-lg text-sm font-bold truncate max-w-[150px]">
+                                    {selectedCustomer.full_name}
+                                </div>
+                            ) : (
+                                <div className="text-[var(--color-text-muted)] text-sm px-2">
+                                    Invitado
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -272,8 +406,20 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
 
                 {/* RIGHT: Cart (35%) */}
                 <div className="w-1/3 flex flex-col bg-[var(--color-surface)]">
-                    <div className="p-6 border-b border-white/5 font-bold text-lg flex items-center gap-2">
-                        <ShoppingCart className="w-5 h-5" /> Carrito
+                    <div className="p-6 border-b border-white/5 flex flex-col gap-4">
+                        <div className="font-bold text-lg flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5" /> Carrito
+                        </div>
+
+                        {/* Time Slot Selector */}
+                        <div className="w-full">
+                            <DeliverySlotSelector
+                                orderType="takeaway" // POS is mostly takeaway/pickup
+                                selectedSlot={selectedSlot}
+                                onSlotSelect={setSelectedSlot}
+                                compact={true}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
@@ -360,6 +506,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                     onClose={() => setCustomizingProduct(null)}
                     initialProduct={customizingProduct}
                     onAddToCart={handleAddToCartFromModal}
+                    onDraftChange={handleDraftChange}
                     isPOS={true}
                 />
             </div>

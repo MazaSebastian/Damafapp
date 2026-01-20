@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../supabaseClient'
 
 const LiveCartView = ({ session }) => {
-    const { cart_items, subtotal, total, status, payment_method, qr_code_url } = session
+    const { cart_items, subtotal, total, status, payment_method, qr_code_url, current_action } = session
     const [bankDetails, setBankDetails] = useState(null)
 
     useEffect(() => {
@@ -30,8 +30,8 @@ const LiveCartView = ({ session }) => {
         <div className="w-full h-screen bg-[var(--color-background)] text-white flex">
 
             {/* LEFT: Cart Items (65%) */}
-            <div className="w-[65%] p-8 flex flex-col h-full border-r border-white/5">
-                <header className="mb-8 flex items-center gap-4">
+            <div className="w-[65%] p-8 flex flex-col h-full border-r border-white/5 relative overflow-hidden">
+                <header className="mb-8 flex items-center gap-4 z-10 relative">
                     <div className="w-12 h-12 bg-[var(--color-primary)] rounded-2xl flex items-center justify-center">
                         <ShoppingBag className="w-6 h-6 text-white" />
                     </div>
@@ -41,7 +41,7 @@ const LiveCartView = ({ session }) => {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar space-y-4">
+                <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar space-y-4 z-10 relative">
                     <AnimatePresence mode="popLayout">
                         {cart_items?.map((item, index) => (
                             <motion.div
@@ -52,13 +52,13 @@ const LiveCartView = ({ session }) => {
                                 className="bg-[var(--color-surface)] p-4 rounded-2xl border border-white/5 flex justify-between items-center"
                             >
                                 <div className="flex items-center gap-4">
-                                    {/* Product Image placeholder if needed */}
                                     <div className="w-16 h-16 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden">
                                         <img src={item.image_url || '/placeholder-food.png'} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-xl">{item.products?.name || item.name}</h3>
                                         <div className="text-sm text-[var(--color-text-muted)] mt-1">
+                                            {item.notes && <span className="block text-orange-400 text-xs mb-1">{item.notes}</span>}
                                             {item.modifiers?.map(m => (
                                                 <span key={m.name} className="block">• {m.name} (x{m.quantity || 1})</span>
                                             ))}
@@ -73,7 +73,53 @@ const LiveCartView = ({ session }) => {
                         ))}
                     </AnimatePresence>
 
-                    {(!cart_items || cart_items.length === 0) && (
+                    {/* LIVE DRAFT PREVIEW OVERLAY/INLINE */}
+                    <AnimatePresence>
+                        {current_action && current_action.main && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 50 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 50 }}
+                                className="mt-8 bg-gradient-to-r from-[var(--color-primary)]/20 to-purple-500/20 p-1 rounded-3xl"
+                            >
+                                <div className="bg-[var(--color-background)] p-6 rounded-[22px] border border-[var(--color-primary)]/50 shadow-[0_0_30px_rgba(255,107,0,0.1)]">
+                                    <div className="flex items-center gap-3 text-[var(--color-primary)] mb-4 animate-pulse uppercase tracking-widest text-sm font-bold">
+                                        <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
+                                        Armando ahora...
+                                    </div>
+
+                                    <div className="flex gap-6">
+                                        <div className="w-32 h-32 bg-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                                            <img src={current_action.main.image_url || '/placeholder-food.png'} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h2 className="text-3xl font-black italic">{current_action.main.name}</h2>
+                                            <p className="text-2xl font-bold text-[var(--color-primary)] mt-1">${current_action.total_price}</p>
+
+                                            <div className="flex flex-wrap gap-2 mt-4">
+                                                {/* Removed Ingredients */}
+                                                {current_action.removed_ingredients?.map(ing => (
+                                                    <span key={ing} className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full text-sm font-bold">
+                                                        SIN {ing}
+                                                    </span>
+                                                ))}
+
+                                                {/* Added Modifiers */}
+                                                {current_action.modifiers?.map(mod => (
+                                                    <span key={mod.id} className="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-sm font-bold flex items-center gap-2">
+                                                        + {mod.name} <span className="text-xs bg-green-500/20 px-1.5 rounded text-white">x{mod.quantity}</span>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+
+                    {(!cart_items || cart_items.length === 0) && !current_action && (
                         <div className="h-full flex items-center justify-center text-[var(--color-text-muted)] text-xl italic opacity-50">
                             Esperando productos...
                         </div>

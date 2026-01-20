@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { UtensilsCrossed, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { toast } from 'sonner'
 import LoyaltyBanner from './LoyaltyBanner'
 import NewsCard from './NewsCard'
 import BottomNav from './BottomNav'
@@ -66,9 +67,17 @@ const UserHome = () => {
 
             {/* Top Header */}
             <header className="px-4 py-6 flex justify-between items-center relative z-10">
-                <div></div>
-
-
+                <div className="flex items-center gap-3">
+                    <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                        <div className="w-10 h-10 rounded-full bg-[var(--color-surface)] border border-white/10 flex items-center justify-center text-xl">
+                            {profile?.full_name ? profile.full_name[0] : '👤'}
+                        </div>
+                        <div>
+                            <h1 className="text-sm font-bold leading-tight">Hola, {profile?.full_name?.split(' ')[0] || 'Vecino'}!</h1>
+                            <p className="text-[10px] text-[var(--color-text-muted)]">Ver Mi Perfil &gt;</p>
+                        </div>
+                    </Link>
+                </div>
 
                 {/* Admin Link or Sign Out */}
                 <div className="flex gap-2 items-center relative z-20">
@@ -77,7 +86,18 @@ const UserHome = () => {
                             Admin
                         </Link>
                     )}
-                    <button onClick={signOut} className="text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/20 hover:bg-white/10 transition-colors uppercase tracking-wider">
+                    <button
+                        onClick={async () => {
+                            const toastId = toast.loading('Cerrando sesión...')
+                            try {
+                                await signOut()
+                                toast.dismiss(toastId)
+                            } catch (error) {
+                                toast.error('Error al salir', { id: toastId })
+                            }
+                        }}
+                        className="text-white/80 text-[10px] font-bold px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors border border-white/5 uppercase tracking-wider"
+                    >
                         Salir
                     </button>
                 </div>

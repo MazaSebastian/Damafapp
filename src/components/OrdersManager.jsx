@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { Loader2, Check, Clock, X, ChefHat, Bell, Trash2, Banknote, CreditCard, Printer, Usb, Plus } from 'lucide-react'
+import { Loader2, Check, Clock, X, ChefHat, Bell, Trash2, Banknote, CreditCard, Printer, Usb, Plus, Bike } from 'lucide-react'
 import { toast } from 'sonner'
 import TicketTemplate from './print/TicketTemplate'
 import { EscPosEncoder } from '../utils/escPosEncoder'
@@ -8,6 +8,7 @@ import { usbPrinter } from '../services/UsbPrinterService'
 import { format } from 'date-fns'
 
 import POSModal from './POSModal'
+import AssignDriverModal from './AssignDriverModal'
 
 const OrdersManager = () => {
     const [orders, setOrders] = useState([])
@@ -15,6 +16,22 @@ const OrdersManager = () => {
     const [usbConnected, setUsbConnected] = useState(false)
     const [printingOrder, setPrintingOrder] = useState(null)
     const [isPOSOpen, setIsPOSOpen] = useState(false)
+
+    // Assign Driver Modal
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+    const [selectedOrderForAssignment, setSelectedOrderForAssignment] = useState(null)
+
+    // Filter States
+    const [filters, setFilters] = useState({
+        startDate: format(new Date(), 'yyyy-MM-dd'),
+        endDate: format(new Date(), 'yyyy-MM-dd'),
+        paymentMethod: 'TODAS',
+        status: 'TODOS',
+        driver: 'TODOS',
+        deliveryType: 'TODOS',
+        zone: '',
+        delay: 'TODOS'
+    })
 
     useEffect(() => {
         fetchOrders()
@@ -43,22 +60,94 @@ const OrdersManager = () => {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [])
+    }, [filters.startDate, filters.endDate]) // Refetch when dates change
 
     const fetchOrders = async () => {
-        const { data: ordersData, error } = await supabase
+        setLoading(true)
+
+        // Base query with date range
+        let query = supabase
             .from('orders')
             .select(`
                 *,
                 order_items (
                     *,
                     products (name) 
-                )
+                ),
+                drivers!fk_orders_drivers (
+                    name
+                ),
+                profiles (*)
             `)
+            .gte('created_at', `${filters.startDate}T00:00:00`)
+            .lte('created_at', `${filters.endDate}T23:59:59`)
             .order('created_at', { ascending: false })
+
+        const { data: ordersData, error } = await query
+
+        if (error) {
+            console.error('Error fetching orders:', error)
+            toast.error('Error al cargar pedidos')
+        }
 
         if (ordersData) setOrders(ordersData)
         setLoading(false)
+    }
+
+    // Client-side filtering
+    const filteredOrders = orders.filter(order => {
+        // Payment Method
+        if (filters.paymentMethod !== 'TODAS') {
+            if (filters.paymentMethod === 'Efectivo' && order.payment_method !== 'cash') return false
+            if (filters.paymentMethod === 'Mercado Pago' && order.payment_method !== 'mercadopago') return false
+            if (filters.paymentMethod === 'Transferencia' && order.payment_method !== 'transfer') return false
+        }
+
+        // Status
+        if (filters.status !== 'TODOS' && order.status !== filters.status.toLowerCase()) {
+            if (order.status !== filters.status) return false
+        }
+
+        // Delivery Type
+        if (filters.deliveryType !== 'TODOS') {
+            const type = filters.deliveryType === 'Delivery' ? 'delivery' : 'pickup'
+            if (order.order_type !== type) return false
+        }
+
+        // Driver
+        if (filters.driver !== 'TODOS') {
+            const driverName = order.drivers?.name || ''
+            if (!driverName.toLowerCase().includes(filters.driver.toLowerCase())) return false
+        }
+
+        // Zone (Address search)
+        if (filters.zone && filters.zone.trim() !== '') {
+            if (!order.delivery_address?.toLowerCase().includes(filters.zone.toLowerCase())) return false
+        }
+
+        return true
+    })
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }))
+    }
+
+    const resetFilters = () => {
+        setFilters({
+            startDate: format(new Date(), 'yyyy-MM-dd'),
+            endDate: format(new Date(), 'yyyy-MM-dd'),
+            paymentMethod: 'TODAS',
+            status: 'TODOS',
+            driver: 'TODOS',
+            deliveryType: 'TODOS',
+            zone: '',
+            delay: 'TODOS'
+        })
+    }
+
+    const openAssignModal = (orderId) => {
+        setSelectedOrderForAssignment(orderId)
+        setIsAssignModalOpen(true)
     }
 
     const updateStatus = async (orderId, newStatus) => {
@@ -308,9 +397,43 @@ const OrdersManager = () => {
     }
 
     const handlePrint = (order) => {
+        // 1. Android Native Print (Priority)
+        if (window.AndroidPrint) {
+            const printPayload = {
+                id: order.id,
+                created_at: order.created_at,
+                total: order.total,
+                // Customer Details
+                client_name: order.profiles?.full_name || 'Invitado',
+                client_address: order.profiles?.address || order.delivery_address || '',
+                client_phone: order.profiles?.phone || '',
+                client_shift: order.scheduled_time || '', // Ensure this column is selected in fetchOrders
+
+                order_type: order.order_type,
+                payment_method: order.payment_method,
+                // Items mapping
+                cart_items: order.order_items.map(item => ({
+                    name: item.products?.name || 'Producto',
+                    quantity: item.quantity,
+                    notes: item.notes,
+                    modifiers: item.modifiers || []
+                }))
+            }
+            try {
+                window.AndroidPrint.printTicket(JSON.stringify(printPayload))
+                toast.success('Imprimiendo ticket... 🖨️')
+            } catch (e) {
+                console.error('Android Print Error:', e)
+                toast.error('Error al imprimir en Android')
+            }
+            return
+        }
+
+        // 2. WebUSB Print
         if (usbConnected) {
             printViaUsb(order)
         } else {
+            // 3. Browser Print Fallback
             handleWindowPrint(order)
         }
     }
@@ -323,6 +446,13 @@ const OrdersManager = () => {
             <div className="hidden">
                 <TicketTemplate order={printingOrder} />
             </div>
+
+            <AssignDriverModal
+                isOpen={isAssignModalOpen}
+                onClose={() => setIsAssignModalOpen(false)}
+                orderId={selectedOrderForAssignment}
+                onAssignSuccess={fetchOrders}
+            />
 
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold flex items-center gap-2">
@@ -367,10 +497,126 @@ const OrdersManager = () => {
                 onSuccess={() => {
                     fetchOrders()
                 }}
-            /> >
+            />
+
+            {/* Filters Section */}
+            <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    {/* Date Range */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Desde Fecha</label>
+                        <input
+                            type="date"
+                            value={filters.startDate}
+                            onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Hasta Fecha</label>
+                        <input
+                            type="date"
+                            value={filters.endDate}
+                            onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+
+                    {/* Payment Method */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Forma de pago</label>
+                        <select
+                            value={filters.paymentMethod}
+                            onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        >
+                            <option value="TODAS">TODAS</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Mercado Pago">Mercado Pago</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                    </div>
+
+                    {/* Status */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Estado</label>
+                        <select
+                            value={filters.status}
+                            onChange={(e) => handleFilterChange('status', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        >
+                            <option value="TODOS">TODOS</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="cooking">Cocinando</option>
+                            <option value="packaging">Empaquetando</option>
+                            <option value="sent">Enviado</option>
+                            <option value="completed">Completado</option>
+                            <option value="cancelled">Cancelado</option>
+                            <option value="rejected">Rechazado</option>
+                        </select>
+                    </div>
+
+                    {/* Delivery Type */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Tipo entrega</label>
+                        <select
+                            value={filters.deliveryType}
+                            onChange={(e) => handleFilterChange('deliveryType', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        >
+                            <option value="TODOS">TODOS</option>
+                            <option value="Delivery">Delivery</option>
+                            <option value="Retiro">Retiro</option>
+                        </select>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-end gap-2">
+                        <button
+                            onClick={fetchOrders}
+                            className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20"
+                        >
+                            FILTRAR
+                        </button>
+                        <button
+                            onClick={resetFilters}
+                            className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded-lg font-bold text-sm transition-colors"
+                        >
+                            LIMPIAR
+                        </button>
+                    </div>
+                </div>
+
+                {/* Second Row of Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 border-t border-white/5 pt-4">
+                    {/* Driver */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Repartidor (Nombre)</label>
+                        <input
+                            type="text"
+                            placeholder="Nombre exacto..."
+                            value={filters.driver === 'TODOS' ? '' : filters.driver}
+                            onChange={(e) => handleFilterChange('driver', e.target.value || 'TODOS')}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+
+                    {/* Zone (Address) */}
+                    <div className="space-y-1 col-span-2">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Zonas (Buscar en Dirección)</label>
+                        <input
+                            type="text"
+                            placeholder="Ej: Av. Principal, Centro..."
+                            value={filters.zone}
+                            onChange={(e) => handleFilterChange('zone', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {orders.map(order => (
+                {filteredOrders.map(order => (
                     <div key={order.id} className={`bg-[var(--color-surface)] rounded-2xl border overflow-hidden flex flex-col transition-all duration-300 ${order.status === 'packaging'
                         ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'
                         : 'border-white/5'
@@ -401,17 +647,50 @@ const OrdersManager = () => {
                                         📍 {order.delivery_address}
                                     </div>
                                 )}
+
+                                {/* Driver Badge */}
+                                {order.drivers?.name ? (
+                                    <div className="flex items-center gap-1 mt-2 text-xs text-orange-400 font-bold bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20 w-fit">
+                                        <Bike className="w-3 h-3" /> {order.drivers.name}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1 mt-2 text-xs text-white/30 font-bold bg-white/5 px-2 py-1 rounded-lg border border-white/5 w-fit">
+                                        <Bike className="w-3 h-3" /> (Sin repartidor)
+                                    </div>
+                                )}
+
                             </div>
                             <div>
-                                <div className="flex items-center gap-1 mt-1 text-xs font-medium text-[var(--color-primary)]">
-                                    {order.payment_method === 'cash' && <><Banknote className="w-3 h-3" /> Efectivo</>}
-                                    {order.payment_method === 'transfer' && <><Banknote className="w-3 h-3" /> Transferencia</>}
-                                    {order.payment_method === 'mercadopago' && <><CreditCard className="w-3 h-3" /> MercadoPago</>}
+                                <div className="mt-1">
+                                    {order.payment_method === 'cash' && (
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/20 text-green-300 text-xs font-bold border border-green-500/30 w-fit">
+                                            <Banknote className="w-3.5 h-3.5" /> Efectivo
+                                        </span>
+                                    )}
+                                    {order.payment_method === 'transfer' && (
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 text-xs font-bold border border-purple-500/30 w-fit">
+                                            <Banknote className="w-3.5 h-3.5" /> Transferencia
+                                        </span>
+                                    )}
+                                    {order.payment_method === 'mercadopago' && (
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30 w-fit">
+                                            <CreditCard className="w-3.5 h-3.5" /> Mercado Pago
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="text-right flex flex-col items-end gap-2">
                                 <span className="font-bold text-lg block">${order.total}</span>
                                 <div className="flex gap-1">
+                                    {/* Assign Driver Button */}
+                                    <button
+                                        onClick={() => openAssignModal(order.id)}
+                                        className="text-orange-400 hover:text-white p-1 rounded hover:bg-orange-500/20 transition-colors"
+                                        title="Asignar Repartidor"
+                                    >
+                                        <Bike className="w-4 h-4" />
+                                    </button>
+
                                     <button
                                         onClick={() => handlePrint(order)}
                                         className="text-[var(--color-text-muted)] hover:text-white p-1 rounded hover:bg-white/10"
@@ -540,7 +819,7 @@ const OrdersManager = () => {
                     </div>
                 ))}
 
-                {orders.length === 0 && (
+                {filteredOrders.length === 0 && (
                     <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
                         No hay pedidos recientes.
                     </div>

@@ -4,15 +4,22 @@ import { Loader2, TrendingUp, Users, ShoppingBag, Package, DollarSign } from 'lu
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+import QRCode from 'react-qr-code'
+
+import OverviewSkeleton from './skeletons/OverviewSkeleton'
+
 const AdminOverview = () => {
     const [stats, setStats] = useState({
         totalRevenue: 0,
         activeOrders: 0,
         totalProducts: 0,
-        totalUsers: 0
+        totalUsers: 0,
+        currentCash: 0,
+        cashStatus: 'closed'
     })
-    const [recentOrders, setRecentOrders] = useState([])
+    // Removed unused recentOrders state
     const [loading, setLoading] = useState(true)
+    const origin = window.location.origin
 
     useEffect(() => {
         fetchDashboardData()
@@ -21,68 +28,57 @@ const AdminOverview = () => {
     const fetchDashboardData = async () => {
         setLoading(true)
         try {
-            // 1. Total Revenue (Paid/Completed orders)
-            // Note: This matches all time. For scalability, we might limit to this month later.
-            const { data: revenueData } = await supabase
-                .from('orders')
-                .select('total')
-                .or('status.eq.paid,status.eq.completed')
+            // Parallel Execution for independent queries
+            const [
+                revenueResult,
+                activeOrdersResult,
+                productsResult,
+                usersResult,
+                cashRegisterResult
+            ] = await Promise.all([
+                // 1. Total Revenue (Optimized RPC)
+                supabase.rpc('get_total_revenue'),
 
-            const totalRevenue = revenueData?.reduce((acc, order) => acc + (order.total || 0), 0) || 0
+                // 2. Active Orders
+                supabase
+                    .from('orders')
+                    .select('*', { count: 'exact', head: true })
+                    .in('status', ['pending', 'preparing', 'ready']),
 
-            // 2. Active Orders (Not cancelled, not completed/paid if flow finishes there. 
-            // Usually "Active" means in kitchen or ready. Let's assume anything not cancelled/completed.)
-            const { count: activeOrdersCount } = await supabase
-                .from('orders')
-                .select('*', { count: 'exact', head: true })
-                .in('status', ['pending', 'preparing', 'ready']) // Adjust statuses as per your flow
+                // 3. Total Products
+                supabase
+                    .from('products')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('is_available', true),
 
-            // 3. Total Products
-            const { count: productsCount } = await supabase
-                .from('products')
-                .select('*', { count: 'exact', head: true })
-                .eq('is_available', true) // Or all? Let's show all active.
+                // 4. Registered Users
+                supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true }),
 
-            // 4. Registered Users
-            const { count: usersCount } = await supabase
-                .from('profiles')
-                .select('*', { count: 'exact', head: true })
+                // 5. Open Cash Register
+                supabase
+                    .from('cash_registers')
+                    .select('id, opening_amount')
+                    .eq('status', 'open')
+                    .single()
+            ])
 
-            setStats({
-                totalRevenue,
-                activeOrders: activeOrdersCount || 0,
-                totalProducts: productsCount || 0,
-                totalUsers: usersCount || 0
-            })
+            // Parse Results
+            const totalRevenue = revenueResult.data || 0
+            const activeOrders = activeOrdersResult.count || 0
+            const totalProducts = productsResult.count || 0
+            const totalUsers = usersResult.count || 0
 
-            // 5. Recent Orders
-            const { data: recentData } = await supabase
-                .from('orders')
-                .select(`
-                    id,
-                    total,
-                    status,
-                    created_at,
-                    user_id,
-                    profiles:user_id (email, full_name)
-                `)
-                .order('created_at', { ascending: false })
-                .limit(5)
-
-            if (recentData) setRecentOrders(recentData)
-
-            // 6. Cash Register Status
-            const { data: openRegister } = await supabase
-                .from('cash_registers')
-                .select('id, opening_amount')
-                .eq('status', 'open')
-                .single()
-
+            // Cash Logic (Dependent on open register)
             let currentCash = 0
             let cashStatus = 'closed'
+            const openRegister = cashRegisterResult.data
 
             if (openRegister) {
                 cashStatus = 'open'
+                // This query must be sequential as it depends on register ID, but it's fast.
+                // We could optimize further by joining or RPC but this is acceptable for now.
                 const { data: movements } = await supabase
                     .from('cash_movements')
                     .select('amount, type')
@@ -98,9 +94,9 @@ const AdminOverview = () => {
 
             setStats({
                 totalRevenue,
-                activeOrders: activeOrdersCount || 0,
-                totalProducts: productsCount || 0,
-                totalUsers: usersCount || 0,
+                activeOrders,
+                totalProducts,
+                totalUsers,
                 currentCash,
                 cashStatus
             })
@@ -111,7 +107,7 @@ const AdminOverview = () => {
         setLoading(false)
     }
 
-    if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[var(--color-primary)]" /></div>
+    if (loading) return <OverviewSkeleton />
 
     return (
         <div className="space-y-8">
@@ -152,46 +148,9 @@ const AdminOverview = () => {
                 />
             </div>
 
-            {/* Recent Orders */}
-            <div className="bg-[var(--color-surface)] rounded-2xl p-6 border border-white/5">
-                <h3 className="text-lg font-bold mb-4 text-white">Pedidos Recientes</h3>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-[var(--color-text-muted)]">
-                        <thead className="bg-[var(--color-background)]/50 text-[var(--color-text-main)] uppercase text-xs">
-                            <tr>
-                                <th className="p-3 rounded-l-lg">ID</th>
-                                <th className="p-3">Cliente</th>
-                                <th className="p-3">Estado</th>
-                                <th className="p-3">Total</th>
-                                <th className="p-3 rounded-r-lg">Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {recentOrders.length > 0 ? (
-                                recentOrders.map(order => (
-                                    <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                        <td className="p-3 font-mono">#{order.id.slice(0, 6)}</td>
-                                        <td className="p-3 font-medium text-[var(--color-text-main)]">
-                                            {order.profiles?.full_name || order.profiles?.email || 'Invitado'}
-                                        </td>
-                                        <td className="p-3">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${getStatusColor(order.status)}`}>
-                                                {formatStatus(order.status)}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 font-bold text-white">${order.total}</td>
-                                        <td className="p-3">{format(new Date(order.created_at), "d MMM, HH:mm", { locale: es })}</td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" className="p-4 text-center">No hay pedidos recientes</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+
+
+            {/* Recent Orders Removed as per user request */}
         </div>
     )
 }

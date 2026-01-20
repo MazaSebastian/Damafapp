@@ -1,8 +1,6 @@
 export const logCashSale = async (orderId, total, paymentMethod, supabase) => {
-    // Determine type based on payment method
-    // Both Cash and Transfer are logged.
-    // 'mercadopago' (Online) is NOT logged in this manual register (usually).
-    if (paymentMethod !== 'cash' && paymentMethod !== 'transfer') return { success: true, message: 'Online payment - not logged in register' }
+    // We now log ALL payment methods to provide a complete report.
+    // However, only 'cash' will increase the "Calculated Total" in the UI logic.
 
     try {
         // 1. Find Open Register
@@ -28,6 +26,11 @@ export const logCashSale = async (orderId, total, paymentMethod, supabase) => {
             return { success: true, message: 'Movimiento ya registrado' }
         }
 
+        // Determine Tag
+        let typeTag = '(Efvo)'
+        if (paymentMethod === 'transfer') typeTag = '(Transf)'
+        if (paymentMethod === 'mercadopago') typeTag = '(MP)'
+
         // 3. Log Movement
         const { error: moveError } = await supabase
             .from('cash_movements')
@@ -35,7 +38,7 @@ export const logCashSale = async (orderId, total, paymentMethod, supabase) => {
                 register_id: openRegister.id,
                 amount: total,
                 type: 'sale', // We might differentiate later, or keep 'sale' and use description
-                description: `Venta #${orderId.slice(0, 6)} (${paymentMethod === 'transfer' ? 'Transf' : 'Efvo'})`,
+                description: `Venta #${orderId.slice(0, 6)} ${typeTag}`,
                 related_order_id: orderId
             }])
 

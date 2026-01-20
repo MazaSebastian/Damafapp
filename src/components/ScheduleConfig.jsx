@@ -14,6 +14,44 @@ const DAYS_MAP = {
 
 const ORDERED_DAYS = [1, 2, 3, 4, 5, 6, 0] // Mon -> Sun
 
+const TimePicker = ({ value, onChange, disabled }) => {
+    const [hours, minutes] = (value || '00:00').split(':')
+
+    const handleChange = (type, val) => {
+        const newHours = type === 'hours' ? val : hours
+        const newMinutes = type === 'minutes' ? val : minutes
+        onChange(`${newHours}:${newMinutes}`)
+    }
+
+    return (
+        <div className={`flex items-center bg-black/40 rounded-lg border border-white/10 px-2 py-1 focus-within:border-[var(--color-primary)] transition-colors ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+            <select
+                value={hours}
+                onChange={(e) => handleChange('hours', e.target.value)}
+                className="bg-transparent text-white text-sm outline-none appearance-none cursor-pointer text-center w-8 hover:text-[var(--color-primary)]"
+                disabled={disabled}
+            >
+                {Array.from({ length: 24 }).map((_, i) => {
+                    const h = i.toString().padStart(2, '0')
+                    return <option key={h} value={h} className="bg-gray-900">{h}</option>
+                })}
+            </select>
+            <span className="text-white/40 font-bold mx-0.5">:</span>
+            <select
+                value={minutes}
+                onChange={(e) => handleChange('minutes', e.target.value)}
+                className="bg-transparent text-white text-sm outline-none appearance-none cursor-pointer text-center w-8 hover:text-[var(--color-primary)]"
+                disabled={disabled}
+            >
+                {Array.from({ length: 60 }).map((_, i) => {
+                    const m = i.toString().padStart(2, '0')
+                    return <option key={m} value={m} className="bg-gray-900">{m}</option>
+                })}
+            </select>
+        </div>
+    )
+}
+
 const ScheduleConfig = ({ value, onChange }) => {
     const [schedule, setSchedule] = useState({})
 
@@ -98,23 +136,21 @@ const ScheduleConfig = ({ value, onChange }) => {
 
                             {/* Middle: Time Inputs */}
                             <div className={`flex items-center gap-3 transition-opacity duration-200 ${isActive ? 'opacity-100' : 'opacity-20 pointer-events-none'}`}>
-                                <div className="flex items-center bg-black/40 rounded-lg border border-white/10 px-3 py-1.5 focus-within:border-[var(--color-primary)] transition-colors">
-                                    <span className="text-xs text-white/40 mr-2">DESDE</span>
-                                    <input
-                                        type="time"
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-white/40 font-bold uppercase">DESDE</span>
+                                    <TimePicker
                                         value={dayData.start}
-                                        onChange={(e) => updateDay(dayIndex, { start: e.target.value })}
-                                        className="bg-transparent text-white text-sm outline-none w-28 appearance-none [&::-webkit-calendar-picker-indicator]:invert"
+                                        onChange={(val) => updateDay(dayIndex, { start: val })}
+                                        disabled={!isActive}
                                     />
                                 </div>
                                 <span className="text-white/20">-</span>
-                                <div className="flex items-center bg-black/40 rounded-lg border border-white/10 px-3 py-1.5 focus-within:border-[var(--color-primary)] transition-colors">
-                                    <span className="text-xs text-white/40 mr-2">HASTA</span>
-                                    <input
-                                        type="time"
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-white/40 font-bold uppercase">HASTA</span>
+                                    <TimePicker
                                         value={dayData.end}
-                                        onChange={(e) => updateDay(dayIndex, { end: e.target.value })}
-                                        className="bg-transparent text-white text-sm outline-none w-28 appearance-none [&::-webkit-calendar-picker-indicator]:invert"
+                                        onChange={(val) => updateDay(dayIndex, { end: val })}
+                                        disabled={!isActive}
                                     />
                                 </div>
                             </div>

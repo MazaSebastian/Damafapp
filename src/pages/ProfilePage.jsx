@@ -16,6 +16,7 @@ const ProfilePage = () => {
         phone: '',
         zip_code: '',
         birth_date: '',
+        address: '' // Added Address
     })
 
     // Separate phone state for UI
@@ -46,7 +47,8 @@ const ProfilePage = () => {
                 full_name: data.full_name || '',
                 phone: data.phone || '',
                 zip_code: data.zip_code || '',
-                birth_date: data.birth_date || ''
+                birth_date: data.birth_date || '',
+                address: data.address || '' // Added Address
             })
 
             if (data.phone) {
@@ -83,10 +85,12 @@ const ProfilePage = () => {
             const fullPhone = `${phoneData.countryCode} ${phoneData.number}`.trim()
 
             const updates = {
-                id: user.id,
+                id: user.id, // Restored ID for upsert
                 full_name: formData.full_name,
                 phone: fullPhone,
                 zip_code: formData.zip_code,
+                address: formData.address, // Added Address
+                updated_at: new Date().toISOString()
             }
 
             const { error } = await supabase
@@ -244,6 +248,19 @@ const ProfilePage = () => {
                                 />
                             </div>
                         </div>
+
+                        {/* Address */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-[var(--color-text-muted)] ml-1">Dirección (Calle y Altura)</label>
+                            <input
+                                type="text"
+                                value={formData.address}
+                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                className="w-full bg-[var(--color-surface)] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
+                                placeholder="Ej: Av. San Martin 1234"
+                            />
+                        </div>
+
 
                         {/* Birth Date (Read Only) */}
                         <div className="space-y-1">

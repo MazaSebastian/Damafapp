@@ -85,13 +85,20 @@ function App() {
         position="top-center"
         theme="dark"
         toastOptions={{
-          // We keep 'style' undefined to let richColors determine the background/border
+          style: {
+            background: 'var(--color-surface)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'white',
+            fontFamily: 'Outfit, sans-serif',
+          },
+          className: 'premium-toast',
           actionButtonStyle: {
             background: 'var(--color-primary)',
             color: 'white',
+            fontWeight: 'bold',
           },
           cancelButtonStyle: {
-            background: 'rgba(255, 255, 255, 0.1)',
+            background: 'rgba(255, 255, 255, 0.05)',
             color: 'var(--color-text-muted)',
           },
         }}

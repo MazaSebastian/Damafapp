@@ -7,7 +7,10 @@ import { calculateKPIs, getDailyRevenueData, getHourlyHeatmapData, getTopProduct
 import GeoHeatmap from './GeoHeatmap'
 
 const AnalyticsManager = () => {
-    const [dateRange, setDateRange] = useState('7') // '7', '30', 'month'
+    const [dateRange, setDateRange] = useState('7') // '7', '30', 'month', 'custom'
+    const [customStart, setCustomStart] = useState('')
+    const [customEnd, setCustomEnd] = useState('')
+
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState({
         kpis: { totalRevenue: 0, totalOrders: 0, averageTicket: 0, paymentMethods: {} },
@@ -18,8 +21,12 @@ const AnalyticsManager = () => {
     })
 
     useEffect(() => {
-        fetchAnalyticsData()
-    }, [dateRange])
+        if (dateRange !== 'custom') {
+            fetchAnalyticsData()
+        } else if (customStart && customEnd) {
+            fetchAnalyticsData()
+        }
+    }, [dateRange, customStart, customEnd])
 
     const fetchAnalyticsData = async () => {
         setLoading(true)
@@ -27,9 +34,22 @@ const AnalyticsManager = () => {
             // Determine date range
             const now = new Date()
             let startDate = subDays(now, 7)
+            let endDate = endOfDay(now)
 
             if (dateRange === '30') startDate = subDays(now, 30)
             if (dateRange === 'month') startDate = startOfDay(new Date(now.getFullYear(), now.getMonth(), 1))
+
+            if (dateRange === 'custom') {
+                if (!customStart || !customEnd) {
+                    setLoading(false)
+                    return
+                }
+                const start = new Date(customStart)
+                // Add timezone offset correction or treat as local YYYY-MM-DD
+                // Simple fix: append T00:00:00
+                startDate = startOfDay(new Date(customStart + 'T00:00:00'))
+                endDate = endOfDay(new Date(customEnd + 'T00:00:00'))
+            }
 
             // Fetch orders
             const { data: orders, error } = await supabase
@@ -41,18 +61,18 @@ const AnalyticsManager = () => {
                         products (name)
                     )
                 `)
-                .result('is_paid', 'is.not.null') // Assuming we only count paid/valid orders? Or all except cancelled.
-                // Better approach: filter by status or checks
-                .in('status', ['paid', 'completed', 'sent', 'packaging', 'cooking', 'ready', 'pending']) // Exclude cancelled/rejected
+                .in('status', ['paid', 'completed', 'preparing', 'ready', 'sent', 'pending']) // Include all valid active/historical statuses
                 .gte('created_at', startDate.toISOString())
-                .lte('created_at', endOfDay(now).toISOString())
+                .lte('created_at', endDate.toISOString())
                 .order('created_at', { ascending: true })
 
             if (error) throw error
 
             // Process Data
             const kpis = calculateKPIs(orders)
-            const revenueChart = getDailyRevenueData(orders, dateRange === '30' ? 30 : dateRange === 'month' ? 31 : 7)
+            // Calculate days diff for chart granularity
+            const diffDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) || 1
+            const revenueChart = getDailyRevenueData(orders, diffDays)
             const hourlyChart = getHourlyHeatmapData(orders)
             const topProducts = getTopProductsData(orders)
 
@@ -65,14 +85,14 @@ const AnalyticsManager = () => {
         }
     }
 
-    if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[var(--color-secondary)]" /></div>
+    if (loading && dateRange !== 'custom') return <div className="h-96 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[var(--color-secondary)]" /></div>
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header & Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                 <div>
                     <h2 className="text-3xl font-black uppercase tracking-tight text-white flex items-center gap-3">
                         <TrendingUp className="text-[var(--color-secondary)] w-8 h-8" />
@@ -81,21 +101,43 @@ const AnalyticsManager = () => {
                     <p className="text-[var(--color-text-muted)] mt-1">Visión estratégica de tu negocio</p>
                 </div>
 
-                <div className="bg-[var(--color-surface)] p-1 rounded-xl flex border border-white/5">
-                    {['7', '30', 'month'].map(range => (
-                        <button
-                            key={range}
-                            onClick={() => setDateRange(range)}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${dateRange === range
-                                ? 'bg-[var(--color-secondary)] text-white shadow-lg'
-                                : 'text-[var(--color-text-muted)] hover:text-white hover:bg-white/5'
-                                }`}
-                        >
-                            {range === '7' && 'Últimos 7 días'}
-                            {range === '30' && 'Últimos 30 días'}
-                            {range === 'month' && 'Este Mes'}
-                        </button>
-                    ))}
+                <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center w-full xl:w-auto">
+
+                    {dateRange === 'custom' && (
+                        <div className="flex items-center gap-2 bg-[var(--color-surface)] p-1 rounded-xl border border-white/5 animate-in slide-in-from-right">
+                            <input
+                                type="date"
+                                value={customStart}
+                                onChange={e => setCustomStart(e.target.value)}
+                                className="bg-transparent text-white text-sm p-2 outline-none border-r border-white/10"
+                            />
+                            <span className="text-white/50">-</span>
+                            <input
+                                type="date"
+                                value={customEnd}
+                                onChange={e => setCustomEnd(e.target.value)}
+                                className="bg-transparent text-white text-sm p-2 outline-none"
+                            />
+                        </div>
+                    )}
+
+                    <div className="bg-[var(--color-surface)] p-1 rounded-xl flex border border-white/5 w-full sm:w-auto overflow-x-auto">
+                        {['7', '30', 'month', 'custom'].map(range => (
+                            <button
+                                key={range}
+                                onClick={() => setDateRange(range)}
+                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${dateRange === range
+                                    ? 'bg-[var(--color-secondary)] text-white shadow-lg'
+                                    : 'text-[var(--color-text-muted)] hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                {range === '7' && 'Últimos 7 días'}
+                                {range === '30' && 'Últimos 30 días'}
+                                {range === 'month' && 'Este Mes'}
+                                {range === 'custom' && 'Personalizado'}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 

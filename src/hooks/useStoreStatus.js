@@ -74,10 +74,57 @@ export const useStoreStatus = () => {
         const todayConfig = currentSchedule[day]
 
         if (todayConfig && todayConfig.active) {
-            if (currentTime >= todayConfig.start && currentTime <= todayConfig.end) {
-                setIsOpen(true)
-                setStatusText('Abierto')
-                return
+            let endTime = todayConfig.end
+            if (endTime === '00:00') endTime = '24:00'
+
+            // Handle normal range (Start < End)
+            if (todayConfig.start < endTime) {
+                if (currentTime >= todayConfig.start && currentTime < endTime) {
+                    setIsOpen(true)
+                    setStatusText('Abierto')
+                    return
+                }
+            }
+            // Handle cross-midnight (Start > End) e.g. 23:00 - 02:00
+            // Note: This only handles the "current day" part.
+            // For full support, we'd need to check "Yesterday's" spillover.
+            // But checking Start <= Current OR Current < End covers the crossover session?
+            // Actually for a shift starting today: Current >= Start is enough to be open "tonight".
+            // The "morning after" part would be handled by checking Yesterday's config.
+            // For now, let's just stick to the requested fix for 00:00.
+            else {
+                // Spans midnight but NOT 00:00 ending.
+                // If 18:00 to 02:00.
+                // If it is 20:00. 20:00 >= 18:00 (True).
+                if (currentTime >= todayConfig.start) {
+                    setIsOpen(true)
+                    setStatusText('Abierto')
+                    return
+                }
+            }
+        }
+
+        // Also check "Yesterday" to see if we are in the early morning spillover
+        // e.g. It is Monday 01:00 AM. Sunday was 18:00 - 02:00.
+        // We need to check Sunday's config.
+        const yesterday = day === 0 ? 6 : day - 1
+        const yesterdayConfig = currentSchedule[yesterday]
+
+        if (yesterdayConfig && yesterdayConfig.active) {
+            let yEnd = yesterdayConfig.end
+            if (yEnd === '00:00') yEnd = '24:00'
+
+            // If yesterday crossed midnight (Start > End)
+            if (yesterdayConfig.start > yEnd || (yEnd === '24:00' && yesterdayConfig.start > '00:00')) {
+                // Actually if yEnd is 24:00 it didn't cross midnight in string terms but ends at midnight.
+                // If 18:00 - 02:00. yEnd = '02:00'. Start '18:00'.
+                // Current '01:00'.
+                // Check if Current < yEnd
+                if (yesterdayConfig.start > yEnd && currentTime < yEnd) {
+                    setIsOpen(true)
+                    setStatusText('Abierto')
+                    return
+                }
             }
         }
 

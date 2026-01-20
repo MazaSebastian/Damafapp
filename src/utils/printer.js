@@ -19,10 +19,18 @@ const TEXT_NORMAL = GS + '!' + '\x00';
 
 export const printTicket = async (order) => {
     try {
+        // 1. Android Native Check
+        if (window.AndroidPrint) {
+            console.log("Printing via Android Native Interface");
+            window.AndroidPrint.printTicket(JSON.stringify(order));
+            return;
+        }
+
+        // 2. WebUSB Check
         if (navigator.usb) {
             await printWebUSB(order);
         } else {
-            // Fallback for non-WebUSB browsers (e.g. mobile/tablet if not wrapped)
+            // Fallback for non-WebUSB browsers
             console.warn('WebUSB not supported, using window.print()');
             window.print();
         }
@@ -30,6 +38,16 @@ export const printTicket = async (order) => {
         console.error('Print failed:', error);
         // Fallback
         window.print();
+    }
+};
+
+export const checkPrinterStatus = () => {
+    if (window.AndroidPrint && window.AndroidPrint.testConnection) {
+        window.AndroidPrint.testConnection();
+    } else {
+        console.warn("Monitor de Impresora: No detectado entorno Android");
+        // Could imply successful check if on web for debugging? No, keep silent or toast.
+        // toast.info("Modo Web: No se puede verificar USB nativo")
     }
 };
 

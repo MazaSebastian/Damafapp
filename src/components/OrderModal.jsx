@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { toast } from 'sonner'
 
-const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null, isPOS = false }) => {
+const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null, isPOS = false, onDraftChange = null }) => {
     const [step, setStep] = useState(1) // 1: Burger, 1.5: Modifiers, 2: Sides, 3: Drinks
     const [products, setProducts] = useState([])
     const [modifiers, setModifiers] = useState([])
@@ -22,6 +22,32 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
 
     const navigate = useNavigate()
     const { addToCart } = useCart()
+
+    // Real-time Draft Sync
+    useEffect(() => {
+        if (!onDraftChange || !isOpen) return
+
+        if (!selectedBurger) {
+            onDraftChange(null)
+            return
+        }
+
+        const modifiersList = Object.entries(selectedModifiers).map(([modId, qty]) => {
+            const mod = modifiers.find(m => m.id === modId)
+            return { ...mod, quantity: qty }
+        }).filter(m => m && m.quantity > 0)
+
+        const draft = {
+            main: selectedBurger,
+            modifiers: modifiersList,
+            removed_ingredients: removedIngredients,
+            step: step,
+            total_price: getCurrentTotal()
+        }
+
+        onDraftChange(draft)
+    }, [selectedBurger, selectedModifiers, removedIngredients, step, isOpen, modifiers])
+
 
     useEffect(() => {
         if (isOpen) {

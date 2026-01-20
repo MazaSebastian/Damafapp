@@ -1,34 +1,35 @@
-com.damafapp.pos.app-jetified-appcompat-resources-1.6.1-0 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/100b7bbbcef832003b847d88be1c7553/transformed/jetified-appcompat-resources-1.6.1/res
-com.damafapp.pos.app-transition-1.2.0-1 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/1a94ab0117b65670f3c808c0060a0ed2/transformed/transition-1.2.0/res
-com.damafapp.pos.app-jetified-emoji2-1.2.0-2 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/1f8e5a183a3e2df1df96caa05a2e41d1/transformed/jetified-emoji2-1.2.0/res
-com.damafapp.pos.app-lifecycle-livedata-2.6.1-3 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/2209ad7c184e9f2208e7f02455e71971/transformed/lifecycle-livedata-2.6.1/res
-com.damafapp.pos.app-core-runtime-2.2.0-4 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3d7f3cce9387beee5e69e82a7281f369/transformed/core-runtime-2.2.0/res
-com.damafapp.pos.app-jetified-annotation-experimental-1.3.0-5 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3dbfee5916922fadd62d062e83728464/transformed/jetified-annotation-experimental-1.3.0/res
-com.damafapp.pos.app-jetified-emoji2-views-helper-1.2.0-6 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3f7dd937429c09b7060f68936ca2064d/transformed/jetified-emoji2-views-helper-1.2.0/res
-com.damafapp.pos.app-fragment-1.3.6-7 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3faf3344d0f2c6b40c8e935a0f4a1752/transformed/fragment-1.3.6/res
-com.damafapp.pos.app-jetified-savedstate-1.2.1-8 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/41a5e6827ce998fdfd2b09f53a5a52fc/transformed/jetified-savedstate-1.2.1/res
-com.damafapp.pos.app-material-1.11.0-9 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/54d5ae0b379a751dcdcf2b3df2b406c3/transformed/material-1.11.0/res
-com.damafapp.pos.app-appcompat-1.6.1-10 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/5d64804f8051a0b2addf541cd0664b64/transformed/appcompat-1.6.1/res
-com.damafapp.pos.app-lifecycle-viewmodel-2.6.1-11 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/6570270a336eaa0d54d8a07c585aaeea/transformed/lifecycle-viewmodel-2.6.1/res
-com.damafapp.pos.app-jetified-profileinstaller-1.3.0-12 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/66e629ec963cf0ee525b66cff38c5c1c/transformed/jetified-profileinstaller-1.3.0/res
-com.damafapp.pos.app-lifecycle-livedata-core-2.6.1-13 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/75323dc659fa569b7199d29a68201d45/transformed/lifecycle-livedata-core-2.6.1/res
-com.damafapp.pos.app-constraintlayout-2.1.4-14 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7cdb198f3bbe2cfd8ce8e30c829e0e84/transformed/constraintlayout-2.1.4/res
-com.damafapp.pos.app-drawerlayout-1.1.1-15 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/8f14aeb4e4aebe23374ab5d7e91360d0/transformed/drawerlayout-1.1.1/res
-com.damafapp.pos.app-core-1.12.0-16 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/96a788d4b25d8546e5bf24497a2f7085/transformed/core-1.12.0/res
-com.damafapp.pos.app-lifecycle-runtime-2.6.1-17 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/9e5323a4b880d45761e26f2b269862a7/transformed/lifecycle-runtime-2.6.1/res
-com.damafapp.pos.app-coordinatorlayout-1.1.0-18 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a8f21ac0e8dcf6835c296d47bc5d9c6b/transformed/coordinatorlayout-1.1.0/res
-com.damafapp.pos.app-jetified-lifecycle-viewmodel-savedstate-2.6.1-19 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/b00e61d2d474d8572b73891e850bc706/transformed/jetified-lifecycle-viewmodel-savedstate-2.6.1/res
-com.damafapp.pos.app-jetified-startup-runtime-1.1.1-20 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/b4aafa527ddf619ad2202ce3de2c2531/transformed/jetified-startup-runtime-1.1.1/res
-com.damafapp.pos.app-recyclerview-1.1.0-21 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/b7a37cf8ffde63c5e02d65d34e135666/transformed/recyclerview-1.1.0/res
-com.damafapp.pos.app-jetified-lifecycle-process-2.6.1-22 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/c4593bcbf1557c69645543f3d0d21a82/transformed/jetified-lifecycle-process-2.6.1/res
-com.damafapp.pos.app-cardview-1.0.0-23 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/c58c8491b1ca57d3e6ea2e8bf9b6567e/transformed/cardview-1.0.0/res
-com.damafapp.pos.app-jetified-core-ktx-1.12.0-24 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/c6b6dbc8c698ec9da1f82874235780de/transformed/jetified-core-ktx-1.12.0/res
-com.damafapp.pos.app-jetified-viewpager2-1.0.0-25 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/ce2fbdb15e1c57a972221c25e29acae4/transformed/jetified-viewpager2-1.0.0/res
-com.damafapp.pos.app-jetified-activity-1.8.0-26 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/d0afd674e802cbe77378ad7460eb0f67/transformed/jetified-activity-1.8.0/res
-com.damafapp.pos.app-pngs-27 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/generated/res/pngs/debug
-com.damafapp.pos.app-resValues-28 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/generated/res/resValues/debug
-com.damafapp.pos.app-packageDebugResources-29 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
-com.damafapp.pos.app-packageDebugResources-30 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
-com.damafapp.pos.app-merged_res-31 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/merged_res/debug
-com.damafapp.pos.app-debug-32 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/debug/res
-com.damafapp.pos.app-main-33 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/res
+com.damafapp.pos.app-jetified-ESCPOS-ThermalPrinter-Android-3.3.0-0 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/06a83c60e4a7b0585dd82132af7b072b/transformed/jetified-ESCPOS-ThermalPrinter-Android-3.3.0/res
+com.damafapp.pos.app-core-runtime-2.2.0-1 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/19896b601ea6690bd653a2ec7415ff6f/transformed/core-runtime-2.2.0/res
+com.damafapp.pos.app-jetified-lifecycle-viewmodel-savedstate-2.6.1-2 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/201c522d045ad247300afb47d2885c21/transformed/jetified-lifecycle-viewmodel-savedstate-2.6.1/res
+com.damafapp.pos.app-lifecycle-livedata-core-2.6.1-3 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/2b07623d60cdf7d0778f46a4bc85f351/transformed/lifecycle-livedata-core-2.6.1/res
+com.damafapp.pos.app-jetified-core-ktx-1.12.0-4 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/2cbfc76faccf01b050bab7e24a7dda72/transformed/jetified-core-ktx-1.12.0/res
+com.damafapp.pos.app-jetified-emoji2-1.2.0-5 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/res
+com.damafapp.pos.app-constraintlayout-2.1.4-6 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/38bece3b231c72499540a1d485c21920/transformed/constraintlayout-2.1.4/res
+com.damafapp.pos.app-jetified-appcompat-resources-1.6.1-7 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3cc80a3afc9f44bc7cfa5faa9a144d38/transformed/jetified-appcompat-resources-1.6.1/res
+com.damafapp.pos.app-material-1.11.0-8 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3cf68078cee68225c804f9281c426d2c/transformed/material-1.11.0/res
+com.damafapp.pos.app-jetified-profileinstaller-1.3.0-9 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/res
+com.damafapp.pos.app-transition-1.2.0-10 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/511a0408345c13e66a1157c325c12f4e/transformed/transition-1.2.0/res
+com.damafapp.pos.app-recyclerview-1.1.0-11 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/5ed6561858a0307af9df28df018fdb72/transformed/recyclerview-1.1.0/res
+com.damafapp.pos.app-appcompat-1.6.1-12 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/5edcc430859e13ead9316ebff007d1ff/transformed/appcompat-1.6.1/res
+com.damafapp.pos.app-jetified-startup-runtime-1.1.1-13 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/5f5150fcc1aa1d45d63b95a0cc7ab87f/transformed/jetified-startup-runtime-1.1.1/res
+com.damafapp.pos.app-cardview-1.0.0-14 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/67d4fc6fb0d3a053a0304b01700970c9/transformed/cardview-1.0.0/res
+com.damafapp.pos.app-coordinatorlayout-1.1.0-15 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/6905c16ff1c667e30470d564ca0b1b8c/transformed/coordinatorlayout-1.1.0/res
+com.damafapp.pos.app-jetified-emoji2-views-helper-1.2.0-16 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/6d4a63da9a403795ed91ab09f3f07fef/transformed/jetified-emoji2-views-helper-1.2.0/res
+com.damafapp.pos.app-core-1.12.0-17 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/res
+com.damafapp.pos.app-jetified-viewpager2-1.0.0-18 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/9a09ca197bccc6d17fd7eb68f9edf3bf/transformed/jetified-viewpager2-1.0.0/res
+com.damafapp.pos.app-jetified-activity-1.8.0-19 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/9c759ec8dbe1c732b9c7858f4cac3fc8/transformed/jetified-activity-1.8.0/res
+com.damafapp.pos.app-jetified-lifecycle-process-2.6.1-20 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a6a333b24900cef2aa08f2e33bb72757/transformed/jetified-lifecycle-process-2.6.1/res
+com.damafapp.pos.app-jetified-savedstate-1.2.1-21 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/b90013371c292b99a824ee2255a2ba3c/transformed/jetified-savedstate-1.2.1/res
+com.damafapp.pos.app-lifecycle-runtime-2.6.1-22 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/ba48330482c87de9bc20218dce706ac9/transformed/lifecycle-runtime-2.6.1/res
+com.damafapp.pos.app-jetified-annotation-experimental-1.3.0-23 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/cd86023af571b110e59dd63f4317944a/transformed/jetified-annotation-experimental-1.3.0/res
+com.damafapp.pos.app-lifecycle-livedata-2.6.1-24 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/d86c62148946d583593dc2a1bceb9c1b/transformed/lifecycle-livedata-2.6.1/res
+com.damafapp.pos.app-drawerlayout-1.1.1-25 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/e4cd1eb8312a3b43cdf4f0b79a8c727b/transformed/drawerlayout-1.1.1/res
+com.damafapp.pos.app-lifecycle-viewmodel-2.6.1-26 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/e4df99f7b2b486a16e8b9df4d073684b/transformed/lifecycle-viewmodel-2.6.1/res
+com.damafapp.pos.app-fragment-1.3.6-27 /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/ee710989b537f95e101ce8737a8be549/transformed/fragment-1.3.6/res
+com.damafapp.pos.app-pngs-28 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/generated/res/pngs/debug
+com.damafapp.pos.app-resValues-29 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/generated/res/resValues/debug
+com.damafapp.pos.app-packageDebugResources-30 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.damafapp.pos.app-packageDebugResources-31 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.damafapp.pos.app-merged_res-32 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/build/intermediates/merged_res/debug
+com.damafapp.pos.app-debug-33 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/debug/res
+com.damafapp.pos.app-main-34 /Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/res

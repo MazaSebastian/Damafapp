@@ -21,31 +21,9 @@ class MainActivity : AppCompatActivity() {
 
         // 1. Setup Main Screen (Admin POS)
         val mainWebView = findViewById<WebView>(R.id.main_webview)
-        mainWebView.settings.javaScriptEnabled = true
-        mainWebView.settings.domStorageEnabled = true
-        
-        mainWebView.webViewClient = object : WebViewClient() {
-            override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-                android.widget.Toast.makeText(this@MainActivity, "Error: $description", android.widget.Toast.LENGTH_LONG).show()
-                android.util.Log.e("WebViewError", "Error: $description")
-            }
-            
-            override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
-                android.widget.Toast.makeText(this@MainActivity, "Error: ${error?.description}", android.widget.Toast.LENGTH_LONG).show()
-                 android.util.Log.e("WebViewError", "Error: ${error?.description}")
-            }
-        }
-        
-        mainWebView.webChromeClient = object : android.webkit.WebChromeClient() {
-            override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
-                android.util.Log.d("WebViewConsole", "${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
-                return true
-            }
-        }
-        
         // CHANGE THIS URL TO YOUR DEPLOYED URL
         // Example: https://damafapp-six.vercel.app/admin/pos
-        mainWebView.loadUrl("https://damafapp-six.vercel.app/admin/pos")
+        setupWebView(mainWebView, "http://10.0.2.2:5173/admin/pos")
 
         // 2. Setup Secondary Screen (Customer Presentation)
         val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
@@ -91,5 +69,43 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         customerPresentation?.dismiss()
         super.onDestroy()
+    }
+
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    private fun setupWebView(webView: WebView, url: String) {
+        val settings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.mediaPlaybackRequiresUserGesture = false
+        settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        settings.allowFileAccess = true
+
+        // Interface for Printing
+        webView.addJavascriptInterface(WebAppInterface(this), "AndroidPrint")
+
+        // Debugging
+        WebView.setWebContentsDebuggingEnabled(true)
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun onReceivedError(
+                view: WebView?,
+                request: android.webkit.WebResourceRequest?,
+                error: android.webkit.WebResourceError?
+            ) {
+                super.onReceivedError(view, request, error)
+                android.widget.Toast.makeText(this@MainActivity, "Error: ${error?.description}", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+
+       webView.webChromeClient = object : android.webkit.WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                if (consoleMessage != null) {
+                    android.util.Log.d("WebViewConsole", "${consoleMessage.message()} -- From line ${consoleMessage.lineNumber()} of ${consoleMessage.sourceId()}")
+                }
+                return true
+            }
+        }
+
+        webView.loadUrl(url)
     }
 }
