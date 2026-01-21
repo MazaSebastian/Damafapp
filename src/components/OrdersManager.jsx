@@ -336,589 +336,589 @@ const OrdersManager = () => {
                 encoder.bold(true).invert(true).text(` TURNO: ${order.scheduled_time} `).invert(false).bold(false).newline().newline()
             }
 
+            encoder.line() // Separator ----------------
+                .newline()
+
+                // 4. Customer Info
+                .bold(false).text('Cliente: ')
+                .bold(true).size(1, 1).text(`${order.profiles?.full_name || 'Invitado'}`) // Big Name
+                .size(0, 0).bold(false) // Reset
+                .newline(2)
+
+                // --- HUGE DELIVERY / RETIRO BLOCK ---
+                .align('center')
+                .invert(true) // Black background
+                .bold(true)
+                .size(3, 3) // SUPER SIZE
+                .text(order.order_type === 'delivery' ? ' DELIVERY ' : ' RETIRO ')
+                .size(0, 0)
+                .bold(false)
+                .invert(false) // Reset
+                .align('left')
+                // ------------------------------------
+
+                .newline(2)
+
+            if (order.delivery_address) {
+                encoder.text(order.delivery_address).newline()
+            }
+            if (order.profiles?.phone) {
+                encoder.text(`Tel: ${order.profiles.phone}`).newline()
+            }
+
+            encoder.newline()
                 .line() // Separator ----------------
-    .newline()
+                .newline()
 
-    // 4. Customer Info
-    .bold(false).text('Cliente: ')
-    .bold(true).size(1, 1).text(`${order.profiles?.full_name || 'Invitado'}`) // Big Name
-    .size(0, 0).bold(false) // Reset
-    .newline(2)
+            // 5. Items
+            order.order_items?.forEach(item => {
+                // "1 x Product Name" (Bold, Medium-Large)
+                encoder.bold(true).size(2, 2) // <-- INCREASED THIS TO 2, 2 (3X SIZE)
+                    .text(`${item.quantity} x ${item.products?.name}`)
+                    .newline()
+                    .size(0, 0).bold(false) // Reset
 
-    // --- HUGE DELIVERY / RETIRO BLOCK ---
-    .align('center')
-    .invert(true) // Black background
-    .bold(true)
-    .size(3, 3) // SUPER SIZE
-    .text(order.order_type === 'delivery' ? ' DELIVERY ' : ' RETIRO ')
-    .size(0, 0)
-    .bold(false)
-    .invert(false) // Reset
-    .align('left')
-    // ------------------------------------
+                // Modifiers
+                if (item.modifiers?.length > 0) {
+                    item.modifiers.forEach(m => {
+                        encoder.text(`   ${m.name}`).newline()
+                    })
+                }
+                if (item.side_info) encoder.text(`   + ${item.side_info.name}`).newline()
+                if (item.drink_info) encoder.text(`   + ${item.drink_info.name}`).newline()
 
-    .newline(2)
+                encoder.newline()
+            })
 
-if (order.delivery_address) {
-    encoder.text(order.delivery_address).newline()
-}
-if (order.profiles?.phone) {
-    encoder.text(`Tel: ${order.profiles.phone}`).newline()
-}
+            encoder.line() // Separator ----------------
+                .newline()
 
-encoder.newline()
-    .line() // Separator ----------------
-    .newline()
+                // 6. Payment Info
+                .bold(true).text('Forma pago: ').bold(false).text(order.payment_method === 'mercadopago' ? 'Mercado Pago' : order.payment_method).newline()
+                .bold(true).text('Forma entrega: ').bold(false).text(order.order_type).newline()
+                .newline(2)
 
-// 5. Items
-order.order_items?.forEach(item => {
-    // "1 x Product Name" (Bold, Medium-Large)
-    encoder.bold(true).size(2, 2) // <-- INCREASED THIS TO 2, 2 (3X SIZE)
-        .text(`${item.quantity} x ${item.products?.name}`)
-        .newline()
-        .size(0, 0).bold(false) // Reset
+                // 7. TOTAL (Massive)
+                .bold(true)
+                .size(1, 1).text('TOTAL').newline()
+                .size(3, 3).text(`$${order.total}`) // Largest size
+                .newline(4)
+                .cut()
 
-    // Modifiers
-    if (item.modifiers?.length > 0) {
-        item.modifiers.forEach(m => {
-            encoder.text(`   ${m.name}`).newline()
-        })
-    }
-    if (item.side_info) encoder.text(`   + ${item.side_info.name}`).newline()
-    if (item.drink_info) encoder.text(`   + ${item.drink_info.name}`).newline()
-
-    encoder.newline()
-})
-
-encoder.line() // Separator ----------------
-    .newline()
-
-    // 6. Payment Info
-    .bold(true).text('Forma pago: ').bold(false).text(order.payment_method === 'mercadopago' ? 'Mercado Pago' : order.payment_method).newline()
-    .bold(true).text('Forma entrega: ').bold(false).text(order.order_type).newline()
-    .newline(2)
-
-    // 7. TOTAL (Massive)
-    .bold(true)
-    .size(1, 1).text('TOTAL').newline()
-    .size(3, 3).text(`$${order.total}`) // Largest size
-    .newline(4)
-    .cut()
-
-await usbPrinter.print(encoder.encode())
-toast.success('Impreso via USB 🖨️')
+            await usbPrinter.print(encoder.encode())
+            toast.success('Impreso via USB 🖨️')
         } catch (err) {
-    console.error('USB Print failed', err)
-    toast.error('Error USB. Intentando modo clásico...')
-    // Fallback
-    handleWindowPrint(order)
-}
-    }
-
-const handleWindowPrint = (order) => {
-    setPrintingOrder(order)
-    setTimeout(() => {
-        window.print()
-    }, 100)
-}
-
-const handlePrint = (order) => {
-    // 1. Android Native Print (Priority)
-    if (window.AndroidPrint) {
-        const printPayload = {
-            id: order.id,
-            created_at: order.created_at,
-            total: order.total,
-            // Customer Details
-            client_name: order.profiles?.full_name || 'Invitado',
-            client_address: order.profiles?.address || order.delivery_address || '',
-            client_phone: order.profiles?.phone || '',
-            client_shift: order.scheduled_time || '', // Ensure this column is selected in fetchOrders
-
-            order_type: order.order_type,
-            payment_method: order.payment_method,
-            // Items mapping
-            cart_items: order.order_items.map(item => ({
-                name: item.products?.name || 'Producto',
-                quantity: item.quantity,
-                notes: item.notes,
-                modifiers: item.modifiers || []
-            }))
+            console.error('USB Print failed', err)
+            toast.error('Error USB. Intentando modo clásico...')
+            // Fallback
+            handleWindowPrint(order)
         }
-        try {
-            window.AndroidPrint.printTicket(JSON.stringify(printPayload))
-            toast.success('Imprimiendo ticket... 🖨️')
-        } catch (e) {
-            console.error('Android Print Error:', e)
-            toast.error('Error al imprimir en Android')
+    }
+
+    const handleWindowPrint = (order) => {
+        setPrintingOrder(order)
+        setTimeout(() => {
+            window.print()
+        }, 100)
+    }
+
+    const handlePrint = (order) => {
+        // 1. Android Native Print (Priority)
+        if (window.AndroidPrint) {
+            const printPayload = {
+                id: order.id,
+                created_at: order.created_at,
+                total: order.total,
+                // Customer Details
+                client_name: order.profiles?.full_name || 'Invitado',
+                client_address: order.profiles?.address || order.delivery_address || '',
+                client_phone: order.profiles?.phone || '',
+                client_shift: order.scheduled_time || '', // Ensure this column is selected in fetchOrders
+
+                order_type: order.order_type,
+                payment_method: order.payment_method,
+                // Items mapping
+                cart_items: order.order_items.map(item => ({
+                    name: item.products?.name || 'Producto',
+                    quantity: item.quantity,
+                    notes: item.notes,
+                    modifiers: item.modifiers || []
+                }))
+            }
+            try {
+                window.AndroidPrint.printTicket(JSON.stringify(printPayload))
+                toast.success('Imprimiendo ticket... 🖨️')
+            } catch (e) {
+                console.error('Android Print Error:', e)
+                toast.error('Error al imprimir en Android')
+            }
+            return
         }
-        return
+
+        // 2. WebUSB Print
+        if (usbConnected) {
+            printViaUsb(order)
+        } else {
+            // 3. Browser Print Fallback
+            handleWindowPrint(order)
+        }
     }
 
-    // 2. WebUSB Print
-    if (usbConnected) {
-        printViaUsb(order)
-    } else {
-        // 3. Browser Print Fallback
-        handleWindowPrint(order)
-    }
-}
+    if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[var(--color-secondary)]" /></div>
 
-if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[var(--color-secondary)]" /></div>
-
-return (
-    <div className="space-y-6">
-        {/* Hidden Ticket Template for Printing */}
-        <div className="hidden">
-            <TicketTemplate order={printingOrder} />
-        </div>
-
-        <AssignDriverModal
-            isOpen={isAssignModalOpen}
-            onClose={() => setIsAssignModalOpen(false)}
-            orderId={selectedOrderForAssignment}
-            onAssignSuccess={fetchOrders}
-        />
-
-        <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-                <ChefHat className="text-[var(--color-secondary)]" />
-                Gestión de Pedidos
-            </h2>
-            <div className="flex gap-2">
-                <button
-                    onClick={() => setIsPOSOpen(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-lg text-sm font-bold hover:brightness-110 transition-colors shadow-lg shadow-purple-900/20"
-                >
-                    <Plus className="w-4 h-4" />
-                    Tomar Pedido
-                </button>
-
-                <button
-                    onClick={clearAllOrders}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    Borrar TODO
-                </button>
-                <button
-                    onClick={clearHistory}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg text-sm font-medium transition-colors"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    Limpiar Completados
-                </button>
+    return (
+        <div className="space-y-6">
+            {/* Hidden Ticket Template for Printing */}
+            <div className="hidden">
+                <TicketTemplate order={printingOrder} />
             </div>
-        </div>
 
-        <POSModal
-            isOpen={isPOSOpen}
-            onClose={() => setIsPOSOpen(false)}
-            onSuccess={() => {
-                fetchOrders()
-            }}
-        />
+            <AssignDriverModal
+                isOpen={isAssignModalOpen}
+                onClose={() => setIsAssignModalOpen(false)}
+                orderId={selectedOrderForAssignment}
+                onAssignSuccess={fetchOrders}
+            />
 
-        {/* Filters Section */}
-        <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-white/5 space-y-4 shadow-xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                {/* Date Range */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Desde Fecha</label>
-                    <input
-                        type="date"
-                        value={filters.startDate}
-                        onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Hasta Fecha</label>
-                    <input
-                        type="date"
-                        value={filters.endDate}
-                        onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    />
-                </div>
-
-                {/* Payment Method */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Forma de pago</label>
-                    <select
-                        value={filters.paymentMethod}
-                        onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    >
-                        <option value="TODAS">TODAS</option>
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Mercado Pago">Mercado Pago</option>
-                        <option value="Transferencia">Transferencia</option>
-                    </select>
-                </div>
-
-                {/* Status */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Estado</label>
-                    <select
-                        value={filters.status}
-                        onChange={(e) => handleFilterChange('status', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    >
-                        <option value="TODOS">TODOS</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="cooking">Cocinando</option>
-                        <option value="packaging">Empaquetando</option>
-                        <option value="sent">Enviado</option>
-                        <option value="completed">Completado</option>
-                        <option value="cancelled">Cancelado</option>
-                        <option value="rejected">Rechazado</option>
-                    </select>
-                </div>
-
-                {/* Delivery Type */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Tipo entrega</label>
-                    <select
-                        value={filters.deliveryType}
-                        onChange={(e) => handleFilterChange('deliveryType', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    >
-                        <option value="TODOS">TODOS</option>
-                        <option value="Delivery">Delivery</option>
-                        <option value="Retiro">Retiro</option>
-                    </select>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-end gap-2">
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                    <ChefHat className="text-[var(--color-secondary)]" />
+                    Gestión de Pedidos
+                </h2>
+                <div className="flex gap-2">
                     <button
-                        onClick={fetchOrders}
-                        className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20"
+                        onClick={() => setIsPOSOpen(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-lg text-sm font-bold hover:brightness-110 transition-colors shadow-lg shadow-purple-900/20"
                     >
-                        FILTRAR
+                        <Plus className="w-4 h-4" />
+                        Tomar Pedido
+                    </button>
+
+                    <button
+                        onClick={clearAllOrders}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        Borrar TODO
                     </button>
                     <button
-                        onClick={resetFilters}
-                        className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded-lg font-bold text-sm transition-colors"
+                        onClick={clearHistory}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg text-sm font-medium transition-colors"
                     >
-                        LIMPIAR
+                        <Trash2 className="w-4 h-4" />
+                        Limpiar Completados
                     </button>
                 </div>
             </div>
 
-            {/* Second Row of Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 border-t border-white/5 pt-4">
-                {/* Client Name */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Cliente (Nombre)</label>
-                    <input
-                        type="text"
-                        placeholder="Nombre cliente..."
-                        value={filters.clientName}
-                        onChange={(e) => handleFilterChange('clientName', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    />
-                </div>
+            <POSModal
+                isOpen={isPOSOpen}
+                onClose={() => setIsPOSOpen(false)}
+                onSuccess={() => {
+                    fetchOrders()
+                }}
+            />
 
-                {/* Order ID */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Nº Orden</label>
-                    <input
-                        type="text"
-                        placeholder="#ID..."
-                        value={filters.orderId}
-                        onChange={(e) => handleFilterChange('orderId', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    />
-                </div>
-
-                {/* Driver */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Repartidor (Nombre)</label>
-                    <input
-                        type="text"
-                        placeholder="Nombre exacto..."
-                        value={filters.driver === 'TODOS' ? '' : filters.driver}
-                        onChange={(e) => handleFilterChange('driver', e.target.value || 'TODOS')}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    />
-                </div>
-
-                {/* Zone (Address) */}
-                <div className="space-y-1 col-span-2">
-                    <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Zonas (Buscar en Dirección)</label>
-                    <input
-                        type="text"
-                        placeholder="Ej: Av. Principal, Centro..."
-                        value={filters.zone}
-                        onChange={(e) => handleFilterChange('zone', e.target.value)}
-                        className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
-                    />
-                </div>
-            </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredOrders.map(order => (
-                <div key={order.id} className={`bg-[var(--color-surface)] rounded-2xl border overflow-hidden flex flex-col transition-all duration-300 ${order.status === 'packaging'
-                    ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'
-                    : 'border-white/5'
-                    }`}>
-                    {/* Header */}
-                    <div className="p-4 border-b border-white/5 bg-[var(--color-background)]/50 flex justify-between items-start">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                {/* Order Number: Use order_number if available, fallback to UUID slice */}
-                                <span className="font-bold text-lg text-white">
-                                    #{order.order_number ? order.order_number.toString().padStart(4, '0') : order.id.slice(0, 4)}
-                                </span>
-                                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${getStatusColor(order.status)}`}>
-                                    {order.status}
-                                </span>
-                            </div>
-                            <span className="text-xs text-[var(--color-text-muted)]">
-                                {new Date(order.created_at).toLocaleString()}
-                            </span>
-
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {/* Shift / Scheduled Time */}
-                                {order.scheduled_time && (
-                                    <div className="flex items-center gap-1 text-xs text-white font-bold bg-orange-500/80 px-3 py-1 rounded-lg border border-orange-400/50 shadow-sm w-fit">
-                                        <Clock className="w-3.5 h-3.5" /> {order.scheduled_time}
-                                    </div>
-                                )}
-
-                                {/* Delivery / Takeaway Badge - High Visibility Enforced */}
-                                {order.order_type === 'delivery' ? (
-                                    <div className="flex items-center gap-1 text-xs text-white font-bold bg-blue-600 px-3 py-1 rounded-lg shadow-sm w-fit">
-                                        <Bell className="w-3.5 h-3.5" /> DELIVERY
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-1 text-xs text-white font-bold bg-green-600 px-3 py-1 rounded-lg shadow-sm w-fit">
-                                        <ChefHat className="w-3.5 h-3.5" /> RETIRO
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Customer Details */}
-                            {order.profiles ? (
-                                <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/5 text-xs text-gray-300">
-                                    <div className="font-bold text-white flex items-center gap-1">
-                                        {order.profiles.full_name}
-                                        {order.profiles.customer_id && (
-                                            <span className="bg-[var(--color-primary)] text-white px-1 py-0.5 rounded text-[10px] items-center text-center">#{order.profiles.customer_id}</span>
-                                        )}
-                                    </div>
-                                    {/* Address logic: Prefer order delivery_address, fallback to profile address */}
-                                    <div className="flex items-start gap-1 mt-1 text-[var(--color-text-muted)]">
-                                        <span>📍</span>
-                                        <span>{order.delivery_address || order.profiles.address || 'Sin dirección'}</span>
-                                    </div>
-                                    {order.profiles.phone && (
-                                        <div className="flex items-center gap-1 mt-0.5 text-[var(--color-text-muted)]">
-                                            <span>📞</span> {order.profiles.phone}
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                // Guest or Manual Name
-                                <div className="mt-2 text-xs">
-                                    <div className="font-bold text-white">{order.client_name || 'Invitado'}</div>
-                                    {order.delivery_address && (
-                                        <div className="text-white/70 italic mt-0.5 max-w-[150px] truncate">
-                                            📍 {order.delivery_address}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-
-                            {/* Driver Badge */}
-                            {order.drivers?.name ? (
-                                <div className="flex items-center gap-1 mt-2 text-xs text-orange-400 font-bold bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20 w-fit">
-                                    <Bike className="w-3 h-3" /> {order.drivers.name}
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-1 mt-2 text-xs text-white/30 font-bold bg-white/5 px-2 py-1 rounded-lg border border-white/5 w-fit">
-                                    <Bike className="w-3 h-3" /> (Sin repartidor)
-                                </div>
-                            )}
-
-                        </div>
-                        <div>
-                            <div className="mt-1">
-                                {order.payment_method === 'cash' && (
-                                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/20 text-green-300 text-xs font-bold border border-green-500/30 w-fit">
-                                        <Banknote className="w-3.5 h-3.5" /> Efectivo
-                                    </span>
-                                )}
-                                {order.payment_method === 'transfer' && (
-                                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 text-xs font-bold border border-purple-500/30 w-fit">
-                                        <Banknote className="w-3.5 h-3.5" /> Transferencia
-                                    </span>
-                                )}
-                                {order.payment_method === 'mercadopago' && (
-                                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30 w-fit">
-                                        <CreditCard className="w-3.5 h-3.5" /> Mercado Pago
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <div className="text-right flex flex-col items-end gap-2">
-                            <span className="font-bold text-lg block">${order.total}</span>
-                            <div className="flex gap-1">
-                                {/* Assign Driver Button */}
-                                <button
-                                    onClick={() => openAssignModal(order.id)}
-                                    className="text-orange-400 hover:text-white p-1 rounded hover:bg-orange-500/20 transition-colors"
-                                    title="Asignar Repartidor"
-                                >
-                                    <Bike className="w-4 h-4" />
-                                </button>
-
-                                <button
-                                    onClick={() => handlePrint(order)}
-                                    className="text-[var(--color-text-muted)] hover:text-white p-1 rounded hover:bg-white/10"
-                                    title="Imprimir Ticket"
-                                >
-                                    <Printer className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => deleteOrder(order.id)}
-                                    className="text-[var(--color-text-muted)] hover:text-red-400 p-1 rounded hover:bg-white/10"
-                                    title="Eliminar pedido"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
+            {/* Filters Section */}
+            <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    {/* Date Range */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Desde Fecha</label>
+                        <input
+                            type="date"
+                            value={filters.startDate}
+                            onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Hasta Fecha</label>
+                        <input
+                            type="date"
+                            value={filters.endDate}
+                            onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
                     </div>
 
-                    {/* Items */}
-                    <div className="p-4 flex-1 space-y-3">
-                        {order.order_items?.map(item => (
-                            <div key={item.id} className="text-sm">
-                                <div className="flex justify-between font-medium">
-                                    <span>1x {item.products?.name}</span>
-                                    <span className="text-[var(--color-text-muted)]">${item.price_at_time}</span>
-                                </div>
+                    {/* Payment Method */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Forma de pago</label>
+                        <select
+                            value={filters.paymentMethod}
+                            onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        >
+                            <option value="TODAS">TODAS</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Mercado Pago">Mercado Pago</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                    </div>
 
-                                {/* Sub-items details */}
-                                <div className="pl-4 border-l border-white/10 mt-1 text-xs text-[var(--color-text-muted)] space-y-0.5">
-                                    {item.modifiers?.map((m, i) => (
-                                        <div key={i}>+ {m.name} {m.quantity > 1 ? <span className="text-white font-bold">x{m.quantity}</span> : ''}</div>
-                                    ))}
-                                    {item.side_info && <div>+ {item.side_info.name}</div>}
-                                    {item.drink_info && <div>+ {item.drink_info.name}</div>}
-                                </div>
-                            </div>
-                        ))}
+                    {/* Status */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Estado</label>
+                        <select
+                            value={filters.status}
+                            onChange={(e) => handleFilterChange('status', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        >
+                            <option value="TODOS">TODOS</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="cooking">Cocinando</option>
+                            <option value="packaging">Empaquetando</option>
+                            <option value="sent">Enviado</option>
+                            <option value="completed">Completado</option>
+                            <option value="cancelled">Cancelado</option>
+                            <option value="rejected">Rechazado</option>
+                        </select>
+                    </div>
+
+                    {/* Delivery Type */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Tipo entrega</label>
+                        <select
+                            value={filters.deliveryType}
+                            onChange={(e) => handleFilterChange('deliveryType', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        >
+                            <option value="TODOS">TODOS</option>
+                            <option value="Delivery">Delivery</option>
+                            <option value="Retiro">Retiro</option>
+                        </select>
                     </div>
 
                     {/* Actions */}
-                    <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
-                        {(order.status === 'pending' || order.status === 'pending_approval') && (
-                            <div className="col-span-3 space-y-2">
-                                {/* Primary Actions: Accept / Reject */}
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={() => {
-                                            // If MP, standard 'Accept' moves to 'pending_payment' to trigger user payment flow
-                                            if (order.status === 'pending_approval') {
-                                                updateStatus(order.id, 'pending_payment')
-                                            } else {
-                                                // Standard Cash/Transfer -> Cooking
-                                                handlePrint(order)
-                                                updateStatus(order.id, 'cooking')
-                                            }
-                                        }}
-                                        className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
-                                    >
-                                        <Check className="w-4 h-4" /> Aceptar
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            toast('¿Rechazar pedido?', {
-                                                action: {
-                                                    label: 'Sí, Rechazar',
-                                                    onClick: () => updateStatus(order.id, 'rejected')
-                                                },
-                                            })
-                                        }}
-                                        className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <X className="w-4 h-4" /> Rechazar
-                                    </button>
-                                </div>
-
-                                {/* Secondary Action: Confirm Payment (if needed) */}
-                                {!order.is_paid && order.payment_method !== 'cash' && order.status !== 'pending_approval' && (
-                                    <button
-                                        onClick={async () => {
-                                            const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
-                                            if (!error) {
-                                                setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
-                                                toast.success('Pago confirmado')
-                                            } else {
-                                                toast.error('Error al confirmar pago')
-                                            }
-                                        }}
-                                        className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Banknote className="w-3 h-3" /> Confirmar recepción del pago
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                        {order.status === 'cooking' && (
-                            <div className="col-span-3 space-y-2">
-                                <button onClick={() => updateStatus(order.id, 'packaging')} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
-                                    <Check className="w-4 h-4" /> Preparar Envío
-                                </button>
-
-                                {/* Still show Confirm Payment if enabled and not paid */}
-                                {!order.is_paid && order.payment_method !== 'cash' && (
-                                    <button
-                                        onClick={async () => {
-                                            const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
-                                            if (!error) {
-                                                setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
-                                                toast.success('Pago confirmado')
-                                            } else {
-                                                toast.error('Error al confirmar pago')
-                                            }
-                                        }}
-                                        className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Banknote className="w-3 h-3" /> Confirmar recepción del pago
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                        {order.status === 'packaging' && (
-                            <button onClick={() => updateStatus(order.id, 'sent')} className="col-span-3 bg-purple-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-purple-500 transition-colors flex items-center justify-center gap-2">
-                                <Bell className="w-4 h-4" /> Enviar Pedido
-                            </button>
-                        )}
-                        {order.status === 'sent' && (
-                            <button onClick={() => updateStatus(order.id, 'completed')} className="col-span-3 bg-gray-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-gray-500 transition-colors flex items-center justify-center gap-2">
-                                <Check className="w-4 h-4" /> Finalizar / Entregado
-                            </button>
-                        )}
+                    <div className="flex items-end gap-2">
+                        <button
+                            onClick={fetchOrders}
+                            className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20"
+                        >
+                            FILTRAR
+                        </button>
+                        <button
+                            onClick={resetFilters}
+                            className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded-lg font-bold text-sm transition-colors"
+                        >
+                            LIMPIAR
+                        </button>
                     </div>
                 </div>
-            ))}
 
-            {filteredOrders.length === 0 && (
-                <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
-                    No hay pedidos recientes.
+                {/* Second Row of Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 border-t border-white/5 pt-4">
+                    {/* Client Name */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Cliente (Nombre)</label>
+                        <input
+                            type="text"
+                            placeholder="Nombre cliente..."
+                            value={filters.clientName}
+                            onChange={(e) => handleFilterChange('clientName', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+
+                    {/* Order ID */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Nº Orden</label>
+                        <input
+                            type="text"
+                            placeholder="#ID..."
+                            value={filters.orderId}
+                            onChange={(e) => handleFilterChange('orderId', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+
+                    {/* Driver */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Repartidor (Nombre)</label>
+                        <input
+                            type="text"
+                            placeholder="Nombre exacto..."
+                            value={filters.driver === 'TODOS' ? '' : filters.driver}
+                            onChange={(e) => handleFilterChange('driver', e.target.value || 'TODOS')}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+
+                    {/* Zone (Address) */}
+                    <div className="space-y-1 col-span-2">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Zonas (Buscar en Dirección)</label>
+                        <input
+                            type="text"
+                            placeholder="Ej: Av. Principal, Centro..."
+                            value={filters.zone}
+                            onChange={(e) => handleFilterChange('zone', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
                 </div>
-            )}
-        </div>
-    </div >
-)
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredOrders.map(order => (
+                    <div key={order.id} className={`bg-[var(--color-surface)] rounded-2xl border overflow-hidden flex flex-col transition-all duration-300 ${order.status === 'packaging'
+                        ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'
+                        : 'border-white/5'
+                        }`}>
+                        {/* Header */}
+                        <div className="p-4 border-b border-white/5 bg-[var(--color-background)]/50 flex justify-between items-start">
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    {/* Order Number: Use order_number if available, fallback to UUID slice */}
+                                    <span className="font-bold text-lg text-white">
+                                        #{order.order_number ? order.order_number.toString().padStart(4, '0') : order.id.slice(0, 4)}
+                                    </span>
+                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${getStatusColor(order.status)}`}>
+                                        {order.status}
+                                    </span>
+                                </div>
+                                <span className="text-xs text-[var(--color-text-muted)]">
+                                    {new Date(order.created_at).toLocaleString()}
+                                </span>
+
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {/* Shift / Scheduled Time */}
+                                    {order.scheduled_time && (
+                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-orange-500/80 px-3 py-1 rounded-lg border border-orange-400/50 shadow-sm w-fit">
+                                            <Clock className="w-3.5 h-3.5" /> {order.scheduled_time}
+                                        </div>
+                                    )}
+
+                                    {/* Delivery / Takeaway Badge - High Visibility Enforced */}
+                                    {order.order_type === 'delivery' ? (
+                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-blue-600 px-3 py-1 rounded-lg shadow-sm w-fit">
+                                            <Bell className="w-3.5 h-3.5" /> DELIVERY
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-green-600 px-3 py-1 rounded-lg shadow-sm w-fit">
+                                            <ChefHat className="w-3.5 h-3.5" /> RETIRO
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Customer Details */}
+                                {order.profiles ? (
+                                    <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/5 text-xs text-gray-300">
+                                        <div className="font-bold text-white flex items-center gap-1">
+                                            {order.profiles.full_name}
+                                            {order.profiles.customer_id && (
+                                                <span className="bg-[var(--color-primary)] text-white px-1 py-0.5 rounded text-[10px] items-center text-center">#{order.profiles.customer_id}</span>
+                                            )}
+                                        </div>
+                                        {/* Address logic: Prefer order delivery_address, fallback to profile address */}
+                                        <div className="flex items-start gap-1 mt-1 text-[var(--color-text-muted)]">
+                                            <span>📍</span>
+                                            <span>{order.delivery_address || order.profiles.address || 'Sin dirección'}</span>
+                                        </div>
+                                        {order.profiles.phone && (
+                                            <div className="flex items-center gap-1 mt-0.5 text-[var(--color-text-muted)]">
+                                                <span>📞</span> {order.profiles.phone}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // Guest or Manual Name
+                                    <div className="mt-2 text-xs">
+                                        <div className="font-bold text-white">{order.client_name || 'Invitado'}</div>
+                                        {order.delivery_address && (
+                                            <div className="text-white/70 italic mt-0.5 max-w-[150px] truncate">
+                                                📍 {order.delivery_address}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+
+                                {/* Driver Badge */}
+                                {order.drivers?.name ? (
+                                    <div className="flex items-center gap-1 mt-2 text-xs text-orange-400 font-bold bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20 w-fit">
+                                        <Bike className="w-3 h-3" /> {order.drivers.name}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1 mt-2 text-xs text-white/30 font-bold bg-white/5 px-2 py-1 rounded-lg border border-white/5 w-fit">
+                                        <Bike className="w-3 h-3" /> (Sin repartidor)
+                                    </div>
+                                )}
+
+                            </div>
+                            <div>
+                                <div className="mt-1">
+                                    {order.payment_method === 'cash' && (
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/20 text-green-300 text-xs font-bold border border-green-500/30 w-fit">
+                                            <Banknote className="w-3.5 h-3.5" /> Efectivo
+                                        </span>
+                                    )}
+                                    {order.payment_method === 'transfer' && (
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 text-xs font-bold border border-purple-500/30 w-fit">
+                                            <Banknote className="w-3.5 h-3.5" /> Transferencia
+                                        </span>
+                                    )}
+                                    {order.payment_method === 'mercadopago' && (
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30 w-fit">
+                                            <CreditCard className="w-3.5 h-3.5" /> Mercado Pago
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="text-right flex flex-col items-end gap-2">
+                                <span className="font-bold text-lg block">${order.total}</span>
+                                <div className="flex gap-1">
+                                    {/* Assign Driver Button */}
+                                    <button
+                                        onClick={() => openAssignModal(order.id)}
+                                        className="text-orange-400 hover:text-white p-1 rounded hover:bg-orange-500/20 transition-colors"
+                                        title="Asignar Repartidor"
+                                    >
+                                        <Bike className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                        onClick={() => handlePrint(order)}
+                                        className="text-[var(--color-text-muted)] hover:text-white p-1 rounded hover:bg-white/10"
+                                        title="Imprimir Ticket"
+                                    >
+                                        <Printer className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => deleteOrder(order.id)}
+                                        className="text-[var(--color-text-muted)] hover:text-red-400 p-1 rounded hover:bg-white/10"
+                                        title="Eliminar pedido"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Items */}
+                        <div className="p-4 flex-1 space-y-3">
+                            {order.order_items?.map(item => (
+                                <div key={item.id} className="text-sm">
+                                    <div className="flex justify-between font-medium">
+                                        <span>1x {item.products?.name}</span>
+                                        <span className="text-[var(--color-text-muted)]">${item.price_at_time}</span>
+                                    </div>
+
+                                    {/* Sub-items details */}
+                                    <div className="pl-4 border-l border-white/10 mt-1 text-xs text-[var(--color-text-muted)] space-y-0.5">
+                                        {item.modifiers?.map((m, i) => (
+                                            <div key={i}>+ {m.name} {m.quantity > 1 ? <span className="text-white font-bold">x{m.quantity}</span> : ''}</div>
+                                        ))}
+                                        {item.side_info && <div>+ {item.side_info.name}</div>}
+                                        {item.drink_info && <div>+ {item.drink_info.name}</div>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
+                            {(order.status === 'pending' || order.status === 'pending_approval') && (
+                                <div className="col-span-3 space-y-2">
+                                    {/* Primary Actions: Accept / Reject */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => {
+                                                // If MP, standard 'Accept' moves to 'pending_payment' to trigger user payment flow
+                                                if (order.status === 'pending_approval') {
+                                                    updateStatus(order.id, 'pending_payment')
+                                                } else {
+                                                    // Standard Cash/Transfer -> Cooking
+                                                    handlePrint(order)
+                                                    updateStatus(order.id, 'cooking')
+                                                }
+                                            }}
+                                            className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+                                        >
+                                            <Check className="w-4 h-4" /> Aceptar
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                toast('¿Rechazar pedido?', {
+                                                    action: {
+                                                        label: 'Sí, Rechazar',
+                                                        onClick: () => updateStatus(order.id, 'rejected')
+                                                    },
+                                                })
+                                            }}
+                                            className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <X className="w-4 h-4" /> Rechazar
+                                        </button>
+                                    </div>
+
+                                    {/* Secondary Action: Confirm Payment (if needed) */}
+                                    {!order.is_paid && order.payment_method !== 'cash' && order.status !== 'pending_approval' && (
+                                        <button
+                                            onClick={async () => {
+                                                const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
+                                                if (!error) {
+                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
+                                                    toast.success('Pago confirmado')
+                                                } else {
+                                                    toast.error('Error al confirmar pago')
+                                                }
+                                            }}
+                                            className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Banknote className="w-3 h-3" /> Confirmar recepción del pago
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                            {order.status === 'cooking' && (
+                                <div className="col-span-3 space-y-2">
+                                    <button onClick={() => updateStatus(order.id, 'packaging')} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
+                                        <Check className="w-4 h-4" /> Preparar Envío
+                                    </button>
+
+                                    {/* Still show Confirm Payment if enabled and not paid */}
+                                    {!order.is_paid && order.payment_method !== 'cash' && (
+                                        <button
+                                            onClick={async () => {
+                                                const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
+                                                if (!error) {
+                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
+                                                    toast.success('Pago confirmado')
+                                                } else {
+                                                    toast.error('Error al confirmar pago')
+                                                }
+                                            }}
+                                            className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Banknote className="w-3 h-3" /> Confirmar recepción del pago
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                            {order.status === 'packaging' && (
+                                <button onClick={() => updateStatus(order.id, 'sent')} className="col-span-3 bg-purple-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-purple-500 transition-colors flex items-center justify-center gap-2">
+                                    <Bell className="w-4 h-4" /> Enviar Pedido
+                                </button>
+                            )}
+                            {order.status === 'sent' && (
+                                <button onClick={() => updateStatus(order.id, 'completed')} className="col-span-3 bg-gray-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-gray-500 transition-colors flex items-center justify-center gap-2">
+                                    <Check className="w-4 h-4" /> Finalizar / Entregado
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {filteredOrders.length === 0 && (
+                    <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
+                        No hay pedidos recientes.
+                    </div>
+                )}
+            </div>
+        </div >
+    )
 }
 
 export default OrdersManager
