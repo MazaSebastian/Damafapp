@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { User, Mail, Star, ShoppingBag, DollarSign, Search, Plus, Copy, Check } from 'lucide-react'
+import { User, Mail, Star, ShoppingBag, DollarSign, Search, Plus, Copy, Check, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 import CreateCustomerModal from './modals/CreateCustomerModal'
 
