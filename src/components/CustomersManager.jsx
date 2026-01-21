@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { User, Mail, Star, ShoppingBag, DollarSign, Search, Plus, Copy, Check, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 import CreateCustomerModal from './modals/CreateCustomerModal'
+import CustomerDetailsModal from './modals/CustomerDetailsModal'
 
 const CustomersManager = () => {
     const [customers, setCustomers] = useState([])
@@ -10,6 +11,10 @@ const CustomersManager = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [copiedId, setCopiedId] = useState(null)
+
+    // Details Modal State
+    const [selectedCustomer, setSelectedCustomer] = useState(null)
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
     useEffect(() => {
         fetchCustomers()
@@ -108,7 +113,8 @@ const CustomersManager = () => {
                 {filteredCustomers.map((customer) => (
                     <div
                         key={customer.id}
-                        className="group bg-[#1a1a1a] border border-white/5 hover:border-white/10 rounded-xl p-4 transition-all hover:bg-[#202020]"
+                        onClick={() => { setSelectedCustomer(customer); setIsDetailsModalOpen(true) }}
+                        className="group bg-[#1a1a1a] border border-white/5 hover:border-[var(--color-primary)] hover:border-opacity-50 rounded-xl p-4 transition-all hover:bg-[#202020] cursor-pointer shadow-sm hover:shadow-lg"
                     >
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex items-start gap-4">
@@ -122,12 +128,12 @@ const CustomersManager = () => {
                                         {customer.first_name ? `${customer.first_name} ${customer.last_name || ''}` : (customer.full_name || 'Sin nombre')}
                                         {/* ID Badge */}
                                         <div
-                                            onClick={() => copyToClipboard(customer.id)}
-                                            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 hover:bg-white/10 cursor-pointer text-gray-500 hover:text-gray-300 transition-colors"
+                                            onClick={(e) => { e.stopPropagation(); copyToClipboard(customer.id) }}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-[var(--color-primary)] text-white hover:brightness-110 cursor-pointer transition-all shadow-lg shadow-red-900/20"
                                             title="Copiar ID"
                                         >
                                             {customer.customer_id ? `#${customer.customer_id}` : '---'}
-                                            {copiedId === (customer.customer_id || customer.id) ? <Check size={10} className="text-green-500" /> : <Copy size={10} />}
+                                            {copiedId === (customer.customer_id || customer.id) ? <Check size={12} className="text-white" /> : <Copy size={12} />}
                                         </div>
                                     </div>
                                     <div className="text-sm text-gray-400 flex items-center gap-1">
@@ -185,6 +191,12 @@ const CustomersManager = () => {
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onCustomerCreated={fetchCustomers}
+            />
+
+            <CustomerDetailsModal
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+                customer={selectedCustomer}
             />
         </div>
     )

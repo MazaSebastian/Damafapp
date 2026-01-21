@@ -19,6 +19,8 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
 
     // New: Schedule Slot
     const [selectedSlot, setSelectedSlot] = useState(null)
+    const [orderType, setOrderType] = useState('takeaway') // 'takeaway' | 'delivery'
+    const [deliveryAddress, setDeliveryAddress] = useState('')
 
     // Initial Load
     useEffect(() => {
@@ -38,6 +40,8 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             setSelectedCustomer(null)
             setCustomerIdInput('')
             setSelectedSlot(null)
+            setOrderType('takeaway')
+            setDeliveryAddress('')
         }
     }, [isOpen])
 
@@ -79,6 +83,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
 
         if (data) {
             setSelectedCustomer(data)
+            if (data.address) setDeliveryAddress(data.address) // Pre-fill address
             toast.success(`Cliente identificado: ${data.full_name}`)
         } else {
             setSelectedCustomer(null)
@@ -190,9 +195,12 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 status: 'pending', // Goes to kitchen
                 total: subtotal,
                 payment_method: method,
-                order_type: 'takeaway',
+                order_type: orderType,
                 payment_status: method === 'cash' ? 'paid' : 'pending', // MP is pending initially
-                delivery_address: 'Retiro en Local'
+                delivery_address: orderType === 'delivery'
+                    ? (selectedCustomer?.address || deliveryAddress || 'Sin Dirección')
+                    : 'Retiro en Local',
+                scheduled_time: selectedSlot ? selectedSlot.time : null
             }
 
             const { data: orderData, error: orderError } = await supabase
@@ -407,14 +415,49 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 {/* RIGHT: Cart (35%) */}
                 <div className="w-1/3 flex flex-col bg-[var(--color-surface)]">
                     <div className="p-6 border-b border-white/5 flex flex-col gap-4">
-                        <div className="font-bold text-lg flex items-center gap-2">
-                            <ShoppingCart className="w-5 h-5" /> Carrito
+                        <div className="font-bold text-lg flex items-center justify-between">
+                            <span className="flex items-center gap-2"><ShoppingCart className="w-5 h-5" /> Carrito</span>
+
+                            {/* Order Type Toggle */}
+                            <div className="flex items-center text-xs border border-white/10 rounded-lg overflow-hidden">
+                                <button
+                                    onClick={() => setOrderType('takeaway')}
+                                    className={`px-3 py-1.5 font-bold transition-colors ${orderType === 'takeaway' ? 'bg-[var(--color-primary)] text-white' : 'bg-transparent text-[var(--color-text-muted)] hover:bg-white/5'}`}
+                                >
+                                    Retiro
+                                </button>
+                                <div className="w-px h-full bg-white/10" />
+                                <button
+                                    onClick={() => setOrderType('delivery')}
+                                    className={`px-3 py-1.5 font-bold transition-colors ${orderType === 'delivery' ? 'bg-[var(--color-primary)] text-white' : 'bg-transparent text-[var(--color-text-muted)] hover:bg-white/5'}`}
+                                >
+                                    Delivery
+                                </button>
+                            </div>
                         </div>
+
+                        {/* Delivery Address Input */}
+                        {orderType === 'delivery' && (
+                            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                <input
+                                    type="text"
+                                    value={selectedCustomer ? (selectedCustomer.address || deliveryAddress) : deliveryAddress}
+                                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                                    placeholder={selectedCustomer ? "Usar dirección del cliente..." : "Dirección de envío..."}
+                                    className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                                />
+                                {selectedCustomer && selectedCustomer.address && (
+                                    <div className="text-xs text-[var(--color-text-muted)] mt-1 ml-1 flex items-center gap-1">
+                                        <Check size={10} className="text-green-500" /> Dir. Registrada: {selectedCustomer.address}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Time Slot Selector */}
                         <div className="w-full">
                             <DeliverySlotSelector
-                                orderType="takeaway" // POS is mostly takeaway/pickup
+                                orderType={orderType}
                                 selectedSlot={selectedSlot}
                                 onSlotSelect={setSelectedSlot}
                                 compact={true}

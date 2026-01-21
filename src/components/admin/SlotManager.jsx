@@ -64,22 +64,32 @@ const SlotManager = () => {
         }
     }
 
-    const handleDelete = async (id) => {
-        if (!confirm('¿Eliminar este horario?')) return
+    const handleDelete = (id) => {
+        toast('¿Eliminar este horario?', {
+            action: {
+                label: 'Eliminar',
+                onClick: async () => {
+                    try {
+                        const { error } = await supabase
+                            .from('production_slots')
+                            .delete()
+                            .eq('id', id)
 
-        try {
-            const { error } = await supabase
-                .from('production_slots')
-                .delete()
-                .eq('id', id)
+                        if (error) throw error
 
-            if (error) throw error
-
-            setSlots(slots.filter(s => s.id !== id))
-            toast.success('Horario eliminado')
-        } catch (error) {
-            toast.error('Error al eliminar')
-        }
+                        setSlots(prev => prev.filter(s => s.id !== id))
+                        toast.success('Horario eliminado')
+                    } catch (error) {
+                        toast.error('Error al eliminar')
+                    }
+                }
+            },
+            cancel: {
+                label: 'Cancelar',
+                onClick: () => { }
+            },
+            duration: 5000,
+        })
     }
 
     const handleUpdate = async (id, field, value) => {

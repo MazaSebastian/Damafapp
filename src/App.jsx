@@ -26,6 +26,7 @@ import { CartProvider } from './context/CartContext'
 import KDSPage from './pages/KDSPage'
 import CustomerDisplayPage from './pages/CustomerDisplayPage'
 import POSPage from './pages/POSPage'
+import useFCM from './hooks/useFCM'
 
 const AnimatedRoutes = () => {
   const location = useLocation()
@@ -77,6 +78,17 @@ const AnimatedRoutes = () => {
   )
 }
 
+
+// Wrapper to use hooks that depend on contexts
+const AppContent = () => {
+  // Initialize FCM
+  useFCM();
+
+  return (
+    <AnimatedRoutes />
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -107,7 +119,7 @@ function App() {
         <AuthProvider>
           <LanguageProvider>
             <CartProvider>
-              <AnimatedRoutes />
+              <AppContent />
             </CartProvider>
           </LanguageProvider>
         </AuthProvider>
@@ -115,5 +127,6 @@ function App() {
     </BrowserRouter>
   )
 }
+
 
 export default App

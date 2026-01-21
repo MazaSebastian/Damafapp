@@ -30,7 +30,9 @@ const OrdersManager = () => {
         driver: 'TODOS',
         deliveryType: 'TODOS',
         zone: '',
-        delay: 'TODOS'
+        delay: 'TODOS',
+        clientName: '',
+        orderId: ''
     })
 
     useEffect(() => {
@@ -125,6 +127,19 @@ const OrdersManager = () => {
             if (!order.delivery_address?.toLowerCase().includes(filters.zone.toLowerCase())) return false
         }
 
+        // Client Name
+        if (filters.clientName && filters.clientName.trim() !== '') {
+            const name = order.profiles?.full_name || order.customer_name || 'Invitado'
+            if (!name.toLowerCase().includes(filters.clientName.toLowerCase())) return false
+        }
+
+        // Order ID
+        if (filters.orderId && filters.orderId.trim() !== '') {
+            const searchId = filters.orderId.toLowerCase()
+            // Check UUID or friendly ID if implemented, for now UUID slice
+            if (!order.id.toLowerCase().includes(searchId)) return false
+        }
+
         return true
     })
 
@@ -141,7 +156,9 @@ const OrdersManager = () => {
             driver: 'TODOS',
             deliveryType: 'TODOS',
             zone: '',
-            delay: 'TODOS'
+            delay: 'TODOS',
+            clientName: '',
+            orderId: ''
         })
     }
 
@@ -471,13 +488,7 @@ const OrdersManager = () => {
                         <Plus className="w-4 h-4" />
                         Tomar Pedido
                     </button>
-                    <button
-                        onClick={connectPrinter}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors shadow-lg ${usbConnected ? 'bg-green-500 text-white shadow-green-500/20' : 'bg-blue-600 text-white shadow-blue-500/20 hover:bg-blue-500'}`}
-                    >
-                        <Usb className="w-4 h-4" />
-                        {usbConnected ? 'Impresora Conectada' : 'Conectar Impresora'}
-                    </button>
+
                     <button
                         onClick={clearAllOrders}
                         className="flex items-center gap-2 px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
@@ -593,6 +604,30 @@ const OrdersManager = () => {
 
                 {/* Second Row of Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 border-t border-white/5 pt-4">
+                    {/* Client Name */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Cliente (Nombre)</label>
+                        <input
+                            type="text"
+                            placeholder="Nombre cliente..."
+                            value={filters.clientName}
+                            onChange={(e) => handleFilterChange('clientName', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+
+                    {/* Order ID */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Nº Orden</label>
+                        <input
+                            type="text"
+                            placeholder="#ID..."
+                            value={filters.orderId}
+                            onChange={(e) => handleFilterChange('orderId', e.target.value)}
+                            className="w-full bg-[var(--color-background)] border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-primary)] transition-colors text-white"
+                        />
+                    </div>
+
                     {/* Driver */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Repartidor (Nombre)</label>
@@ -637,6 +672,14 @@ const OrdersManager = () => {
                                 <span className="text-xs text-[var(--color-text-muted)]">
                                     {new Date(order.created_at).toLocaleString()}
                                 </span>
+                                {/* Shift / Scheduled Time */}
+                                {order.scheduled_time && (
+                                    <div className="flex items-center gap-1 mt-1 text-xs text-orange-400 font-bold bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20 w-fit">
+                                        <Clock className="w-3 h-3" /> Turno: {order.scheduled_time}
+                                    </div>
+                                )}
+
+                                {/* Delivery / Takeaway Badge */}
                                 {order.order_type === 'delivery' ? (
                                     <div className="flex items-center gap-1 mt-1 text-xs text-blue-400 font-medium">
                                         <Bell className="w-3 h-3" /> Delivery
@@ -646,11 +689,39 @@ const OrdersManager = () => {
                                         <ChefHat className="w-3 h-3" /> Take Away
                                     </div>
                                 )}
-                                {order.delivery_address && (
-                                    <div className="text-xs text-white/70 italic mt-0.5 max-w-[150px] truncate">
-                                        📍 {order.delivery_address}
+
+                                {/* Customer Details */}
+                                {order.profiles ? (
+                                    <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/5 text-xs text-gray-300">
+                                        <div className="font-bold text-white flex items-center gap-1">
+                                            {order.profiles.full_name}
+                                            {order.profiles.customer_id && (
+                                                <span className="bg-[var(--color-primary)] text-white px-1 py-0.5 rounded text-[10px] items-center text-center">#{order.profiles.customer_id}</span>
+                                            )}
+                                        </div>
+                                        {/* Address logic: Prefer order delivery_address, fallback to profile address */}
+                                        <div className="flex items-start gap-1 mt-1 text-[var(--color-text-muted)]">
+                                            <span>📍</span>
+                                            <span>{order.delivery_address || order.profiles.address || 'Sin dirección'}</span>
+                                        </div>
+                                        {order.profiles.phone && (
+                                            <div className="flex items-center gap-1 mt-0.5 text-[var(--color-text-muted)]">
+                                                <span>📞</span> {order.profiles.phone}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // Guest or Manual Name
+                                    <div className="mt-2 text-xs">
+                                        <div className="font-bold text-white">{order.client_name || 'Invitado'}</div>
+                                        {order.delivery_address && (
+                                            <div className="text-white/70 italic mt-0.5 max-w-[150px] truncate">
+                                                📍 {order.delivery_address}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
+
 
                                 {/* Driver Badge */}
                                 {order.drivers?.name ? (
