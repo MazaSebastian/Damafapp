@@ -26,7 +26,7 @@ import { CartProvider } from './context/CartContext'
 import KDSPage from './pages/KDSPage'
 import CustomerDisplayPage from './pages/CustomerDisplayPage'
 import POSPage from './pages/POSPage'
-import useFCM from './hooks/useFCM'
+import useFCM from './hooks/useFCM.jsx'
 
 const AnimatedRoutes = () => {
   const location = useLocation()
