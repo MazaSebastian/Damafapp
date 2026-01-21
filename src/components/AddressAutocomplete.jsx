@@ -3,12 +3,13 @@ import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocom
 import { useLoadScript } from '@react-google-maps/api'
 import { MapPin, Loader2 } from 'lucide-react'
 
-const LIBRARIES = ['places']
+const LIBRARIES = ['places', 'visualization'] // Must match GeoHeatmap to share the script instance
 
 const AddressAutocomplete = ({ onSelect, defaultValue = '', placeholder = 'Buscar dirección...', className }) => {
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries: LIBRARIES,
+        id: 'google-map-script' // Adding ID helps react-google-maps/api dedupe the script load
     })
 
     if (loadError) return <div className="text-red-500 text-xs">Error loading maps</div>

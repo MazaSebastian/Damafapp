@@ -7,6 +7,7 @@ const GeoHeatmap = ({ orders }) => {
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries: LIBRARIES,
+        id: 'google-map-script'
     })
 
     // Process orders into Heatmap points
