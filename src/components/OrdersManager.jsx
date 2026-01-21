@@ -266,6 +266,7 @@ const OrdersManager = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'pending': return 'bg-yellow-500/20 text-yellow-500'
+            case 'pending_approval': return 'bg-blue-500/20 text-blue-400 animate-pulse'
             case 'cooking': return 'bg-orange-500/20 text-orange-500'
             case 'packaging': return 'bg-red-500/20 text-red-500 font-black animate-bounce'
             case 'sent': return 'bg-purple-500/20 text-purple-500'
@@ -735,14 +736,20 @@ const OrdersManager = () => {
 
                         {/* Actions */}
                         <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
-                            {order.status === 'pending' && (
+                            {(order.status === 'pending' || order.status === 'pending_approval') && (
                                 <div className="col-span-3 space-y-2">
                                     {/* Primary Actions: Accept / Reject */}
                                     <div className="grid grid-cols-2 gap-2">
                                         <button
                                             onClick={() => {
-                                                handlePrint(order)
-                                                updateStatus(order.id, 'cooking')
+                                                // If MP, standard 'Accept' moves to 'pending_payment' to trigger user payment flow
+                                                if (order.status === 'pending_approval') {
+                                                    updateStatus(order.id, 'pending_payment')
+                                                } else {
+                                                    // Standard Cash/Transfer -> Cooking
+                                                    handlePrint(order)
+                                                    updateStatus(order.id, 'cooking')
+                                                }
                                             }}
                                             className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
                                         >
@@ -765,7 +772,7 @@ const OrdersManager = () => {
                                     </div>
 
                                     {/* Secondary Action: Confirm Payment (if needed) */}
-                                    {!order.is_paid && order.payment_method !== 'cash' && (
+                                    {!order.is_paid && order.payment_method !== 'cash' && order.status !== 'pending_approval' && (
                                         <button
                                             onClick={async () => {
                                                 const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)

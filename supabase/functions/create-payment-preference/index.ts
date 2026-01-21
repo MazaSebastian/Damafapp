@@ -81,12 +81,14 @@ serve(async (req) => {
             throw new Error('Server configuration error: Missing MP Token')
         }
 
+        const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://damafapp.vercel.app'
+
         const preferenceData = {
             items: items,
             back_urls: {
-                success: "https://damafapp.vercel.app/my-orders?status=approved",
-                failure: "https://damafapp.vercel.app/checkout?status=failure",
-                pending: "https://damafapp.vercel.app/my-orders?status=pending"
+                success: `${frontendUrl}/my-orders?status=approved`,
+                failure: `${frontendUrl}/checkout?status=failure`,
+                pending: `${frontendUrl}/my-orders?status=pending`
             },
             auto_return: "approved",
             external_reference: order_id,
