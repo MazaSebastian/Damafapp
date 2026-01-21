@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { Store, DollarSign } from 'lucide-react' // Using Store icon instead of TrendingUp
+import { Store, DollarSign } from 'lucide-react'
 import OverviewSkeleton from './skeletons/OverviewSkeleton'
 import { useStoreStatus } from '../hooks/useStoreStatus'
 import WeatherWidget from './WeatherWidget'
+import DashboardHeader from './DashboardHeader'
 
 const AdminOverview = () => {
     const { isOpen, loading: statusLoading } = useStoreStatus()
@@ -35,7 +36,10 @@ const AdminOverview = () => {
     if (loading || statusLoading) return <OverviewSkeleton />
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
+
+            <DashboardHeader />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Store Status Card */}

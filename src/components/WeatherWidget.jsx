@@ -1,21 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Cloud, CloudRain, Sun, CloudLightning, CloudSnow, Droplets, Calendar } from 'lucide-react'
+import { Cloud, CloudRain, Sun, CloudLightning, CloudSnow, Droplets } from 'lucide-react'
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
 
 const WeatherWidget = () => {
     const [hourlyWeather, setHourlyWeather] = useState([])
     const [loading, setLoading] = useState(true)
-    const [currentTime, setCurrentTime] = useState(new Date())
 
     // Vicente López Coordinates (approx location based on app context)
     const LAT = -34.52
     const LNG = -58.53
 
     useEffect(() => {
-        // Clock Interval
-        const timer = setInterval(() => setCurrentTime(new Date()), 60000)
-
         const fetchWeather = async () => {
             try {
                 // Open-Meteo API: Free, no key required
@@ -52,7 +47,6 @@ const WeatherWidget = () => {
         }
 
         fetchWeather()
-        return () => clearInterval(timer)
     }, [])
 
     const getWeatherDescription = (code) => {
@@ -93,24 +87,17 @@ const WeatherWidget = () => {
         <div className="h-32 bg-white/5 animate-pulse rounded-2xl w-full"></div>
     )
 
-    // Capitalize first letter of string
-    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1)
-
-    const dateStr = capitalize(format(currentTime, "EEEE d 'de' MMMM, HH:mm'hs'", { locale: es }))
-
     return (
         <div className="bg-[var(--color-surface)] border border-white/5 rounded-2xl p-4 shadow-xl overflow-hidden mt-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-2">
                 <div>
                     <h3 className="text-white font-bold text-base flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[var(--color-primary)]" />
-                        {dateStr}
+                        <Cloud className="w-4 h-4 text-blue-400" />
+                        Monitor de Clima
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
-                            <Cloud className="w-3 h-3" /> Pronóstico VILO
-                        </span>
-                    </div>
+                    <span className="text-xs text-[var(--color-text-muted)] mt-1 block">
+                        Vicente López
+                    </span>
                 </div>
             </div>
 
