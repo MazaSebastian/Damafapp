@@ -417,23 +417,22 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                     <div className="p-6 border-b border-white/5 flex flex-col gap-4">
                         <div className="font-bold text-lg flex items-center justify-between">
                             <span className="flex items-center gap-2"><ShoppingCart className="w-5 h-5" /> Carrito</span>
+                        </div>
 
-                            {/* Order Type Toggle */}
-                            <div className="flex items-center text-xs border border-white/10 rounded-lg overflow-hidden">
-                                <button
-                                    onClick={() => setOrderType('takeaway')}
-                                    className={`px-3 py-1.5 font-bold transition-colors ${orderType === 'takeaway' ? 'bg-[var(--color-primary)] text-white' : 'bg-transparent text-[var(--color-text-muted)] hover:bg-white/5'}`}
-                                >
-                                    Retiro
-                                </button>
-                                <div className="w-px h-full bg-white/10" />
-                                <button
-                                    onClick={() => setOrderType('delivery')}
-                                    className={`px-3 py-1.5 font-bold transition-colors ${orderType === 'delivery' ? 'bg-[var(--color-primary)] text-white' : 'bg-transparent text-[var(--color-text-muted)] hover:bg-white/5'}`}
-                                >
-                                    Delivery
-                                </button>
-                            </div>
+                        {/* Order Type Toggle - Large */}
+                        <div className="grid grid-cols-2 gap-2 bg-black/20 p-1 rounded-xl">
+                            <button
+                                onClick={() => setOrderType('takeaway')}
+                                className={`py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${orderType === 'takeaway' ? 'bg-[var(--color-primary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
+                            >
+                                <span className={orderType === 'takeaway' ? 'block' : 'hidden md:block'}>🏪</span> Retiro
+                            </button>
+                            <button
+                                onClick={() => setOrderType('delivery')}
+                                className={`py-2 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${orderType === 'delivery' ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
+                            >
+                                <span className={orderType === 'delivery' ? 'block' : 'hidden md:block'}>🛵</span> Delivery
+                            </button>
                         </div>
 
                         {/* Delivery Address Input */}
