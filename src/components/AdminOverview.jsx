@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { Store, DollarSign } from 'lucide-react' // Using Store icon instead of TrendingUp
 import OverviewSkeleton from './skeletons/OverviewSkeleton'
 import { useStoreStatus } from '../hooks/useStoreStatus'
+import WeatherWidget from './WeatherWidget'
 
 const AdminOverview = () => {
     const { isOpen, loading: statusLoading } = useStoreStatus()
@@ -39,8 +40,8 @@ const AdminOverview = () => {
 
                 {/* Store Status Card */}
                 <div className={`p-8 rounded-2xl border flex items-center justify-between relative overflow-hidden transition-all shadow-lg ${isOpen
-                        ? 'bg-green-500/10 border-green-500/20 shadow-green-500/10'
-                        : 'bg-red-500/10 border-red-500/20 shadow-red-500/10'
+                    ? 'bg-green-500/10 border-green-500/20 shadow-green-500/10'
+                    : 'bg-red-500/10 border-red-500/20 shadow-red-500/10'
                     }`}>
                     <div>
                         <h4 className="text-[var(--color-text-muted)] text-sm font-bold uppercase tracking-wider mb-2">Estado del Local</h4>
@@ -58,8 +59,8 @@ const AdminOverview = () => {
 
                 {/* Cash Register Status Card */}
                 <div className={`p-8 rounded-2xl border flex items-center justify-between relative overflow-hidden transition-all shadow-lg ${cashStatus === 'open'
-                        ? 'bg-blue-500/10 border-blue-500/20 shadow-blue-500/10'
-                        : 'bg-gray-800/50 border-white/10'
+                    ? 'bg-blue-500/10 border-blue-500/20 shadow-blue-500/10'
+                    : 'bg-gray-800/50 border-white/10'
                     }`}>
                     <div>
                         <h4 className="text-[var(--color-text-muted)] text-sm font-bold uppercase tracking-wider mb-2">Estado de Caja</h4>
@@ -75,6 +76,11 @@ const AdminOverview = () => {
                     </div>
                 </div>
 
+            </div>
+
+            {/* Weather Widget Section */}
+            <div>
+                <WeatherWidget />
             </div>
         </div>
     )
