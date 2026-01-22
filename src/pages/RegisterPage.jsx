@@ -201,6 +201,7 @@ const RegisterPage = () => {
                                 <AddressAutocomplete
                                     onSelect={(address) => setAddressData(prev => ({ ...prev, address }))}
                                     placeholder="Dirección completa"
+                                    className="w-full bg-[var(--color-background)] border border-white/10 rounded-xl px-4 py-3.5 pl-10 text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-secondary)] transition-all"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-2">
