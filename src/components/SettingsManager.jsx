@@ -54,6 +54,7 @@ const SettingsManager = () => {
 
     const SETTING_LABELS = {
         'delivery_free_range_km': 'Radio de Envío Gratis (KM)',
+        'delivery_fixed_price': 'Costo de Envío Fijo (Global)',
         'delivery_price_per_km': 'Precio por KM Adicional',
         'stars_exchange_rate': 'Tasa de Canje de Estrellas (Legacy)',
         'store_address': 'Dirección del Local',

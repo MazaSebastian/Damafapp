@@ -44,7 +44,8 @@ const CheckoutPage = () => {
         store_lat: -34.530019, // Default fallback (Carapachay)
         store_lng: -58.542822,
         delivery_price_per_km: 500,
-        delivery_free_range_km: 0
+        delivery_free_range_km: 0,
+        delivery_fixed_price: 0
     })
 
     useEffect(() => {
@@ -64,6 +65,7 @@ const CheckoutPage = () => {
                     store_lng: parseFloat(newSettings.store_lng || prev.store_lng),
                     delivery_price_per_km: parseFloat(newSettings.delivery_price_per_km || prev.delivery_price_per_km),
                     delivery_free_range_km: parseFloat(newSettings.delivery_free_range_km || prev.delivery_free_range_km),
+                    delivery_fixed_price: parseFloat(newSettings.delivery_fixed_price || prev.delivery_fixed_price || 0),
                 }))
             }
         }
@@ -130,8 +132,13 @@ const CheckoutPage = () => {
         setDistanceKm(distance)
         let cost = 0
 
+        // Check for Fixed Price
+        if (deliverySettings.delivery_fixed_price > 0) {
+            cost = deliverySettings.delivery_fixed_price
+            toast.info(`Costo de envío fijo: $${cost}`)
+        }
         // Check for Free Shipping Radius
-        if (deliverySettings.delivery_free_range_km > 0 && distance <= deliverySettings.delivery_free_range_km) {
+        else if (deliverySettings.delivery_free_range_km > 0 && distance <= deliverySettings.delivery_free_range_km) {
             cost = 0
             toast.success('¡Estás dentro del rango de envío GRATIS! 🎉')
         } else {
