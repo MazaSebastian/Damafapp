@@ -177,8 +177,8 @@ const CheckoutPage = () => {
 
         try {
             // 1. Create Order
-            // IF Mercado Pago -> Set status to 'pending_approval' to trigger Wait Flow
-            const initialStatus = paymentMethod === 'mercadopago' ? 'pending_approval' : 'pending'
+            // ALL User Orders start as 'pending_approval' so Admin can Accept/Reject
+            const initialStatus = 'pending_approval'
 
             const { data: order, error: orderError } = await supabase
                 .from('orders')
@@ -189,7 +189,6 @@ const CheckoutPage = () => {
                     order_type: orderType,
                     payment_method: paymentMethod,
                     delivery_address: orderType === 'delivery' ? address : null,
-                    delivery_lat: (orderType === 'delivery' && deliveryCoords) ? deliveryCoords.lat : null,
                     delivery_lat: (orderType === 'delivery' && deliveryCoords) ? deliveryCoords.lat : null,
                     delivery_lng: (orderType === 'delivery' && deliveryCoords) ? deliveryCoords.lng : null,
                     coupon_code: appliedCoupon?.code || null,
@@ -246,8 +245,14 @@ const CheckoutPage = () => {
                 setShowApprovalModal(true)
                 // Payment generation is deferred until onApproved callback
             } else {
-                // CASH OR TRANSFER FLOW -> WHATSAPP REDIRECT
-                redirectToWhatsApp(order)
+                // CASH OR TRANSFER FLOW -> MANUAL COORDINATION
+                // User requirement: "Administracion se comunicara para coordinar el pago"
+                clearCart()
+                toast.success('Pedido enviado. Administración te contactará para coordinar el pago 🕒', { duration: 5000 })
+                // Redirect to Profile or Home
+                setTimeout(() => {
+                    navigate('/profile') // Or /orders if it existed, profile usually has history
+                }, 2000)
             }
 
         } catch (error) {
