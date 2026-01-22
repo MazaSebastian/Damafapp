@@ -194,7 +194,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             const orderPayload = {
                 user_id: orderUserId,
                 client_name: selectedCustomer ? selectedCustomer.full_name : 'Invitado', // Explicitly store name
-                status: 'pending', // Goes to kitchen
+                status: 'cooking', // POS orders bypass approval (cooking directly)
                 total: subtotal,
                 payment_method: method,
                 order_type: orderType,
@@ -233,6 +233,37 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             if (method === 'cash') {
                 // Immediate Success
                 await finalizeOrder(orderData.id, 'paid', subtotal)
+
+                // Print Detailed Ticket (Android) - Auto-print for POS
+                if (window.AndroidPrint) {
+                    const printPayload = {
+                        id: orderData.id,
+                        created_at: orderData.created_at,
+                        updated_at: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString(),
+                        total: subtotal,
+                        client_name: selectedCustomer ? selectedCustomer.full_name : 'Invitado',
+                        client_address: orderType === 'delivery' ? (selectedCustomer?.address || deliveryAddress || '') : '',
+                        client_phone: selectedCustomer?.phone || '',
+                        client_shift: selectedSlot ? selectedSlot.time : '',
+                        delivery_time: selectedSlot ? selectedSlot.time : '', // Explicit Label Support
+                        order_type: orderType,
+                        payment_method: 'cash',
+                        cart_items: cart.map(item => ({
+                            name: item.name,
+                            quantity: item.quantity,
+                            notes: item.notes,
+                            modifiers: item.modifiers || [],
+                            side_info: item.side_info,
+                            drink_info: item.drink_info
+                        }))
+                    }
+                    try {
+                        window.AndroidPrint.printTicket(JSON.stringify(printPayload))
+                        toast.success('Imprimiendo comanda... 🖨️')
+                    } catch (e) {
+                        console.error('Error sending to printer:', e)
+                    }
+                }
 
                 toast.success(`Pedido #${orderData.id.slice(0, 6)} completado (Efectivo) 💵`)
                 closeModalAfterDelay()
