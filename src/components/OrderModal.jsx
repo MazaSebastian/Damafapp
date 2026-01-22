@@ -355,13 +355,13 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
                                                         onClick={() => setSize('Simple')}
                                                         className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${size === 'Simple' ? 'bg-[var(--color-primary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
                                                     >
-                                                        Simple (${selectedBurger.price})
+                                                        Precio Simple: ${selectedBurger.price}
                                                     </button>
                                                     <button
                                                         onClick={() => setSize('Double')}
                                                         className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1 ${size === 'Double' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
                                                     >
-                                                        <span>💪</span> Doble (${selectedBurger.price_double})
+                                                        Precio Doble: ${selectedBurger.price_double}
                                                     </button>
                                                 </div>
                                             )}
