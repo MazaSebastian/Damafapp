@@ -181,7 +181,11 @@ const OrdersManager = () => {
 
             // Auto-Print on Acceptance (Cooking)
             if (newStatus === 'cooking') {
-                handlePrint({ ...order, status: newStatus })
+                toast.info('Autoprint cooking...')
+                // Wait briefly for state or simply trigger
+                setTimeout(() => {
+                    handlePrint({ ...order, status: newStatus })
+                }, 500)
             }
 
             // Log Cash Sale if Completed
@@ -838,12 +842,13 @@ const OrdersManager = () => {
                                     <div className="grid grid-cols-2 gap-2">
                                         <button
                                             onClick={() => {
-                                                // If MP, standard 'Accept' moves to 'pending_payment' to trigger user payment flow
-                                                if (order.status === 'pending_approval') {
+                                                // Logic depends on Payment Method
+                                                if (order.payment_method === 'mercadopago') {
+                                                    // MP Order: Needs payment confirmation by user
                                                     updateStatus(order.id, 'pending_payment')
                                                 } else {
-                                                    // Standard Cash/Transfer -> Cooking
-                                                    handlePrint(order)
+                                                    // Cash/Transfer: "Accept" means confirmed -> Cooking
+                                                    // This will trigger the Auto-Print logic in updateStatus
                                                     updateStatus(order.id, 'cooking')
                                                 }
                                             }}
