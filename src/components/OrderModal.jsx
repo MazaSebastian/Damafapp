@@ -154,15 +154,21 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
         }).filter(m => m.quantity > 0)
 
         let notesParts = [onAddToCart ? 'Pedido por POS' : 'Desde modal rápido']
-        if (size === 'Double') notesParts.push('TAMAÑO: DOBLE')
+        if (size !== 'Simple') notesParts.push(`TAMAÑO: ${size.toUpperCase()}`)
         if (removedIngredients.length > 0) {
             notesParts.push(`SIN: ${removedIngredients.join(', ')}`)
         }
 
+        // Calculate Price Logic
+        let finalPrice = selectedBurger.price
+        const sizeVariant = selectedBurger.sizes?.find(s => s.name === size)
+        if (sizeVariant) finalPrice = sizeVariant.price
+        else if (size === 'Double' && selectedBurger.price_double) finalPrice = selectedBurger.price_double
+
         const comboItem = {
             main: {
                 ...selectedBurger,
-                price: (size === 'Double' && selectedBurger.price_double) ? selectedBurger.price_double : selectedBurger.price,
+                price: finalPrice,
                 notes: notesParts.join('. ')
             },
             modifiers: modifiersList,
@@ -192,7 +198,7 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
         }).filter(m => m.quantity > 0)
 
         let notesParts = []
-        if (size === 'Double') notesParts.push('TAMAÑO: DOBLE')
+        if (size !== 'Simple') notesParts.push(`TAMAÑO: ${size.toUpperCase()}`)
         if (removedIngredients.length > 0) {
             notesParts.push(`SIN: ${removedIngredients.join(', ')}`)
         }
@@ -204,7 +210,11 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
         }
 
         // Calculate total price for this customized item
-        let basePrice = (size === 'Double' && selectedBurger.price_double) ? selectedBurger.price_double : selectedBurger.price
+        let basePrice = selectedBurger.price
+        const sizeVariant = selectedBurger.sizes?.find(s => s.name === size)
+        if (sizeVariant) basePrice = sizeVariant.price
+        else if (size === 'Double' && selectedBurger.price_double) basePrice = selectedBurger.price_double
+
         let totalPrice = basePrice
         modifiersList.forEach(mod => {
             totalPrice += (mod.price * mod.quantity)
@@ -260,7 +270,18 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
     }
 
     const getCurrentTotal = () => {
-        let total = (size === 'Double' && selectedBurger?.price_double) ? selectedBurger.price_double : (selectedBurger?.price || 0)
+        let basePrice = selectedBurger?.price || 0
+
+        if (size !== 'Simple') {
+            const variant = selectedBurger?.sizes?.find(s => s.name === size)
+            if (variant) {
+                basePrice = variant.price
+            } else if (size === 'Double' && selectedBurger?.price_double) {
+                basePrice = selectedBurger.price_double
+            }
+        }
+
+        let total = basePrice
         Object.entries(selectedModifiers).forEach(([modId, qty]) => {
             const mod = modifiers.find(m => m.id === modId)
             if (mod) total += mod.price * qty
@@ -349,20 +370,35 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
                                             </div>
 
                                             {/* Size Selector */}
-                                            {selectedBurger?.price_double > 0 && (
-                                                <div className="bg-[var(--color-surface)] p-1 rounded-xl flex border border-white/5">
+                                            {(selectedBurger?.sizes?.length > 0 || selectedBurger?.price_double > 0) && (
+                                                <div className="bg-[var(--color-surface)] p-1 rounded-xl flex flex-wrap gap-1 border border-white/5">
                                                     <button
                                                         onClick={() => setSize('Simple')}
-                                                        className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${size === 'Simple' ? 'bg-[var(--color-primary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
+                                                        className={`flex-1 py-3 px-2 rounded-lg font-bold text-xs md:text-sm transition-all whitespace-nowrap min-w-[80px] ${size === 'Simple' ? 'bg-[var(--color-primary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
                                                     >
-                                                        Precio Simple: ${selectedBurger.price}
+                                                        Simple (${selectedBurger.price})
                                                     </button>
-                                                    <button
-                                                        onClick={() => setSize('Double')}
-                                                        className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-1 ${size === 'Double' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
-                                                    >
-                                                        Precio Doble: ${selectedBurger.price_double}
-                                                    </button>
+
+                                                    {/* Legacy Doble Check */}
+                                                    {(!selectedBurger?.sizes || selectedBurger.sizes.length === 0) && selectedBurger?.price_double > 0 && (
+                                                        <button
+                                                            onClick={() => setSize('Double')}
+                                                            className={`flex-1 py-3 px-2 rounded-lg font-bold text-xs md:text-sm transition-all whitespace-nowrap min-w-[80px] ${size === 'Double' ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
+                                                        >
+                                                            Doble (${selectedBurger.price_double})
+                                                        </button>
+                                                    )}
+
+                                                    {/* Dynamic Sizes */}
+                                                    {selectedBurger?.sizes?.map((sz, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => setSize(sz.name)}
+                                                            className={`flex-1 py-3 px-2 rounded-lg font-bold text-xs md:text-sm transition-all whitespace-nowrap min-w-[80px] ${size === sz.name ? 'bg-[var(--color-secondary)] text-white shadow-lg' : 'text-[var(--color-text-muted)] hover:bg-white/5'}`}
+                                                        >
+                                                            {sz.name} (${sz.price})
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             )}
 

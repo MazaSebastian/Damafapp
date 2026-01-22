@@ -14,6 +14,7 @@ const ProductManager = () => {
 
     const [editingProduct, setEditingProduct] = useState(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [productSizes, setProductSizes] = useState([]) // Array of { name, price }
 
     useEffect(() => {
         fetchCategories()
@@ -101,7 +102,8 @@ const ProductManager = () => {
             name: formData.get('name'),
             description: formData.get('description'),
             price: parseFloat(formData.get('price')),
-            price_double: formData.get('price_double') ? parseFloat(formData.get('price_double')) : null,
+            price_double: null, // Deprecated in favor of sizes
+            sizes: productSizes,
             image_url: formData.get('image_url'),
             media_type: formData.get('media_type') || 'image',
             removable_ingredients: removableArr,
@@ -177,7 +179,15 @@ const ProductManager = () => {
 
     const startEditing = (product) => {
         setEditingProduct(product)
-        setEditingProduct(product)
+        // Pre-fill sizes (Migration support: use price_double if sizes empty)
+        if (product.sizes && product.sizes.length > 0) {
+            setProductSizes(product.sizes)
+        } else if (product.price_double) {
+            setProductSizes([{ name: 'Doble', price: product.price_double }])
+        } else {
+            setProductSizes([])
+        }
+
         // Pre-fill modifiers & recipe
         fetchProductModifiers(product.id)
         fetchProductRecipe(product.id)
@@ -186,6 +196,7 @@ const ProductManager = () => {
 
     const startCreating = () => {
         setEditingProduct(null)
+        setProductSizes([])
         setProductModifiers([]) // Reset for new
         setProductRecipe([]) // Reset recipe
         setIsModalOpen(true)
@@ -197,6 +208,21 @@ const ProductManager = () => {
         } else {
             setProductModifiers([...productModifiers, modId])
         }
+    }
+
+    // Size Handling
+    const handleAddSize = () => {
+        setProductSizes([...productSizes, { name: '', price: 0 }])
+    }
+
+    const handleRemoveSize = (index) => {
+        setProductSizes(productSizes.filter((_, i) => i !== index))
+    }
+
+    const handleSizeChange = (index, field, value) => {
+        const newSizes = [...productSizes]
+        newSizes[index] = { ...newSizes[index], [field]: value }
+        setProductSizes(newSizes)
     }
 
     // Recipe Handling
@@ -388,7 +414,7 @@ const ProductManager = () => {
                                         required
                                     />
                                 </div>
-                                <div>
+                                <div className="col-span-2 md:col-span-1">
                                     <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">PRECIO SIMPLE ($)</label>
                                     <input
                                         name="price"
@@ -396,20 +422,47 @@ const ProductManager = () => {
                                         step="0.01"
                                         defaultValue={editingProduct?.price || ''}
                                         placeholder="0.00"
-                                        className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)]"
+                                        className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)] font-bold text-lg"
                                         required
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">PRECIO DOBLE ($) <span className="font-normal opacity-50 text-[10px]">(Opc.)</span></label>
-                                    <input
-                                        name="price_double"
-                                        type="number"
-                                        step="0.01"
-                                        defaultValue={editingProduct?.price_double || ''}
-                                        placeholder="Solo si tiene tamaño Doble"
-                                        className="w-full bg-[var(--color-background)] p-3 rounded-xl outline-none border border-white/5 focus:border-[var(--color-secondary)]"
-                                    />
+
+                                {/* Dynamic Sizes */}
+                                <div className="col-span-2 space-y-2 mt-2">
+                                    <label className="block text-xs font-bold text-[var(--color-text-muted)]">TAMAÑOS EXTRAS / VARIANTES</label>
+                                    <div className="space-y-2">
+                                        {productSizes.map((size, idx) => (
+                                            <div key={idx} className="flex gap-3 items-center">
+                                                <div className="flex-1">
+                                                    <input
+                                                        placeholder="Nombre (ej: Doble)"
+                                                        value={size.name}
+                                                        onChange={e => handleSizeChange(idx, 'name', e.target.value)}
+                                                        className="w-full bg-[var(--color-background)] p-3 rounded-xl text-sm border border-white/5 outline-none focus:border-[var(--color-secondary)]"
+                                                    />
+                                                </div>
+                                                <div className="w-32">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Precio"
+                                                        value={size.price}
+                                                        onChange={e => handleSizeChange(idx, 'price', e.target.value)}
+                                                        className="w-full bg-[var(--color-background)] p-3 rounded-xl text-sm border border-white/5 outline-none focus:border-[var(--color-secondary)] font-bold"
+                                                    />
+                                                </div>
+                                                <button type="button" onClick={() => handleRemoveSize(idx)} className="p-3 text-red-400 hover:bg-white/5 rounded-xl border border-white/5 transition-colors">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddSize}
+                                        className="w-full py-2 border border-dashed border-white/10 rounded-xl text-xs font-bold text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 hover:border-[var(--color-secondary)] transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Plus className="w-3 h-3" /> Agregar Tamaño
+                                    </button>
                                 </div>
                             </div>
 
