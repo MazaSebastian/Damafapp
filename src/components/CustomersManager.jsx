@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { User, Mail, Star, ShoppingBag, DollarSign, Search, Plus, Copy, Check, Phone } from 'lucide-react'
+import { User, Mail, Star, ShoppingBag, DollarSign, Search, Plus, Copy, Check, Phone, Bell, BellOff } from 'lucide-react'
 import { toast } from 'sonner'
 import CreateCustomerModal from './modals/CreateCustomerModal'
 import CustomerDetailsModal from './modals/CustomerDetailsModal'
@@ -146,6 +146,14 @@ const CustomersManager = () => {
                                             {customer.phone}
                                         </div>
                                     )}
+                                    {/* Push Status Badge */}
+                                    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 border ${customer.fcm_token
+                                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                        }`}>
+                                        {customer.fcm_token ? <Bell size={10} /> : <BellOff size={10} />}
+                                        {customer.fcm_token ? 'Push Activo' : 'Sin Notificaciones'}
+                                    </div>
                                 </div>
                             </div>
 
