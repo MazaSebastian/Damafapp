@@ -42,17 +42,31 @@ const AdminDashboard = () => {
 
             if (ordersCount !== null) setPendingOrdersCount(ordersCount)
 
-            // Inventory: Low Stock
-            // We unfortunately can't do "WHERE stock <= min_stock" easily in Supabase JS basic filter without RPC
-            // So we fetch all and filter. Ingredients list is usually small.
+            // Inventory: Low Stock (Ingredients + Products)
+            let lowCount = 0
+
+            // 1. Ingredients
             const { data: ingredients } = await supabase
                 .from('ingredients')
                 .select('stock, min_stock')
 
             if (ingredients) {
-                const low = ingredients.filter(i => i.stock <= i.min_stock).length
-                setLowStockCount(low)
+                lowCount += ingredients.filter(i => i.stock <= i.min_stock).length
             }
+
+            // 2. Products (Check for stock being 0 or low if we had min_stock, for now just 0 or null as "Low" isn't standard yet on prod)
+            // Actually, let's just count 'Sold Out' (stock === 0) for products as "Action Needed"
+            const { data: products } = await supabase
+                .from('products')
+                .select('stock')
+                .eq('is_available', true)
+
+            if (products) {
+                // Counts products with explicit 0 stock (finite stock management)
+                lowCount += products.filter(p => p.stock !== null && p.stock === 0).length
+            }
+
+            setLowStockCount(lowCount)
         }
 
         fetchCounts()
@@ -68,6 +82,11 @@ const AdminDashboard = () => {
                 // Refresh inventory count
                 fetchCounts()
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+                // Refresh inventory count (for product stock)
+                fetchCounts()
+            })
+            .subscribe()
             .subscribe()
 
         return () => {

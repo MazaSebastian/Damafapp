@@ -36,7 +36,8 @@ const AssignDriverModal = ({ isOpen, onClose, orderId, onAssignSuccess }) => {
 
         if (error) {
             console.error(error)
-            toast.error('Error al asignar repartidor')
+            console.error(error)
+            toast.error('Error: ' + (error.message || 'Al asignar repartidor'))
         } else {
             toast.success('Repartidor asignado correctamente')
             onAssignSuccess()
