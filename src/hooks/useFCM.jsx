@@ -6,12 +6,13 @@ import { useAuth } from '../context/AuthContext';
 const useFCM = () => {
     const { user } = useAuth();
 
-    useEffect(() => {
-        // Only request token if user is logged in (optional, but good practice to link to profile)
-        if (user) {
-            requestForToken(user.id);
-        }
-    }, [user]);
+    // useEffect(() => {
+    //     // Removed auto-request to comply with iOS requirements and avoid unexpected prompts.
+    //     // Valid request must be triggered by user interaction (e.g. button click).
+    //     // if (user) {
+    //     //     requestForToken(user.id);
+    //     // }
+    // }, [user]);
 
     useEffect(() => {
         const unsubscribe = onMessageListener().then((payload) => {

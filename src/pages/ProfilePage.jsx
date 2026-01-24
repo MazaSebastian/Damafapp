@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { ArrowLeft, Loader2, Home, User, Star, Gift, LogIn } from 'lucide-react'
+import { ArrowLeft, Loader2, Home, User, Star, Gift, LogIn, Bell } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { countryCodes } from '../utils/countryCodes'
+import { requestForToken } from '../services/messaging'
 
 const ProfilePage = () => {
     const { user } = useAuth()
@@ -313,7 +314,6 @@ const ProfilePage = () => {
 
 
 
-                        {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={saving}
@@ -321,6 +321,25 @@ const ProfilePage = () => {
                         >
                             {saving ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : 'Actualizar'}
                         </button>
+
+                        {/* Notification Permission Button */}
+                        <div className="pt-4 border-t border-white/5">
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const token = await requestForToken(user.id);
+                                    if (token) toast.success('Notificaciones activadas correctamente 🔔');
+                                    else toast.error('No se pudieron activar las notificaciones. Revisa los permisos de tu navegador.');
+                                }}
+                                className="w-full flex items-center justify-center gap-2 bg-[var(--color-surface)] border border-white/10 text-white font-bold text-sm py-3 rounded-xl hover:bg-white/5 transition-colors"
+                            >
+                                <Bell className="w-4 h-4 text-[var(--color-primary)]" />
+                                Activar Notificaciones
+                            </button>
+                            <p className="text-[10px] text-center text-[var(--color-text-muted)] mt-2">
+                                Activa las notificaciones para saber cuando tu pedido esté listo.
+                            </p>
+                        </div>
                     </form>
                 )}
 
