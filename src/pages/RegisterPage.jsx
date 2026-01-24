@@ -1,16 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { supabase } from '../supabaseClient'
 import { ArrowRight, Loader2, Mail, Lock, Phone, User } from 'lucide-react'
 import { countryCodes } from '../utils/countryCodes'
-import AddressAutocomplete from '../components/AddressAutocomplete'
+import DeliveryMap from '../components/DeliveryMap'
 
 const RegisterPage = () => {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [storeLocation, setStoreLocation] = useState(null)
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const { data } = await supabase.from('app_settings').select('*')
+            if (data) {
+                const settings = {}
+                data.forEach(item => settings[item.key] = item.value)
+                if (settings.store_lat && settings.store_lng) {
+                    setStoreLocation({
+                        lat: parseFloat(settings.store_lat),
+                        lng: parseFloat(settings.store_lng)
+                    })
+                }
+            }
+        }
+        fetchSettings()
+    }, [])
 
     // Registration fields
     const [fullName, setFullName] = useState('')
@@ -198,10 +216,12 @@ const RegisterPage = () => {
                         {/* Address Section */}
                         <div className="space-y-2">
                             <div className="relative">
-                                <AddressAutocomplete
-                                    onSelect={(address) => setAddressData(prev => ({ ...prev, address }))}
-                                    placeholder="Dirección completa"
-                                    className="w-full bg-[var(--color-background)] border border-white/10 rounded-xl px-4 py-3.5 pl-10 text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-secondary)] transition-all"
+                                <DeliveryMap
+                                    storeLocation={storeLocation}
+                                    onAddressSelected={(data) => {
+                                        // data = { address, lat, lng }
+                                        setAddressData(prev => ({ ...prev, address: data.address }))
+                                    }}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-2">
