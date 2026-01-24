@@ -18,7 +18,7 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
 
     const [map, setMap] = useState(null)
     const [selectedLocation, setSelectedLocation] = useState(null)
-    const [selectedLocation, setSelectedLocation] = useState(null)
+
     const [directions, setDirections] = useState(null)
     const [calculating, setCalculating] = useState(false)
 
