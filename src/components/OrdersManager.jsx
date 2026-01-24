@@ -342,13 +342,22 @@ const OrdersManager = () => {
 
             // Shift Row if exists
             if (order.scheduled_time) {
+                let displayTime = order.scheduled_time
+                try {
+                    if (displayTime.startsWith('{')) {
+                        displayTime = JSON.parse(displayTime).start_time.slice(0, 5)
+                    } else {
+                        displayTime = displayTime.slice(0, 5)
+                    }
+                } catch (e) { }
+
                 encoder
                     .newline()
                     .align('center')
                     .invert(true)
                     .bold(true)
                     .size(2, 2) // Large Text
-                    .text(` HORARIO DE ENTREGA: ${order.scheduled_time} `)
+                    .text(` HORARIO DE ENTREGA: ${displayTime} `)
                     .size(0, 0)
                     .bold(false)
                     .invert(false)

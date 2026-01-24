@@ -194,8 +194,10 @@ const CheckoutPage = () => {
                     delivery_lng: (orderType === 'delivery' && deliveryCoords) ? deliveryCoords.lng : null,
                     coupon_code: appliedCoupon?.code || null,
                     discount_amount: discountAmount,
+                    coupon_code: appliedCoupon?.code || null,
+                    discount_amount: discountAmount,
                     notes: notes, // Customer notes
-                    scheduled_time: selectedSlot // Save selected time
+                    scheduled_time: selectedSlot ? selectedSlot.start_time.slice(0, 5) : null // Save "HH:mm"
                 }])
                 .select()
                 .single()
@@ -356,7 +358,8 @@ const CheckoutPage = () => {
                     delivery_address: orderType === 'delivery' ? address : null,
                     coupon_code: appliedCoupon?.code || null,
                     discount_amount: discountAmount,
-                    scheduled_time: selectedSlot, // Simulation
+                    discount_amount: discountAmount,
+                    scheduled_time: selectedSlot ? selectedSlot.start_time.slice(0, 5) : null, // Simulation
                 }])
                 .select()
                 .single()
