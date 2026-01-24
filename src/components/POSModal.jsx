@@ -231,7 +231,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 delivery_address: orderType === 'delivery'
                     ? (selectedCustomer?.address || deliveryAddress || 'Sin Dirección')
                     : 'Retiro en Local',
-                scheduled_time: selectedSlot ? selectedSlot.time : null
+                scheduled_time: selectedSlot ? selectedSlot.start_time.slice(0, 5) : null
             }
 
             const { data: orderData, error: orderError } = await supabase
@@ -273,8 +273,8 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                         client_name: selectedCustomer ? selectedCustomer.full_name : 'Invitado',
                         client_address: orderType === 'delivery' ? (selectedCustomer?.address || deliveryAddress || '') : '',
                         client_phone: selectedCustomer?.phone || '',
-                        client_shift: selectedSlot ? selectedSlot.time : '',
-                        delivery_time: selectedSlot ? selectedSlot.time : '', // Explicit Label Support
+                        client_shift: selectedSlot ? selectedSlot.start_time.slice(0, 5) : '',
+                        delivery_time: selectedSlot ? selectedSlot.start_time.slice(0, 5) : '', // Explicit Label Support
                         order_type: orderType,
                         payment_method: 'cash',
                         cart_items: cart.map(item => ({
@@ -438,8 +438,8 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
                                 className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all border ${selectedCategory === cat
-                                        ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/20'
-                                        : 'bg-[var(--color-surface)] border-white/10 text-[var(--color-text-muted)] hover:bg-white/5 hover:text-white'
+                                    ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/20'
+                                    : 'bg-[var(--color-surface)] border-white/10 text-[var(--color-text-muted)] hover:bg-white/5 hover:text-white'
                                     }`}
                             >
                                 {cat === 'all' ? 'Todos' : cat}

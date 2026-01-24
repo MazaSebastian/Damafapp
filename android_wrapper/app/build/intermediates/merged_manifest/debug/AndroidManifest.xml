@@ -30,7 +30,6 @@
         android:label="Damaf POS"
         android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
-        android:testOnly="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         android:usesCleartextTraffic="true" >
         <activity

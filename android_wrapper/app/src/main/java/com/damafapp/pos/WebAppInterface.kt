@@ -136,7 +136,10 @@ class WebAppInterface(private val context: Context) {
         
         if (clientAddress.isNotEmpty()) sb.append("[L]Calle: $clientAddress\n")
         if (clientPhone.isNotEmpty()) sb.append("[L]Tel: $clientPhone\n")
-        if (clientShift.isNotEmpty()) sb.append("[L]Turno: $clientShift\n")
+        if (clientShift.isNotEmpty()) {
+             sb.append("\n[C]Turno de entrega:\n")
+             sb.append("[C]<b><font size='big'>$clientShift</font></b>\n")
+        }
         
         
         // Order Type - HUGE (Match PAGO size)
