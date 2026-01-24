@@ -346,7 +346,11 @@ const OrdersManager = () => {
                     .newline()
                     .align('center')
                     .invert(true)
-                    .bold(true).size(2, 2).text(` HORARIO: ${order.scheduled_time} `).size(0, 0).bold(false)
+                    .bold(true)
+                    .size(2, 2) // Large Text
+                    .text(` HORARIO DE ENTREGA: ${order.scheduled_time} `)
+                    .size(0, 0)
+                    .bold(false)
                     .invert(false)
                     .align('left')
                     .newline()
@@ -700,10 +704,11 @@ const OrdersManager = () => {
                                 </span>
 
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                    {/* Shift / Scheduled Time */}
+                                    {/* Shift / Scheduled Time - ENHANCED VISIBILITY */}
                                     {order.scheduled_time && (
-                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-orange-500/80 px-3 py-1 rounded-lg border border-orange-400/50 shadow-sm w-fit">
-                                            <Clock className="w-3.5 h-3.5" /> {order.scheduled_time}
+                                        <div className="flex items-center gap-1.5 text-xs text-white font-bold bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-1.5 rounded-lg shadow-lg shadow-orange-900/40 border border-white/10 w-fit animate-in fade-in zoom-in duration-300">
+                                            <Clock className="w-4 h-4 text-white" />
+                                            <span className="text-white text-sm tracking-wide">{order.scheduled_time}</span>
                                         </div>
                                     )}
 
