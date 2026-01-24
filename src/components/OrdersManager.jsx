@@ -717,7 +717,30 @@ const OrdersManager = () => {
                                     {order.scheduled_time && (
                                         <div className="flex items-center gap-1.5 text-xs text-white font-bold bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-1.5 rounded-lg shadow-lg shadow-orange-900/40 border border-white/10 w-fit animate-in fade-in zoom-in duration-300">
                                             <Clock className="w-4 h-4 text-white" />
-                                            <span className="text-white text-sm tracking-wide">{order.scheduled_time}</span>
+                                            <span className="text-white text-sm tracking-wide">
+                                                {(() => {
+                                                    try {
+                                                        const raw = order.scheduled_time
+                                                        if (!raw) return ''
+                                                        // Try direct string
+                                                        if (typeof raw === 'string' && !raw.includes('{') && raw.includes(':')) return raw.slice(0, 5)
+
+                                                        // Try parse
+                                                        let parsed = raw
+                                                        if (typeof raw === 'string' && raw.includes('{')) {
+                                                            parsed = JSON.parse(raw)
+                                                        }
+
+                                                        // Extract from object
+                                                        if (parsed && parsed.start_time) return parsed.start_time.slice(0, 5)
+
+                                                        // Fallback
+                                                        return typeof raw === 'string' ? raw.slice(0, 5) : '??:??'
+                                                    } catch (e) {
+                                                        return typeof order.scheduled_time === 'string' ? order.scheduled_time.slice(0, 5) : '??:??'
+                                                    }
+                                                })()}
+                                            </span>
                                         </div>
                                     )}
 
