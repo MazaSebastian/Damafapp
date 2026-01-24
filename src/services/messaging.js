@@ -32,28 +32,41 @@ const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
 export const requestForToken = async (userId) => {
     try {
-        if (!messaging) return null;
+        if (!('Notification' in window)) {
+            console.log('This browser does not support desktop notification');
+            return { token: null, error: 'unsupported_browser' };
+        }
+
+        if (!messaging) {
+            console.warn('Messaging not initialized. Check Env Vars.');
+            return { token: null, error: 'missing_config' };
+        }
+
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-            const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-            if (currentToken) {
-                console.log('FCM Token:', currentToken);
-                // Save token to database
-                if (userId) {
-                    await saveTokenToDatabase(currentToken, userId);
+            try {
+                const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+                if (currentToken) {
+                    console.log('FCM Token:', currentToken);
+                    if (userId) {
+                        await saveTokenToDatabase(currentToken, userId);
+                    }
+                    return { token: currentToken, error: null };
+                } else {
+                    console.log('No registration token available.');
+                    return { token: null, error: 'no_token' };
                 }
-                return currentToken;
-            } else {
-                console.log('No registration token available. Request permission to generate one.');
-                return null;
+            } catch (tokenError) {
+                console.error('Error getting token:', tokenError);
+                return { token: null, error: 'token_error: ' + tokenError.message };
             }
         } else {
             console.log('Notification permission denied.');
-            return null;
+            return { token: null, error: 'permission_denied' };
         }
     } catch (err) {
         console.log('An error occurred while retrieving token. ', err);
-        return null;
+        return { token: null, error: 'unknown_error: ' + err.message };
     }
 };
 

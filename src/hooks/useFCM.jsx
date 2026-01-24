@@ -10,7 +10,7 @@ const useFCM = () => {
     //     // Removed auto-request to comply with iOS requirements and avoid unexpected prompts.
     //     // Valid request must be triggered by user interaction (e.g. button click).
     //     // if (user) {
-    //     //     requestForToken(user.id);
+    //     
     //     // }
     // }, [user]);
 
