@@ -24,7 +24,10 @@ export const CartProvider = ({ children }) => {
             // Add Drink price (if it has a price)
             if (item.drink) itemTotal += Number(item.drink.price)
 
-            return acc + itemTotal
+            // Ensure itemTotal is number
+            if (isNaN(itemTotal)) itemTotal = 0
+
+            return Number(acc) + itemTotal
         }, 0)
         setTotal(newTotal)
     }, [cart])
