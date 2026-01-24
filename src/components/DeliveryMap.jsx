@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { GoogleMap, useLoadScript, Marker, StandaloneSearchBox, DirectionsRenderer } from '@react-google-maps/api'
+import { GoogleMap, useLoadScript, Marker, Autocomplete, DirectionsRenderer } from '@react-google-maps/api'
 import { MapPin, Search, Navigation } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -32,15 +32,13 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
         setMap(null)
     }, [])
 
-    const onSearchBoxLoad = (ref) => {
-        setSearchBox(ref)
-    }
+
 
     const onPlacesChanged = () => {
-        const places = searchBox.getPlaces()
-        if (places.length === 0) return
+        if (!searchBox) return
 
-        const place = places[0]
+        const place = searchBox.getPlace()
+        if (!place.geometry) return
         const location = {
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng(),
@@ -143,7 +141,10 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
         <div className="space-y-4">
             {/* Search Box */}
             <div className="relative z-10">
-                <StandaloneSearchBox onLoad={onSearchBoxLoad} onPlacesChanged={onPlacesChanged}>
+                <Autocomplete
+                    onLoad={(ref) => setSearchBox(ref)}
+                    onPlaceChanged={onPlacesChanged}
+                >
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
@@ -152,7 +153,7 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
                             className="w-full bg-[var(--color-surface)] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[var(--color-primary)] shadow-lg"
                         />
                     </div>
-                </StandaloneSearchBox>
+                </Autocomplete>
             </div>
 
             {/* Map Container */}
