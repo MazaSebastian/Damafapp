@@ -194,7 +194,8 @@ const CheckoutPage = () => {
                     delivery_lng: (orderType === 'delivery' && deliveryCoords) ? deliveryCoords.lng : null,
                     coupon_code: appliedCoupon?.code || null,
                     discount_amount: discountAmount,
-                    notes: notes // Customer notes
+                    notes: notes, // Customer notes
+                    scheduled_time: selectedSlot // Save selected time
                 }])
                 .select()
                 .single()
@@ -355,6 +356,7 @@ const CheckoutPage = () => {
                     delivery_address: orderType === 'delivery' ? address : null,
                     coupon_code: appliedCoupon?.code || null,
                     discount_amount: discountAmount,
+                    scheduled_time: selectedSlot, // Simulation
                 }])
                 .select()
                 .single()
