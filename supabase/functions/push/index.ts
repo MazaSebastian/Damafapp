@@ -69,33 +69,39 @@ serve(async (req) => {
         }
 
         // Parse Request
-        const { userId, title, body, openUrl } = await req.json();
+        const { userId, token: explicitToken, title, body, openUrl } = await req.json();
 
-        if (!userId || !title || !body) {
-            return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        if ((!userId && !explicitToken) || !title || !body) {
+            return new Response(JSON.stringify({ error: "Missing required fields (userId or token, title, body)" }), {
                 status: 400,
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
         }
 
-        // Init Supabase Client to get User's Token
-        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        let targetToken = explicitToken;
 
-        // Get FCM Token from DB
-        const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("fcm_token")
-            .eq("id", userId)
-            .single();
+        // If no explicit token, look it up via userId
+        if (!targetToken && userId) {
+            // Init Supabase Client to get User's Token
+            const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+            const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+            const supabase = createClient(supabaseUrl, supabaseKey);
 
-        if (profileError || !profile?.fcm_token) {
-            console.error("Profile/Token error:", profileError);
-            return new Response(JSON.stringify({ error: "User has no FCM Token" }), {
-                status: 404,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
+            // Get FCM Token from DB
+            const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("fcm_token")
+                .eq("id", userId)
+                .single();
+
+            if (profileError || !profile?.fcm_token) {
+                console.error("Profile/Token error:", profileError);
+                return new Response(JSON.stringify({ error: "User has no FCM Token" }), {
+                    status: 404,
+                    headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+            }
+            targetToken = profile.fcm_token;
         }
 
         // Authenticate with Google
@@ -108,7 +114,7 @@ serve(async (req) => {
 
         const message = {
             message: {
-                token: profile.fcm_token,
+                token: targetToken,
                 notification: {
                     title: title,
                     body: body,
