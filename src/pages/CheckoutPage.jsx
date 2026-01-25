@@ -255,6 +255,7 @@ const CheckoutPage = () => {
             } else {
                 // CASH OR MERCADO PAGO -> STANDARD FLOW
                 // "Administracion se comunicara para coordinar el pago"
+                setLoading(true) // Prevent empty cart screen flash
                 clearCart()
                 toast.success('Pedido enviado. Administración te contactará para confirmar y coordinar el pago 🕒', { duration: 5000 })
                 // Redirect to Profile or Home
@@ -464,7 +465,7 @@ const CheckoutPage = () => {
         setShowConfirmModal(true)
     }
 
-    if (cart.length === 0) {
+    if (cart.length === 0 && !loading) {
         return (
             <div className="min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center p-4 text-center">
                 <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
@@ -801,6 +802,7 @@ const CheckoutPage = () => {
 
                             <button
                                 onClick={() => {
+                                    setLoading(true) // Prevent empty cart screen flash
                                     setShowBankModal(false)
                                     clearCart() // Now clear cart when finishing
                                     navigate('/')
