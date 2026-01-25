@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { Plus, Trash2, Edit2, Save, X, Layers } from 'lucide-react'
+import { Plus, Trash2, Edit2, Save, X, Layers, Scale } from 'lucide-react'
 import { toast } from 'sonner'
 
 const ModifiersManager = () => {
@@ -8,10 +8,24 @@ const ModifiersManager = () => {
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingModifier, setEditingModifier] = useState(null)
+    const [ingredients, setIngredients] = useState([])
+    const [modifierRecipe, setModifierRecipe] = useState([]) // [{ ingredient_id, quantity }]
 
     useEffect(() => {
         fetchModifiers()
+        fetchIngredients()
     }, [])
+
+    const fetchIngredients = async () => {
+        const { data } = await supabase.from('ingredients').select('*').order('name')
+        if (data) setIngredients(data)
+    }
+
+    const fetchModifierRecipe = async (modifierId) => {
+        const { data } = await supabase.from('modifier_recipes').select('*').eq('modifier_id', modifierId)
+        if (data) setModifierRecipe(data.map(r => ({ ingredient_id: r.ingredient_id, quantity: r.quantity })))
+        else setModifierRecipe([])
+    }
 
     const fetchModifiers = async () => {
         setLoading(true)
@@ -36,32 +50,54 @@ const ModifiersManager = () => {
             is_available: true
         }
 
+        let modifierId = editingModifier?.id
+
         if (editingModifier) {
             const { error } = await supabase
                 .from('modifiers')
                 .update(modifierData)
-                .eq('id', editingModifier.id)
+                .eq('id', modifierId)
 
             if (!error) {
                 toast.success('Extra actualizado')
                 fetchModifiers()
-                closeModal()
             } else {
                 toast.error('Error: ' + error.message)
+                return
             }
         } else {
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('modifiers')
                 .insert([modifierData])
+                .select()
 
-            if (!error) {
+            if (!error && data) {
+                modifierId = data[0].id
                 toast.success('Extra creado')
                 fetchModifiers()
-                closeModal()
             } else {
                 toast.error('Error: ' + error.message)
+                return
             }
         }
+
+        // SAVE RECIPE
+        if (modifierId) {
+            // Delete old
+            if (editingModifier) {
+                await supabase.from('modifier_recipes').delete().eq('modifier_id', modifierId)
+            }
+            // Insert new
+            if (modifierRecipe.length > 0) {
+                const moves = modifierRecipe.map(r => ({
+                    modifier_id: modifierId,
+                    ingredient_id: r.ingredient_id,
+                    quantity: parseFloat(r.quantity)
+                }))
+                await supabase.from('modifier_recipes').insert(moves)
+            }
+        }
+        closeModal()
     }
 
     const handleDelete = async (id) => {
@@ -82,7 +118,24 @@ const ModifiersManager = () => {
 
     const openModal = (modifier = null) => {
         setEditingModifier(modifier)
+        setModifierRecipe([])
+        if (modifier) {
+            fetchModifierRecipe(modifier.id)
+        }
         setIsModalOpen(true)
+    }
+
+    const handleRecipeChange = (ingredientId, quantity) => {
+        if (!quantity || quantity <= 0) {
+            setModifierRecipe(modifierRecipe.filter(r => r.ingredient_id !== ingredientId))
+            return
+        }
+        const existing = modifierRecipe.find(r => r.ingredient_id === ingredientId)
+        if (existing) {
+            setModifierRecipe(modifierRecipe.map(r => r.ingredient_id === ingredientId ? { ...r, quantity } : r))
+        } else {
+            setModifierRecipe([...modifierRecipe, { ingredient_id: ingredientId, quantity }])
+        }
     }
 
     const closeModal = () => {
@@ -221,6 +274,35 @@ const ModifiersManager = () => {
                                             required
                                             className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)]"
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-[var(--color-surface)] rounded-xl border border-white/5 space-y-4">
+                                    <h5 className="font-bold text-sm text-[var(--color-primary)] flex items-center gap-2">
+                                        <Scale className="w-4 h-4" /> Receta / Consumo Stock
+                                    </h5>
+                                    <p className="text-xs text-[var(--color-text-muted)]">Define qué ingredientes descuenta este extra.</p>
+
+                                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar p-2">
+                                        {ingredients.map(ing => {
+                                            const current = modifierRecipe.find(r => r.ingredient_id === ing.id)
+                                            return (
+                                                <div key={ing.id} className={`flex items-center justify-between p-2 rounded-lg border ${current ? 'bg-green-500/10 border-green-500/30' : 'bg-black/20 border-white/5'}`}>
+                                                    <div className="flex-1">
+                                                        <span className="font-bold text-sm">{ing.name}</span>
+                                                        <span className="text-xs text-[var(--color-text-muted)] ml-1">({ing.unit})</span>
+                                                    </div>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="0"
+                                                        value={current?.quantity || ''}
+                                                        onChange={(e) => handleRecipeChange(ing.id, parseFloat(e.target.value))}
+                                                        className={`w-20 text-center bg-[var(--color-background)] rounded border p-1 outline-none text-sm font-bold ${current ? 'text-green-400 border-green-500' : 'text-gray-500 border-white/10'}`}
+                                                    />
+                                                </div>
+                                            )
+                                        })}
+                                        {ingredients.length === 0 && <span className="text-xs text-yellow-500">Primero crea ingredientes en "Inventario"</span>}
                                     </div>
                                 </div>
 
