@@ -892,7 +892,9 @@ const OrdersManager = () => {
                                     {/* Sub-items details */}
                                     <div className="pl-4 border-l border-white/10 mt-1 text-xs text-[var(--color-text-muted)] space-y-0.5">
                                         {item.modifiers?.map((m, i) => (
-                                            <div key={i}>+ {m.name} {m.quantity > 1 ? <span className="text-white font-bold">x{m.quantity}</span> : ''}</div>
+                                            <div key={i}>
+                                                + {m.quantity > 1 ? `(x${m.quantity}) ` : ''}{m.name}
+                                            </div>
                                         ))}
                                         {item.side_info && <div>+ {item.side_info.name}</div>}
                                         {item.drink_info && <div>+ {item.drink_info.name}</div>}
