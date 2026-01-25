@@ -31,6 +31,8 @@ const ModifiersManager = () => {
             name: formData.get('name'),
             price: parseFloat(formData.get('price')),
             category: formData.get('category') || 'General',
+            min_quantity: parseInt(formData.get('min_quantity')) || 0,
+            max_quantity: parseInt(formData.get('max_quantity')) || 10,
             is_available: true
         }
 
@@ -120,6 +122,9 @@ const ModifiersManager = () => {
                             <p className="text-[var(--color-secondary)] font-bold mt-1">
                                 +${mod.price.toLocaleString()}
                             </p>
+                            <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+                                Min: {mod.min_quantity || 0} / Max: {mod.max_quantity || 10}
+                            </p>
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
@@ -147,61 +152,87 @@ const ModifiersManager = () => {
             </div>
 
             {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={closeModal}>
-                    <div className="bg-[var(--color-surface)] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold">{editingModifier ? 'Editar Extra' : 'Nuevo Extra'}</h3>
-                            <button onClick={closeModal}><X className="w-5 h-5 text-white/50 hover:text-white" /></button>
-                        </div>
-
-                        <form onSubmit={handleSave} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">NOMBRE</label>
-                                <input
-                                    name="name"
-                                    defaultValue={editingModifier?.name}
-                                    placeholder="Ej: Extra Cheddar"
-                                    required
-                                    className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)]"
-                                />
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={closeModal}>
+                        <div className="bg-[var(--color-surface)] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold">{editingModifier ? 'Editar Extra' : 'Nuevo Extra'}</h3>
+                                <button onClick={closeModal}><X className="w-5 h-5 text-white/50 hover:text-white" /></button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <form onSubmit={handleSave} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">PRECIO ($)</label>
+                                    <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">NOMBRE</label>
                                     <input
-                                        name="price"
-                                        type="number"
-                                        defaultValue={editingModifier?.price || 0}
+                                        name="name"
+                                        defaultValue={editingModifier?.name}
+                                        placeholder="Ej: Extra Cheddar"
                                         required
                                         className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)]"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">CATEGORÍA</label>
-                                    <select
-                                        name="category"
-                                        defaultValue={editingModifier?.category || 'General'}
-                                        className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)] text-white"
-                                    >
-                                        <option value="General">General</option>
-                                        <option value="Carne">Carne</option>
-                                        <option value="Queso">Queso</option>
-                                        <option value="Salsas">Salsas</option>
-                                        <option value="Veggie">Veggie</option>
-                                    </select>
-                                </div>
-                            </div>
 
-                            <button type="submit" className="w-full bg-[var(--color-secondary)] hover:bg-orange-600 text-white font-bold py-3 rounded-lg mt-4 transition-colors">
-                                Guardar
-                            </button>
-                        </form>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">PRECIO ($)</label>
+                                        <input
+                                            name="price"
+                                            type="number"
+                                            defaultValue={editingModifier?.price || 0}
+                                            required
+                                            className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">CATEGORÍA</label>
+                                        <select
+                                            name="category"
+                                            defaultValue={editingModifier?.category || 'General'}
+                                            className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)] text-white"
+                                        >
+                                            <option value="General">General</option>
+                                            <option value="Carne">Carne</option>
+                                            <option value="Queso">Queso</option>
+                                            <option value="Salsas">Salsas</option>
+                                            <option value="Veggie">Veggie</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">MÍNIMO (Opcional)</label>
+                                        <input
+                                            name="min_quantity"
+                                            type="number"
+                                            min="0"
+                                            defaultValue={editingModifier?.min_quantity || 0}
+                                            className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-[var(--color-text-muted)] mb-1">MÁXIMO</label>
+                                        <input
+                                            name="max_quantity"
+                                            type="number"
+                                            min="1"
+                                            defaultValue={editingModifier?.max_quantity || 10}
+                                            required
+                                            className="w-full bg-[var(--color-background)] rounded-lg p-3 border border-white/5 outline-none focus:border-[var(--color-secondary)]"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="w-full bg-[var(--color-secondary)] hover:bg-orange-600 text-white font-bold py-3 rounded-lg mt-4 transition-colors">
+                                    Guardar
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }
 

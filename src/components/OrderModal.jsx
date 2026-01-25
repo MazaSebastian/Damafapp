@@ -135,6 +135,16 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
     }
 
     const handleModifiersNext = () => {
+        // Validate Min Quantities
+        for (const mod of modifiers) {
+            const currentQty = selectedModifiers[mod.id] || 0
+            const min = mod.min_quantity || 0
+            if (min > 0 && currentQty < min) {
+                toast.error(`Debes seleccionar al menos ${min} ${mod.name}`)
+                return
+            }
+        }
+
         setStep(2)
         fetchSides()
     }
@@ -191,6 +201,16 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
 
     const handlePOSAdd = () => {
         if (!selectedBurger) return
+
+        // Validate Min Quantities
+        for (const mod of modifiers) {
+            const currentQty = selectedModifiers[mod.id] || 0
+            const min = mod.min_quantity || 0
+            if (min > 0 && currentQty < min) {
+                toast.error(`Debes seleccionar al menos ${min} ${mod.name}`)
+                return
+            }
+        }
 
         const modifiersList = Object.entries(selectedModifiers).map(([modId, qty]) => {
             const mod = modifiers.find(m => m.id === modId)
@@ -250,6 +270,14 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
     const updateModifierQuantity = (modId, delta) => {
         setSelectedModifiers(prev => {
             const current = prev[modId] || 0
+            const mod = modifiers.find(m => m.id === modId)
+            const max = mod?.max_quantity !== undefined ? mod.max_quantity : 10 // Default 10 if not set
+
+            if (delta > 0 && current >= max) {
+                toast.warning(`Máximo ${max} unidades para ${mod.name}`)
+                return prev
+            }
+
             const next = Math.max(0, current + delta)
             if (next === 0) {
                 const { [modId]: _, ...rest } = prev
