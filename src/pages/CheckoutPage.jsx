@@ -259,7 +259,7 @@ const CheckoutPage = () => {
                 toast.success('Pedido enviado. Administración te contactará para confirmar y coordinar el pago 🕒', { duration: 5000 })
                 // Redirect to Profile or Home
                 setTimeout(() => {
-                    navigate('/profile')
+                    navigate('/')
                 }, 2000)
             }
 
@@ -803,7 +803,7 @@ const CheckoutPage = () => {
                                 onClick={() => {
                                     setShowBankModal(false)
                                     clearCart() // Now clear cart when finishing
-                                    navigate('/profile')
+                                    navigate('/')
                                 }}
                                 className="w-full bg-white/10 text-white py-3 rounded-xl font-bold hover:bg-white/20 transition-colors"
                             >
