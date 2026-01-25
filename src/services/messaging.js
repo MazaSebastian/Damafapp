@@ -49,7 +49,10 @@ export const requestForToken = async (userId) => {
                 if (currentToken) {
                     console.log('FCM Token:', currentToken);
                     if (userId) {
-                        await saveTokenToDatabase(currentToken, userId);
+                        const { success, error } = await saveTokenToDatabase(currentToken, userId);
+                        if (!success) {
+                            return { token: null, error: 'db_save_error: ' + (error.message || JSON.stringify(error)) };
+                        }
                     }
                     return { token: currentToken, error: null };
                 } else {
@@ -79,8 +82,10 @@ const saveTokenToDatabase = async (token, userId) => {
 
         if (error) throw error;
         console.log('FCM Token saved to profile');
+        return { success: true };
     } catch (error) {
         console.error('Error saving FCM token to DB:', error);
+        return { success: false, error: error };
     }
 };
 
