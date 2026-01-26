@@ -9,22 +9,35 @@ import { supabase } from '../supabaseClient'
 const STORE_LOCATION = { lat: -34.530019, lng: -58.542822 }
 const LIBRARIES = ['places']
 
-const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation }) => {
+// DELIVERY MAP (CONTAINER) - Handles API Key Fetching
+const DeliveryMap = (props) => {
     const [mapsApiKey, setMapsApiKey] = useState(null)
+    const [error, setError] = useState(null)
 
     useEffect(() => {
         const fetchMapsKey = async () => {
-            const { data } = await supabase.from('app_settings').select('value').eq('key', 'google_maps_api_key').single()
-            if (data?.value) setMapsApiKey(data.value)
-            else console.warn('Google Maps API Key not found in settings')
+            const { data, error } = await supabase.from('app_settings').select('value').eq('key', 'google_maps_api_key').single()
+            if (data?.value) {
+                setMapsApiKey(data.value)
+            } else {
+                console.error('Google Maps API Key missing', error)
+                setError('Falta configurar la API Key de Google Maps')
+            }
         }
         fetchMapsKey()
     }, [])
 
+    if (error) return <div className="p-4 bg-red-500/10 text-red-400 rounded-lg text-sm">{error}</div>
+    if (!mapsApiKey) return <div className="h-64 bg-white/5 animate-pulse rounded-lg flex items-center justify-center text-[var(--color-text-muted)]">Cargando Mapa...</div>
+
+    return <DeliveryMapContent apiKey={mapsApiKey} {...props} />
+}
+
+// REAL MAP COMPONENT (Uses Hooks)
+const DeliveryMapContent = ({ apiKey, onDistanceCalculated, onAddressSelected, storeLocation }) => {
     const { isLoaded, loadError } = useLoadScript({
-        googleMapsApiKey: mapsApiKey || 'LOADING', // Prevent crash, will retry or wait
-        libraries: LIBRARIES,
-        enabled: !!mapsApiKey
+        googleMapsApiKey: apiKey,
+        libraries: LIBRARIES
     })
 
     const finalStoreLocation = storeLocation || STORE_LOCATION
@@ -33,7 +46,7 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
     const [selectedLocation, setSelectedLocation] = useState(null)
 
     const [directions, setDirections] = useState(null)
-    const [calculating, setCalculating] = useState(false)
+    // const [calculating, setCalculating] = useState(false) // Removed unused
 
     const mapRef = useRef()
 
@@ -53,7 +66,7 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
         }
         setSelectedLocation(location)
 
-        // Reverse geocoding to get address (optional, nice to have)
+        // Reverse geocoding
         try {
             const geocoder = new window.google.maps.Geocoder()
             const response = await geocoder.geocode({ location })
@@ -72,7 +85,7 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
     }
 
     const calculateRoute = async (destination) => {
-        setCalculating(true)
+        // setCalculating(true)
         const directionsService = new window.google.maps.DirectionsService()
 
         try {
@@ -95,13 +108,14 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
             console.error('Error calculating route:', error)
             toast.error('No pudimos calcular la ruta hasta ahí. Intenta otra dirección.')
         } finally {
-            setCalculating(false)
+            // setCalculating(false)
+            // No-op
         }
     }
 
     // Get Current Location
     const handleUseCurrentLocation = () => {
-        if (navigator.geolocation) {
+        if (navigator.geolocation && map) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const location = {
@@ -120,12 +134,12 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
         }
     }
 
-    if (loadError) return <div className="p-4 text-red-400 bg-red-900/10 rounded-lg">Error al cargar Google Maps</div>
-    if (!isLoaded) return <div className="h-64 bg-white/5 animate-pulse rounded-lg flex items-center justify-center">Cargando Mapa...</div>
+    if (loadError) return <div className="p-4 text-red-800 bg-red-100 rounded-lg text-sm">Error cargando Maps: {loadError.message}</div>
+    if (!isLoaded) return <div className="h-64 bg-white/5 animate-pulse rounded-lg flex items-center justify-center">Iniciando Mapa...</div>
 
     return (
         <div className="space-y-4">
-            {/* Search Box - Custom Headless Implementation */}
+            {/* Search Box */}
             <div className="relative z-10">
                 <SearchBox
                     onPlaceSelected={(place) => {
@@ -208,6 +222,7 @@ const DeliveryMap = ({ onDistanceCalculated, onAddressSelected, storeLocation })
                 <button
                     onClick={handleUseCurrentLocation}
                     className="absolute bottom-4 right-4 bg-[var(--color-secondary)] p-3 rounded-full text-white shadow-lg hover:bg-orange-600 transition-colors z-10"
+                    type="button" // Prevent form submission
                 >
                     <Navigation className="w-5 h-5" />
                 </button>
