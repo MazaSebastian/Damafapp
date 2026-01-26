@@ -24,6 +24,7 @@ import SocialManager from '../components/SocialManager'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
 import NewOrderAlert from '../components/NewOrderAlert'
+import BillingManager from '../components/billing/BillingManager'
 
 
 const AdminDashboard = () => {
@@ -179,6 +180,7 @@ const AdminDashboard = () => {
                         <p className="px-4 text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Gestión</p>
                         <NavItem icon={<LayoutDashboard />} label="Vista General" active={activeTab === 'Overview'} onClick={() => { setActiveTab('Overview'); setIsSidebarOpen(false) }} />
                         <NavItem icon={<TrendingUp />} label="Métricas" active={activeTab === 'Analytics'} onClick={() => { setActiveTab('Analytics'); setIsSidebarOpen(false) }} />
+                        <NavItem icon={<FileText />} label="Centro de Facturación" active={activeTab === 'Billing'} onClick={() => { setActiveTab('Billing'); setIsSidebarOpen(false) }} />
                         <NavItem icon={<Users />} label="Clientes" active={activeTab === 'Customers'} onClick={() => { setActiveTab('Customers'); setIsSidebarOpen(false) }} />
                         <NavItem icon={<MessageCircle />} label="Mensajes" active={activeTab === 'Messages'} onClick={() => { setActiveTab('Messages'); setIsSidebarOpen(false) }} />
                     </div>
@@ -261,6 +263,8 @@ const AdminDashboard = () => {
                     <SocialManager />
                 ) : activeTab === 'Analytics' ? (
                     <AnalyticsManager />
+                ) : activeTab === 'Billing' ? (
+                    <BillingManager />
                 ) : activeTab === 'Drivers' ? (
                     <DriversManager />
                 ) : activeTab === 'Notifications' ? (

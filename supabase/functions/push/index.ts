@@ -155,6 +155,7 @@ serve(async (req) => {
                 notification: {
                     title: title,
                     body: body,
+                    image: 'https://damafapp-six.vercel.app/logo-damaf.png'
                 },
                 data: {
                     url: openUrl || "/", // Custom data for redirection

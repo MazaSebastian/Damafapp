@@ -336,89 +336,6 @@ const CheckoutPage = () => {
         }, 1000)
     }
 
-    // SIMULATION FOR TESTING (TRIGGER BUILD)
-    const simulatePayment = async () => {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            toast.error('Debes iniciar sesión para simular')
-            return
-        }
-
-        try {
-            toast.loading('Simulando pago...')
-            // 1. Create Order as PENDING first
-            const { data: order, error: orderError } = await supabase
-                .from('orders')
-                .insert([{
-                    user_id: user.id,
-                    total: finalTotal,
-                    status: 'pending', // Visible in 'En Proceso'
-                    order_type: orderType,
-                    delivery_address: orderType === 'delivery' ? address : null,
-                    coupon_code: appliedCoupon?.code || null,
-                    discount_amount: discountAmount,
-                    discount_amount: discountAmount,
-                    scheduled_time: selectedSlot ? selectedSlot.start_time.slice(0, 5) : null, // Simulation
-                }])
-                .select()
-                .single()
-
-            if (orderError) throw orderError
-
-            // 2. Insert Items
-            const orderItems = cart.map(item => ({
-                order_id: order.id,
-                product_id: item.main.id,
-                quantity: 1,
-                price_at_time: item.main.price,
-                modifiers: item.modifiers || [],
-                side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
-                drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
-            }))
-
-            const { error: itemsError } = await supabase
-                .from('order_items')
-                .insert(orderItems)
-
-            if (itemsError) throw itemsError
-
-            // 3. Manually Update Stars (Simulation Only)
-            // Trigger only works on 'completed', but we want order in Active.
-            // We manually award stars here for the user experience.
-            const starsToAdd = Math.floor(finalTotal / 100)
-            if (starsToAdd > 0) {
-                // Try updating profile directly (requires RLS policy or admin role)
-                // Or we rely on verify that simulation is usually 'completed' flow.
-                // But user wants "Active" order flow AND stars.
-                // We'll update the profile directly. If RLS fails, we log it.
-                const { error: starError } = await supabase.rpc('increment_stars', { amount: starsToAdd })
-
-                // If RPC fails (doesn't exist), try direct update if policies allow
-                if (starError) {
-                    // Fallback: This assumes the user CAN update their own stars, which is insecure but might be allowed in this dev setup
-                    // based on previous SQL files disabling RLS.
-                    const { data: profile } = await supabase.from('profiles').select('stars').eq('id', user.id).single()
-                    if (profile) {
-                        await supabase.from('profiles').update({ stars: (profile.stars || 0) + starsToAdd }).eq('id', user.id)
-                    }
-                }
-            }
-
-            // Refresh Profile to get new stars
-            await refreshProfile()
-
-            toast.dismiss()
-            toast.success('Pedido pagado correctamente, en breve estaras disfrutando de tu burga! 🍔')
-
-            clearCart()
-            navigate('/')
-
-        } catch (error) {
-            console.error('Error simulando:', error)
-            toast.dismiss()
-            toast.error('Error al simular: ' + error.message)
-        }
-    }
 
     const handleCheckout = async () => {
         if (!orderType) {
@@ -814,14 +731,6 @@ const CheckoutPage = () => {
                     </div>
                 </div>
             )}
-            <div className="fixed top-20 right-4 z-50">
-                <button
-                    onClick={simulatePayment}
-                    className="bg-purple-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-lg opacity-50 hover:opacity-100 transition-opacity flex items-center gap-1"
-                >
-                    🛠 Simular Pago
-                </button>
-            </div>
 
         </div >
     )
