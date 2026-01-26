@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import TicketTemplate from './print/TicketTemplate'
 import { EscPosEncoder } from '../utils/escPosEncoder'
 import { usbPrinter } from '../services/UsbPrinterService'
-import { format } from 'date-fns'
+import { format, startOfDay, endOfDay, parseISO } from 'date-fns'
 
 import POSModal from './POSModal'
 import AssignDriverModal from './AssignDriverModal'
@@ -75,8 +75,12 @@ const OrdersManager = () => {
                 ),
                 profiles (*)
             `)
-            .gte('created_at', new Date(`${filters.startDate}T00:00:00`).toISOString())
-            .lte('created_at', new Date(`${filters.endDate}T23:59:59.999`).toISOString())
+            .gte('created_at', startOfDay(parseISO(filters.startDate)).toISOString())
+            .lte('created_at', endOfDay(parseISO(filters.endDate)).toISOString())
+
+        // Debugging for Android WebView
+        console.log(`[OrdersManager] Fetching: ${filters.startDate} - ${filters.endDate}`)
+        console.log(`[OrdersManager] ISO Range: ${startOfDay(parseISO(filters.startDate)).toISOString()} - ${endOfDay(parseISO(filters.endDate)).toISOString()}`)
             .order('created_at', { ascending: false })
 
         const { data: ordersData, error } = await query
