@@ -65,16 +65,16 @@ const OrdersManager = () => {
         let query = supabase
             .from('orders')
             .select(`
-                *,
-                order_items (
-                    *,
-                    products (name) 
-                ),
-                drivers!fk_orders_drivers (
-                    name
-                ),
-                profiles (*)
-            `)
+        *,
+        order_items (
+        *,
+        products (name)
+        ),
+        drivers!fk_orders_drivers (
+        name
+        ),
+        profiles (*)
+        `)
             .gte('created_at', new Date(`${filters.startDate}T00:00:00`).toISOString())
             .lte('created_at', new Date(`${filters.endDate}T23:59:59.999`).toISOString())
             .order('created_at', { ascending: false })

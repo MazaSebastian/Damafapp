@@ -23,6 +23,7 @@ import NotificationsManager from '../components/NotificationsManager'
 import SocialManager from '../components/SocialManager'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
+import NewOrderAlert from '../components/NewOrderAlert'
 
 
 const AdminDashboard = () => {
@@ -32,6 +33,7 @@ const AdminDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(0)
     const [pendingOrdersCount, setPendingOrdersCount] = useState(0)
     const [lowStockCount, setLowStockCount] = useState(0)
+    const [alertOrder, setAlertOrder] = useState(null)
 
     // Badge Logic
     const fetchCounts = async () => {
@@ -112,14 +114,7 @@ const AdminDashboard = () => {
             }, (payload) => {
                 // Determine if we should alert (e.g. ignore if simple status update? logic says event=INSERT so only new)
                 playNewOrderSound()
-                toast.success('🔔 ¡NUEVO PEDIDO RECIBIDO!', {
-                    description: `Orden #${payload.new.id.slice(0, 8)}`,
-                    duration: 8000,
-                    action: {
-                        label: 'Ver Pedidos',
-                        onClick: () => setActiveTab('Orders')
-                    }
-                })
+                setAlertOrder(payload.new)
             })
             .subscribe()
 
@@ -296,6 +291,13 @@ const AdminDashboard = () => {
                     <AdminOverview />
                 )}
             </main>
+
+            <NewOrderAlert
+                isOpen={!!alertOrder}
+                order={alertOrder}
+                onClose={() => setAlertOrder(null)}
+                onView={() => setActiveTab('Orders')}
+            />
         </div>
     )
 }
