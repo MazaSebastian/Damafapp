@@ -115,15 +115,42 @@ serve(async (req) => {
             });
         }
 
+        // Initialize Supabase Client
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // --- SECURITY CHECK (Manual Verification) ---
+        // We do this manually so we can deploy with --no-verify-jwt and bypass Gateway 401 issues
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            return new Response(JSON.stringify({ error: "Missing Authorization Header" }), { status: 401, headers: corsHeaders });
+        }
+
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
+        if (authError || !user) {
+            return new Response(JSON.stringify({ error: "Invalid Token" }), { status: 401, headers: corsHeaders });
+        }
+
+        // Check Role
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (!profile || (profile.role !== 'admin' && profile.role !== 'owner')) {
+            return new Response(JSON.stringify({ error: "Unauthorized: Admin Only" }), { status: 403, headers: corsHeaders });
+        }
+        // ---------------------------------------------
+
+
         let targetToken = explicitToken;
 
         // If no explicit token, look it up via userId
         if (!targetToken && userId) {
-            // Init Supabase Client to get User's Token
-            const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-            const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-            const supabase = createClient(supabaseUrl, supabaseKey);
-
             // Get FCM Token from DB
             const { data: profile, error: profileError } = await supabase
                 .from("profiles")
