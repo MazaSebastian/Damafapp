@@ -12,7 +12,7 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL
 // For now, let's try to disable RLS via SQL file migration which is the standard way.
 
 // But wait, I can try to read .env file content directly first to see if I can find a key.
-const fs = require('fs');
+import fs from 'fs';
 try {
     const envConfig = dotenv.parse(fs.readFileSync('.env'))
     for (const k in envConfig) {

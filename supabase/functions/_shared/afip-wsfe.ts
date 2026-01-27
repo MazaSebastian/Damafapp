@@ -97,10 +97,30 @@ export const generateInvoice = async (
     const dateMatch = text.match(/<CAEFchVto>(.*?)<\/CAEFchVto>/);
     const resultMatch = text.match(/<Resultado>(.*?)<\/Resultado>/);
 
+    // Parse Errors
+    const errorMatch = text.match(/<Err>(.*?)<\/Err>/s); // s flag for dotAll not always supported in strict regex, but usually works in JS. Safe to use [\s\S]*?
+    let errorMsg = null;
+    if (errorMatch) {
+        const msgMatch = errorMatch[1].match(/<Msg>(.*?)<\/Msg>/);
+        const codeMatch = errorMatch[1].match(/<Code>(.*?)<\/Code>/);
+        if (msgMatch) {
+            errorMsg = `${msgMatch[1]} (Cod: ${codeMatch ? codeMatch[1] : '?'})`;
+        }
+    }
+
+    // Parse Observations
+    const obsMatch = text.match(/<Obs>(.*?)<\/Obs>/s);
+    let obsMsg = null;
+    if (obsMatch) {
+        const msgMatch = obsMatch[1].match(/<Msg>(.*?)<\/Msg>/);
+        if (msgMatch) obsMsg = msgMatch[1];
+    }
+
     return {
         cae: caeMatch ? caeMatch[1] : null,
         caeFchVto: dateMatch ? dateMatch[1] : null,
         resultado: resultMatch ? resultMatch[1] : 'Error',
-        rawResponse: text
+        errorMsg: errorMsg || obsMsg, // Returns the specific error message if found
+        rawResponse: text // Keep raw for debugging
     };
 }

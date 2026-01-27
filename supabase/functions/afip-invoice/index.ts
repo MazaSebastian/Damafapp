@@ -42,7 +42,12 @@ serve(async (req) => {
             .eq('environment', environment)
             .single();
 
-        if (!credentials) throw new Error("No active credentials found for environment: " + environment);
+        if (!credentials) {
+            console.error("No active credentials found for environment: " + environment);
+            // If no credentials in DB, we cannot proceed with correct PTO VTA.
+            throw new Error("Sistema no configurado. Faltan credenciales en base de datos.");
+        }
+        console.log(`Using Credentials: CUIT ${credentials.cuit}, PtoVta ${credentials.sales_point}`);
 
         if (action === 'status') {
             // Determine Invoice Details
@@ -114,9 +119,14 @@ serve(async (req) => {
                     status: 200,
                 })
             } else {
-                return new Response(JSON.stringify({ success: false, error: result, raw_response: result.rawResponse }), {
+                console.error("AFIP Error:", result.errorMsg || result.rawResponse);
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: result.errorMsg ? "AFIP: " + result.errorMsg : "Error desconocido de AFIP",
+                    raw_response: result.rawResponse
+                }), {
                     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    status: 200, // Return 200 to allow client to read error body
+                    status: 200,
                 })
             }
         }
