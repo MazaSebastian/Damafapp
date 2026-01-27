@@ -11,11 +11,16 @@ interface AfipAuth {
 
 // XML Template for LoginTicketRequest
 const getLoginTicketRequest = (service: string = 'wsfe'): string => {
-    const now = new Date();
-    const expiration = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours
+    // AFIP expects Argentina Time (UTC-3) or allows a small window.
+    // Cloud servers run in UTC. If we send UTC time (e.g. 15:00) and AFIP expects Local (12:00),
+    // we are 3 hours in the future.
+    // Fix: Subtract 3 hours (180 min) + 10 min safety buffer.
+    const now = new Date(Date.now() - 3 * 60 * 60 * 1000 - 10 * 60 * 1000);
+    const expiration = new Date(now.getTime() + 12 * 60 * 60 * 1000); // +12 hours from generation
 
     // Format: YYYY-MM-DDTHH:mm:ss
     const formatDate = (date: Date) => date.toISOString().split('.')[0];
+
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <loginTicketRequest version="1.0">
