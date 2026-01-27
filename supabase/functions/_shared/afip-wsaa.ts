@@ -103,7 +103,10 @@ export const getWSAAAuth = async (supabase: any, environment: 'testing' | 'produ
 
     if (!tokenMatch || !signMatch) {
         console.error("WSAA Error", textResponse);
-        throw new Error('Failed to authenticate with WSAA');
+        // Try to extract faultstring or error
+        const faultMatch = textResponse.match(/<faultstring>(.*?)<\/faultstring>/) || textResponse.match(/<faultcode>(.*?)<\/faultcode>/);
+        const errorDetail = faultMatch ? faultMatch[1] : textResponse.substring(0, 500); // Return up to 500 chars of xml to see what happened
+        throw new Error(`AFIP WSAA Error: ${errorDetail}`);
     }
 
     const newToken = tokenMatch[1];
