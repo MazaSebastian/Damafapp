@@ -1,17 +1,42 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, FileText, Settings, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, FileText, Settings, FileSpreadsheet, AlertTriangle, CheckCircle } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 import BillingOverview from './billing/BillingOverview';
 import BillingList from './billing/BillingList';
 import BillingSettings from './billing/BillingSettings';
 
 const BillingManager = () => {
     const [activeTab, setActiveTab] = useState('overview');
+    const [isConfigured, setIsConfigured] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const tabs = [
         { id: 'overview', label: 'General', icon: LayoutDashboard },
         { id: 'invoices', label: 'Comprobantes', icon: FileSpreadsheet },
         { id: 'settings', label: 'Configuración', icon: Settings },
     ];
+
+    useEffect(() => {
+        checkConfiguration();
+    }, [activeTab]); // Re-check when switching tabs (e.g. after saving settings)
+
+    const checkConfiguration = async () => {
+        try {
+            const { data } = await supabase
+                .from('afip_credentials')
+                .select('id, is_active')
+                .eq('environment', 'production')
+                .eq('is_active', true)
+                .single();
+
+            setIsConfigured(!!data);
+        } catch (error) {
+            console.error('Error checking config:', error);
+            setIsConfigured(false);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -25,6 +50,16 @@ const BillingManager = () => {
                         Gestiona tus comprobantes electrónicos y credenciales de ARCA (AFIP).
                     </p>
                 </div>
+
+                {!loading && (
+                    <div className={`px-4 py-2 rounded-full border flex items-center gap-2 font-bold text-sm ${isConfigured
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+                        }`}>
+                        {isConfigured ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                        {isConfigured ? 'Sistema Configurado' : 'Sistema No Configurado'}
+                    </div>
+                )}
             </div>
 
             {/* Navigation Tabs */}

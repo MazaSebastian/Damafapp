@@ -1,12 +1,64 @@
-import React from 'react';
-import { DollarSign, FileText, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { DollarSign, FileText, CheckCircle, AlertCircle, PlayCircle, Loader2, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '../../supabaseClient';
 
 const BillingOverview = ({ onChangeTab }) => {
+    const [isTesting, setIsTesting] = useState(false);
+
     // Mock Data for UI Dev
     const stats = {
         totalToday: 154200.50,
-        lastInvoice: { type: 'Factura B', number: '0005-00001234', amount: 4500.00 },
+        lastInvoice: { type: 'Factura C', number: '0002-00001234', amount: 4500.00 },
         status: 'online' // online, offline, error
+    };
+
+    const handleTestInvoice = async () => {
+        setIsTesting(true);
+        const toastId = toast.loading("Generando pedido y factura de prueba...");
+
+        try {
+            // 1. Create Dummy Order
+            const { data: order, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    total: 10,
+                    status: 'completed',
+                    order_type: 'takeaway',
+                    payment_method: 'cash',
+                    notes: 'PRUEBA DE FACTURACIÓN'
+                })
+                .select()
+                .single();
+
+            if (orderError) throw new Error("Error creando pedido: " + orderError.message);
+
+            // 2. Trigger Invoice Generation
+            const { data: invoiceData, error: invoiceError } = await supabase.functions.invoke('afip-invoice', {
+                body: {
+                    action: 'generate',
+                    orderId: order.id
+                }
+            });
+
+            if (invoiceError) throw new Error("Error en función de facturación: " + invoiceError.message);
+
+            if (invoiceData?.error) {
+                throw new Error("AFIP Error: " + JSON.stringify(invoiceData.error));
+            }
+
+            toast.dismiss(toastId);
+            toast.success(`Factura Generada! CAE: ${invoiceData.cae}`);
+            // Refresh logic could go here
+            onChangeTab('invoices');
+
+        } catch (error) {
+            console.error(error);
+            toast.dismiss(toastId);
+            toast.error(error.message);
+        } finally {
+            setIsTesting(false);
+        }
     };
 
     return (
@@ -72,6 +124,17 @@ const BillingOverview = ({ onChangeTab }) => {
             {/* Quick Actions */}
             <h3 className="text-xl font-bold text-white pt-4">Acciones Rápidas</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button
+                    disabled={isTesting}
+                    onClick={handleTestInvoice}
+                    className="p-4 bg-[var(--color-surface)] border border-white/10 rounded-2xl flex flex-col items-center gap-3 hover:bg-white/5 hover:border-[var(--color-primary)] transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <div className="h-12 w-12 rounded-full bg-yellow-500 text-black flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-yellow-500/20">
+                        {isTesting ? <Loader2 size={24} className="animate-spin" /> : <PlayCircle size={24} />}
+                    </div>
+                    <span className="font-bold text-white text-center">Prueba ($10)</span>
+                </button>
+
                 <button
                     className="p-4 bg-[var(--color-surface)] border border-white/10 rounded-2xl flex flex-col items-center gap-3 hover:bg-white/5 hover:border-[var(--color-primary)] transition-all group"
                 >
