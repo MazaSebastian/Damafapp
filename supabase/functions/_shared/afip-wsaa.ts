@@ -1,6 +1,6 @@
 
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-import forge from 'npm:node-forge@1.3.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import forge from 'https://esm.sh/node-forge@1.3.1';
 
 // Interface for Token/Sign
 interface AfipAuth {
@@ -64,7 +64,9 @@ export const getWSAAAuth = async (supabase: any, environment: 'testing' | 'produ
     const tra = getLoginTicketRequest('wsfe');
 
     // Sign TRA (CMS/PKCS#7)
-    const cms = await signTRA(tra, credentials.private_key, credentials.cert_crt);
+    // Sanitize Key just in case
+    const safeKey = credentials.private_key.replace(/\\n/g, '\n').trim();
+    const cms = await signTRA(tra, safeKey, credentials.cert_crt);
 
     // Call WSAA
     const wsdlUrl = environment === 'production'
