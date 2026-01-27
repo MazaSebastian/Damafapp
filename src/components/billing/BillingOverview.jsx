@@ -3,7 +3,7 @@ import { DollarSign, FileText, CheckCircle, AlertCircle, PlayCircle, Loader2, Ar
 import { toast } from 'sonner';
 import { supabase } from '../../supabaseClient';
 
-const BillingOverview = ({ onChangeTab }) => {
+const BillingOverview = ({ setTab }) => {
     const [isTesting, setIsTesting] = useState(false);
 
     // Mock Data for UI Dev
@@ -64,8 +64,8 @@ const BillingOverview = ({ onChangeTab }) => {
             toast.success(`Factura Generada! CAE: ${invoiceData.cae}`);
 
             // Switch to history tab
-            if (onChangeTab) {
-                onChangeTab('invoices');
+            if (setTab) {
+                setTab('Invoices');
             }
 
         } catch (error) {
@@ -130,7 +130,7 @@ const BillingOverview = ({ onChangeTab }) => {
                         </p>
                     </div>
                     <button
-                        onClick={() => onChangeTab('settings')}
+                        onClick={() => setTab('Settings')}
                         className="mt-4 w-full py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-xl transition-colors"
                     >
                         Ver Configuración
@@ -162,7 +162,7 @@ const BillingOverview = ({ onChangeTab }) => {
                 </button>
 
                 <button
-                    onClick={() => onChangeTab('invoices')}
+                    onClick={() => setTab('Invoices')}
                     className="p-4 bg-[var(--color-surface)] border border-white/10 rounded-2xl flex flex-col items-center gap-3 hover:bg-white/5 hover:border-white/30 transition-all group"
                 >
                     <div className="h-12 w-12 rounded-full bg-white/10 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
