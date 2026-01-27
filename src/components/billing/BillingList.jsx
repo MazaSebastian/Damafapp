@@ -9,6 +9,41 @@ const BillingList = () => {
         { id: 3, date: '2024-01-25', type: 'Factura A', number: '0005-00001232', amount: 32000.00, customer: 'Empresa SA', cae: '73412345678903' },
     ];
 
+    const handleDownloadPDF = async (invoice) => {
+        // Mock Company Data (In real app, fetch from settings/context)
+        const companyData = {
+            business_name: 'DamafAPP S.A.',
+            address: 'Calle Falsa 123',
+            city: 'Buenos Aires',
+            cuit: '20-12345678-9',
+            start_date: '01/01/2024'
+        };
+
+        const invoiceData = {
+            cbte_tipo: invoice.type.includes('C') ? 11 : 6,
+            pt_vta: 5, // Mock
+            cbte_nro: parseInt(invoice.number.split('-')[1]),
+            total_amount: invoice.amount,
+            created_at: new Date().toISOString(), // Should come from DB
+            cae: invoice.cae,
+            cae_due_date: '20250130', // Mock
+            customer_name: invoice.customer,
+            customer_doc: '0',
+            customer_iva: 'Consumidor Final',
+            items: [{ quantity: 1, name: 'Servicios Digitales', price: invoice.amount }]
+        };
+
+        if (window.confirm(`¿Descargar PDF de la factura ${invoice.number}?`)) {
+            try {
+                const { generateInvoicePDF } = await import('../../utils/invoiceGenerator');
+                await generateInvoicePDF(invoiceData, companyData);
+            } catch (e) {
+                console.error("Error generating PDF:", e);
+                alert("Error generando PDF");
+            }
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -61,7 +96,11 @@ const BillingList = () => {
                                         <button className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors" title="Ver PDF">
                                             <FileText size={18} />
                                         </button>
-                                        <button className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-[var(--color-primary)] transition-colors" title="Descargar">
+                                        <button
+                                            onClick={() => handleDownloadPDF(inv)}
+                                            className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-[var(--color-primary)] transition-colors"
+                                            title="Descargar PDF"
+                                        >
                                             <Download size={18} />
                                         </button>
                                     </td>
