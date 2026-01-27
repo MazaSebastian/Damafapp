@@ -102,9 +102,10 @@ export const getWSAAAuth = async (supabase: any, environment: 'testing' | 'produ
     const textResponse = await response.text();
 
     // Parse XML Response (Simplified regex parsing for now)
-    const tokenMatch = textResponse.match(/<token>(.*?)<\/token>/);
-    const signMatch = textResponse.match(/<sign>(.*?)<\/sign>/);
-    const expirationMatch = textResponse.match(/<expirationTime>(.*?)<\/expirationTime>/);
+    // Handle both standard XML and Escaped XML (AFIP often returns escaped XML inside loginCmsReturn)
+    const tokenMatch = textResponse.match(/<token>(.*?)<\/token>/) || textResponse.match(/&lt;token&gt;(.*?)&lt;\/token&gt;/);
+    const signMatch = textResponse.match(/<sign>(.*?)<\/sign>/) || textResponse.match(/&lt;sign&gt;(.*?)&lt;\/sign&gt;/);
+    const expirationMatch = textResponse.match(/<expirationTime>(.*?)<\/expirationTime>/) || textResponse.match(/&lt;expirationTime&gt;(.*?)&lt;\/expirationTime&gt;/);
 
     if (!tokenMatch || !signMatch) {
         console.error("WSAA Error", textResponse);
