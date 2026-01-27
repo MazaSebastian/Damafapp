@@ -3,17 +3,23 @@ import QRCode from 'qrcode';
 
 /**
  * Generates a PDF invoice compliant with AFIP standards for 80mm Thermal Printer.
+ * Optimized for Android / Webview printing.
  * @param {Object} invoice - The invoice data
  * @param {Object} company - The company data
  */
 export const generateInvoicePDF = async (invoice, company) => {
-    // 80mm width, dynamic height (start with long, trim later if needed, or just standard roll length)
-    // Using [80, 297] (A4 height strip) usually works for thermal drivers which handle the cut.
-    // If we need dynamic height based on content, we'd calculate it. For now, a long strip is safe.
+    // 1. Calculate Dynamic Height
+    // Estimate content length to avoid page breaks on thermal paper
+    const items = invoice.items || [{ quantity: 1, name: 'Consumo Gastronómico', price: invoice.total_amount }];
+    const baseHeight = 150; // Headers + Footers (approximate)
+    const itemHeight = 15; // Avg height per item (accounting for wrapping)
+    const dynamicHeight = baseHeight + (items.length * itemHeight);
+
+    // Create Doc with calculated height
     const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [80, 297]
+        format: [80, dynamicHeight]
     });
 
     const pageWidth = 80;
