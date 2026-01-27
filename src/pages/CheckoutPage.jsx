@@ -17,7 +17,7 @@ import OrderApprovalModal from '../components/checkout/OrderApprovalModal'
 const CheckoutPage = () => {
     const navigate = useNavigate()
     const { cart, removeFromCart, total, clearCart } = useCart()
-    const { user, refreshProfile } = useAuth()
+    const { user, profile, refreshProfile } = useAuth()
     const { isOpen, loading: statusLoading } = useStoreStatus()
     const [loading, setLoading] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -176,11 +176,13 @@ const CheckoutPage = () => {
         const { data: { user } } = await supabase.auth.getUser()
 
         // Validation logic
-        const userPhone = user?.phone || user?.user_metadata?.phone || confirmedPhone
-        // If user logged in, trust metadata unless it was 'Cliente Web' which means we asked for it
-        let userName = user?.user_metadata?.full_name || user?.user_metadata?.name
+        const userPhone = profile?.phone || user?.phone || user?.user_metadata?.phone || confirmedPhone
+        // If user logged in, use profile name. If confirmedName provided, use it (override or guest).
+        let userName = profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name
 
-        // If we got a confirmedName from modal, use it (it overrides or fills missing)
+        // If we got a confirmedName from modal and it's not generic 'Cliente Web' match logic, use it.
+        // But if we have a profile name, we usually prefer it unless user explicitly edited it.
+        // Actually, logic is: if we have a confirmedName (from input), use it.
         if (confirmedName) {
             userName = confirmedName
         } else if (!userName) {
@@ -638,8 +640,8 @@ const CheckoutPage = () => {
                     type: orderType,
                     items: cart,
                     address: address, // Pass address
-                    customerName: user?.user_metadata?.name || 'Cliente',
-                    customerPhone: user?.phone || '', // User phone if available
+                    customerName: profile?.full_name || user?.user_metadata?.name || 'Cliente Web',
+                    customerPhone: profile?.phone || user?.phone || '',
                     paymentMethod: paymentMethod === 'mercadopago' ? 'Mercado Pago' : paymentMethod === 'transfer' ? 'Transferencia' : 'Efectivo'
                 }}
                 onConfirm={(additionalData) => {

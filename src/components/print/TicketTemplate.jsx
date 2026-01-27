@@ -51,19 +51,19 @@ const TicketTemplate = ({ order }) => {
             <div className="mb-6 text-sm font-bold leading-snug">
                 <div className="mb-2">
                     <span className="font-normal">Cliente: </span>
-                    <span className="text-lg">{order.client_name || order.profiles?.full_name || 'Invitado'}</span>
+                    <span className="text-lg">{order.profiles?.full_name || order.client_name || 'Invitado'}</span>
                 </div>
 
                 {order.order_type === 'delivery' ? (
                     <div className="mb-2 whitespace-pre-wrap">
-                        {order.delivery_address}
+                        {order.delivery_address || order.profiles?.address}
                     </div>
                 ) : (
                     <div className="mb-2 italic">Retiro en Local</div>
                 )}
 
-                {(order.client_phone || order.profiles?.phone) && (
-                    <div>Tel: {order.client_phone || order.profiles?.phone}</div>
+                {(order.profiles?.phone || order.client_phone) && (
+                    <div>Tel: {order.profiles?.phone || order.client_phone}</div>
                 )}
             </div>
 

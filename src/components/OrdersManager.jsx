@@ -371,7 +371,7 @@ const OrdersManager = () => {
 
                 // 4. Customer Info
                 .bold(false).text('Cliente: ')
-                .bold(true).size(1, 1).text(`${order.client_name || order.profiles?.full_name || 'Invitado'}`) // Big Name
+                .bold(true).size(1, 1).text(`${order.profiles?.full_name || order.client_name || 'Invitado'}`) // Big Name
                 .size(0, 0).bold(false) // Reset
                 .newline(2)
 
@@ -389,11 +389,11 @@ const OrdersManager = () => {
 
                 .newline(2)
 
-            if (order.delivery_address) {
-                encoder.text(order.delivery_address).newline()
+            if (order.delivery_address || order.profiles?.address) {
+                encoder.text(order.profiles?.address || order.delivery_address).newline()
             }
-            if (order.client_phone || order.profiles?.phone) {
-                encoder.text(`Tel: ${order.client_phone || order.profiles?.phone}`).newline()
+            if (order.profiles?.phone || order.client_phone) {
+                encoder.text(`Tel: ${order.profiles?.phone || order.client_phone}`).newline()
             }
 
             encoder.newline()
@@ -461,9 +461,9 @@ const OrdersManager = () => {
                 created_at: order.created_at,
                 total: order.total,
                 // Customer Details
-                client_name: order.client_name || order.profiles?.full_name || 'Invitado',
-                client_address: order.delivery_address || order.profiles?.address || '',
-                client_phone: order.client_phone || order.profiles?.phone || '',
+                client_name: order.profiles?.full_name || order.client_name || 'Invitado',
+                client_address: order.profiles?.address || order.delivery_address || '',
+                client_phone: order.profiles?.phone || order.client_phone || '',
                 client_shift: order.scheduled_time || '',
                 delivery_time: order.scheduled_time || '', // Redundant key for compatibility
 
@@ -762,10 +762,10 @@ const OrdersManager = () => {
                                     </div>
                                 )}
 
-                                {/* Customer Details - Prioritize Snapshot Name */}
+                                {/* Customer Details - Prioritize Profile if available (Registered), else Snapshot (Guest) */}
                                 <div className="mt-2 text-xs">
                                     <div className="font-bold text-white text-sm">
-                                        {order.client_name || order.profiles?.full_name || 'Invitado'}
+                                        {order.profiles?.full_name || order.client_name || 'Invitado'}
                                     </div>
 
                                     {/* ID Badge if Profile Exists */}
@@ -778,17 +778,17 @@ const OrdersManager = () => {
                                     )}
 
                                     {/* Address */}
-                                    {(order.delivery_address || order.profiles?.address) && (
+                                    {(order.profiles?.address || order.delivery_address) && (
                                         <div className="flex items-start gap-1 mt-1 text-[var(--color-text-muted)]">
                                             <span>📍</span>
-                                            <span className="italic">{order.delivery_address || order.profiles?.address}</span>
+                                            <span className="italic">{order.profiles?.address || order.delivery_address}</span>
                                         </div>
                                     )}
 
-                                    {/* Phone - Prioritize Snapshot Phone */}
-                                    {(order.client_phone || order.profiles?.phone) && (
+                                    {/* Phone - Prioritize Profile */}
+                                    {(order.profiles?.phone || order.client_phone) && (
                                         <div className="flex items-center gap-1 mt-1 text-[var(--color-text-muted)]">
-                                            <span>📞</span> {order.client_phone || order.profiles?.phone}
+                                            <span>📞</span> {order.profiles?.phone || order.client_phone}
                                         </div>
                                     )}
                                 </div>
