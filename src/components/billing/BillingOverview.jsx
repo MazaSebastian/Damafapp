@@ -34,10 +34,16 @@ const BillingOverview = ({ onChangeTab }) => {
             if (orderError) throw new Error("Error creando pedido: " + orderError.message);
 
             // 2. Trigger Invoice Generation
+            // Explicitly getting session to ensure auth header is present
+            const { data: { session } } = await supabase.auth.getSession();
+
             const { data: invoiceData, error: invoiceError } = await supabase.functions.invoke('afip-invoice', {
                 body: {
                     action: 'generate',
                     orderId: order.id
+                },
+                headers: {
+                    Authorization: `Bearer ${session?.access_token}`
                 }
             });
 
