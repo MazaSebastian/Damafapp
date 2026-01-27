@@ -73,7 +73,7 @@ const UserHome = () => {
                             {profile?.full_name ? profile.full_name[0] : '👤'}
                         </div>
                         <div>
-                            <h1 className="text-sm font-bold leading-tight">Hola, {profile?.full_name?.split(' ')[0] || user?.user_metadata?.name?.split(' ')[0] || 'Usuario'}!</h1>
+                            <h1 className="text-sm font-bold leading-tight">Hola, {profile?.full_name?.split(' ')[0] || user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuario'}!</h1>
                             <p className="text-[10px] text-[var(--color-text-muted)]">Ver Mi Perfil &gt;</p>
                         </div>
                     </Link>
