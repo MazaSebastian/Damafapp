@@ -2,12 +2,43 @@ import React from 'react';
 import { FileText, Download, User } from 'lucide-react';
 
 const BillingList = () => {
-    // Mock Data
-    const invoices = [
-        { id: 1, date: '2024-01-26', type: 'Factura B', number: '0005-00001234', amount: 4500.00, customer: 'Consumidor Final', cae: '73412345678901' },
-        { id: 2, date: '2024-01-26', type: 'Factura B', number: '0005-00001233', amount: 12500.50, customer: 'Sebastian Maza', cae: '73412345678902' },
-        { id: 3, date: '2024-01-25', type: 'Factura A', number: '0005-00001232', amount: 32000.00, customer: 'Empresa SA', cae: '73412345678903' },
-    ];
+    const [invoices, setInvoices] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        fetchInvoices();
+    }, []);
+
+    const fetchInvoices = async () => {
+        try {
+            const { data, error } = await import('../../supabaseClient')
+                .then(module => module.supabase
+                    .from('invoices')
+                    .select('*, order:order_id(customer:customer_id(name, business_name))')
+                    .order('created_at', { ascending: false })
+                );
+
+            if (error) throw error;
+
+            const formattedInvoices = data.map(inv => ({
+                id: inv.id,
+                date: new Date(inv.created_at).toLocaleDateString('es-AR'),
+                type: inv.cbte_tipo === 11 ? 'Factura C' : (inv.cbte_tipo === 6 ? 'Factura B' : 'Factura A'),
+                number: `${inv.pt_vta.toString().padStart(4, '0')}-${inv.cbte_nro.toString().padStart(8, '0')}`,
+                amount: inv.total_amount,
+                customer: inv.order?.customer?.business_name || inv.order?.customer?.name || 'Consumidor Final',
+                cae: inv.cae,
+                // Pass raw data for PDF generator
+                ...inv
+            }));
+
+            setInvoices(formattedInvoices);
+        } catch (error) {
+            console.error("Error fetching invoices:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleDownloadPDF = async (invoice) => {
         // Mock Company Data (In real app, fetch from settings/context)
@@ -20,17 +51,17 @@ const BillingList = () => {
         };
 
         const invoiceData = {
-            cbte_tipo: invoice.type.includes('C') ? 11 : 6,
-            pt_vta: 5, // Mock
-            cbte_nro: parseInt(invoice.number.split('-')[1]),
-            total_amount: invoice.amount,
-            created_at: new Date().toISOString(), // Should come from DB
+            cbte_tipo: invoice.cbte_tipo,
+            pt_vta: invoice.pt_vta,
+            cbte_nro: invoice.cbte_nro,
+            total_amount: invoice.total_amount,
+            created_at: invoice.created_at,
             cae: invoice.cae,
-            cae_due_date: '20250130', // Mock
+            cae_due_date: invoice.cae_due_date,
             customer_name: invoice.customer,
-            customer_doc: '0',
+            customer_doc: '0', // TODO: Fetch from customer relation if available
             customer_iva: 'Consumidor Final',
-            items: [{ quantity: 1, name: 'Servicios Digitales', price: invoice.amount }]
+            items: [{ quantity: 1, name: 'Consumo Gastronómico', price: invoice.total_amount }]
         };
 
         if (window.confirm(`¿Descargar PDF de la factura ${invoice.number}?`)) {
