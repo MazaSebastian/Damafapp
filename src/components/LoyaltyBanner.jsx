@@ -9,8 +9,8 @@ const LoyaltyBanner = ({ stars = 0 }) => {
 
     // While settings load, we might flicker or show default. 
     // Ideally we could show a skeleton, but for now we render gracefully.
-    // If name is missing, we use empty string or generic "Usuario" if strictly needed, but let's try to get name.
-    const firstName = profile?.full_name?.split(' ')[0] || 'Usuario'
+    // If name is missing, just show "Hola!" without name to avoid "Hola, Usuario"
+    const firstName = profile?.full_name?.split(' ')[0] || ''
 
     if (loading) return null
 
@@ -23,7 +23,9 @@ const LoyaltyBanner = ({ stars = 0 }) => {
             {/* Header */}
             <div className="flex justify-between items-start mb-6 relative z-10">
                 <div>
-                    <h2 className="text-lg font-bold text-white mb-1">¡Hola, {firstName}! 👋</h2>
+                    <h2 className="text-lg font-bold text-white mb-1">
+                        {firstName ? `¡Hola, ${firstName}! 👋` : '¡Hola! 👋'}
+                    </h2>
                     <div className={`text-[10px] font-bold px-2 py-0.5 rounded-sm inline-block mb-2 uppercase tracking-wide bg-white/10 border border-white/10 ${currentLevel.color.replace('text-', 'text-')}`}>
                         Nivel {currentLevel.name}
                     </div>
