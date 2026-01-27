@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { getWSAAAuth } from '../_shared/afip-wsaa.ts'
 import { getLastVoucher, generateInvoice } from '../_shared/afip-wsfe.ts'
@@ -8,6 +8,7 @@ import { getLastVoucher, generateInvoice } from '../_shared/afip-wsfe.ts'
 console.log("AFIP Invoice Function initialized")
 
 serve(async (req) => {
+    // 1. HANDLE OPTIONS REQUEST
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
@@ -18,11 +19,21 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        const { action, orderId, environment = 'production' } = await req.json()
+        let body;
+        try {
+            body = await req.json();
+            console.log("Request Body:", body);
+        } catch (e) {
+            throw new Error("Invalid JSON Body: " + e.message);
+        }
+
+        const { action, orderId, environment = 'production' } = body;
 
         // 1. Authenticate (WSAA)
         // This will either get existing token or try to generate new one (which might fail if signing not implemented)
+        console.log("Authenticating with WSAA...");
         const auth = await getWSAAAuth(supabaseClient, environment);
+        console.log("Authentication successful, Token Expiry:", auth.expiration);
 
         // Get Credentials for CUIT and PtoVta
         const { data: credentials } = await supabaseClient
@@ -31,10 +42,14 @@ serve(async (req) => {
             .eq('environment', environment)
             .single();
 
-        if (!credentials) throw new Error("No active credentials found");
+        if (!credentials) throw new Error("No active credentials found for environment: " + environment);
 
         if (action === 'status') {
-            const lastVoucher = await getLastVoucher(auth.token, auth.sign, credentials.cuit, credentials.sales_point, 6, environment); // 6 = Factura B
+            // Determine Invoice Details
+            const isMonotributo = credentials.tax_condition === 'monotributo';
+            const cbteTipo = isMonotributo ? 11 : 6; // 11=Factura C, 6=Factura B
+
+            const lastVoucher = await getLastVoucher(auth.token, auth.sign, credentials.cuit, credentials.sales_point, cbteTipo, environment); // 6 = Factura B
             return new Response(JSON.stringify({ status: 'online', last_voucher: lastVoucher }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 200,
@@ -49,7 +64,7 @@ serve(async (req) => {
                 .eq('id', orderId)
                 .single();
 
-            if (!order) throw new Error("Order not found");
+            if (!order) throw new Error("Order not found with ID: " + orderId);
 
             // Determine Invoice Details
             const isMonotributo = credentials.tax_condition === 'monotributo';
@@ -94,7 +109,7 @@ serve(async (req) => {
                     status: 200,
                 })
             } else {
-                return new Response(JSON.stringify({ success: false, error: result }), {
+                return new Response(JSON.stringify({ success: false, error: result, raw_response: result.rawResponse }), {
                     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                     status: 400,
                 })
@@ -107,9 +122,14 @@ serve(async (req) => {
         })
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        // GLOBAL ERROR HANDLER - RETURNS 400 INSTEAD OF 500 TO SHOW MESSAGE
+        console.error("FUNCTION ERROR:", error);
+        return new Response(JSON.stringify({
+            error: error.message,
+            stack: error.stack
+        }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500,
+            status: 400 // Returning 400 so the client can read the JSON body
         })
     }
 })

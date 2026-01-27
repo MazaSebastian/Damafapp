@@ -1,6 +1,6 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import forge from 'https://esm.sh/node-forge@1.3.1';
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import forge from 'npm:node-forge@1.3.1';
 
 // Interface for Token/Sign
 interface AfipAuth {
