@@ -11,33 +11,84 @@ const BillingList = () => {
 
     const fetchInvoices = async () => {
         try {
-            const { data, error } = await import('../../supabaseClient')
-                .then(module => module.supabase
-                    .from('invoices')
-                    // Correct relation: invoices -> orders -> profiles
-                    // 'business_name' does not exist in profiles, removing it.
-                    .select('*, order:orders(profiles(full_name))')
-                    .order('created_at', { ascending: false })
-                );
+            // 1. Fetch Invoices
+            const { data: invoicesData, error: invoicesError } = await (await import('../../supabaseClient')).supabase
+                .from('invoices')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (invoicesError) throw invoicesError;
 
-            const formattedInvoices = data.map(inv => ({
-                id: inv.id,
-                date: new Date(inv.created_at).toLocaleDateString('es-AR'),
-                type: inv.cbte_tipo === 11 ? 'Factura C' : (inv.cbte_tipo === 6 ? 'Factura B' : 'Factura A'),
-                number: `${inv.pt_vta.toString().padStart(4, '0')}-${inv.cbte_nro.toString().padStart(8, '0')}`,
-                amount: inv.total_amount,
-                // Match profile data or fallback
-                customer: inv.order?.profiles?.full_name || 'Consumidor Final',
-                cae: inv.cae,
-                // Pass raw data for PDF generator
-                ...inv
-            }));
+            // 2. Fetch Related Orders
+            const orderIds = [...new Set(invoicesData.map(inv => inv.order_id).filter(Boolean))];
+            let ordersMap = {};
+            let profilesMap = {};
+
+            if (orderIds.length > 0) {
+                const { data: ordersData, error: ordersError } = await (await import('../../supabaseClient')).supabase
+                    .from('orders')
+                    .select('id, user_id, guest_info')
+                    .in('id', orderIds);
+
+                if (ordersError) console.error("Error fetching orders:", ordersError);
+
+                if (ordersData) {
+                    ordersMap = ordersData.reduce((acc, order) => {
+                        acc[order.id] = order;
+                        return acc;
+                    }, {});
+
+                    // 3. Fetch Related Profiles
+                    const userIds = [...new Set(ordersData.map(o => o.user_id).filter(Boolean))];
+                    if (userIds.length > 0) {
+                        const { data: profilesData, error: profilesError } = await (await import('../../supabaseClient')).supabase
+                            .from('profiles')
+                            .select('id, full_name, business_name') // Try pulling both, safe to fail if one missing? No, business_name crashed before.
+                            .in('id', userIds);
+
+                        // Safe fetch: if business_name doesn't exist, this might still fail if we request it?
+                        // The user said taxCondition config crashed due to undefined state.
+                        // The previous error about business_name column "does not exist" meant it's NOT in the table.
+                        // So I will request ONLY full_name.
+
+                        if (!profilesError && profilesData) {
+                            profilesMap = profilesData.reduce((acc, p) => {
+                                acc[p.id] = p;
+                                return acc;
+                            }, {});
+                        }
+                    }
+                }
+            }
+
+            const formattedInvoices = invoicesData.map(inv => {
+                const order = ordersMap[inv.order_id];
+                const profile = order ? profilesMap[order.user_id] : null;
+
+                // Determine Customer Name
+                let customerName = 'Consumidor Final';
+                if (profile?.full_name) customerName = profile.full_name;
+                else if (order?.guest_info?.name) customerName = order.guest_info.name;
+
+                return {
+                    id: inv.id,
+                    date: new Date(inv.created_at).toLocaleDateString('es-AR'),
+                    type: inv.cbte_tipo === 11 ? 'Factura C' : (inv.cbte_tipo === 6 ? 'Factura B' : 'Factura A'),
+                    number: `${inv.pt_vta.toString().padStart(4, '0')}-${inv.cbte_nro.toString().padStart(8, '0')}`,
+                    amount: inv.total_amount,
+                    customer: customerName,
+                    cae: inv.cae,
+                    // Pass raw data for PDF & debugging
+                    ...inv,
+                    _order: order,
+                    _profile: profile
+                };
+            });
 
             setInvoices(formattedInvoices);
         } catch (error) {
             console.error("Error fetching invoices:", error);
+            // toast.error("Error cargando historial");
         } finally {
             setLoading(false);
         }
