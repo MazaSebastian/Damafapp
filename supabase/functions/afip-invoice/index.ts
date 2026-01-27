@@ -52,8 +52,8 @@ serve(async (req) => {
             if (!order) throw new Error("Order not found");
 
             // Determine Invoice Details
-            // TODO: Handle 'A' vs 'B' based on CUIT logic
-            const cbteTipo = 6; // Factura B by default
+            const isMonotributo = credentials.tax_condition === 'monotributo';
+            const cbteTipo = isMonotributo ? 11 : 6; // 11=Factura C, 6=Factura B
             const docTipo = 99; // Sin identificar (Consumidor Final < X amount)
             const docNro = '0';
 

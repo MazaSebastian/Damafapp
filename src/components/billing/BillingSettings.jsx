@@ -73,6 +73,7 @@ const BillingSettings = () => {
                 environment: 'production',
                 cuit: cuit.replace(/\D/g, ''), // Remove non-digits
                 sales_point: parseInt(salesPoint),
+                tax_condition: taxCondition,
                 cert_crt: certContent,
                 private_key: keyContent,
                 is_active: true,
@@ -148,10 +149,13 @@ const BillingSettings = () => {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-white/80">Condición Fiscal</label>
-                            <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none">
+                            <select
+                                value={taxCondition}
+                                onChange={(e) => setTaxCondition(e.target.value)}
+                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                            >
                                 <option value="monotributo">Responsable Monotributo</option>
                                 <option value="inscripto">Responsable Inscripto</option>
-                                <option value="exento">Exento</option>
                             </select>
                         </div>
                         <div className="space-y-2">
