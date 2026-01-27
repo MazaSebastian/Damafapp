@@ -51,7 +51,7 @@ const TicketTemplate = ({ order }) => {
             <div className="mb-6 text-sm font-bold leading-snug">
                 <div className="mb-2">
                     <span className="font-normal">Cliente: </span>
-                    <span className="text-lg">{order.profiles?.full_name || order.order_items?.[0]?.order_id ? 'Cliente #' + order.id.slice(0, 4) : 'Invitado'}</span>
+                    <span className="text-lg">{order.client_name || order.profiles?.full_name || 'Invitado'}</span>
                 </div>
 
                 {order.order_type === 'delivery' ? (
@@ -62,10 +62,9 @@ const TicketTemplate = ({ order }) => {
                     <div className="mb-2 italic">Retiro en Local</div>
                 )}
 
-                {order.profiles?.phone && (
-                    <div>Tel: {order.profiles.phone}</div>
+                {(order.client_phone || order.profiles?.phone) && (
+                    <div>Tel: {order.client_phone || order.profiles?.phone}</div>
                 )}
-                {/* Fallback for guest phone if stored in metadata or similar, usually logic dependent */}
             </div>
 
             <hr className="border-t border-black mb-4" />

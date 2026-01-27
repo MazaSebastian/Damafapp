@@ -371,7 +371,7 @@ const OrdersManager = () => {
 
                 // 4. Customer Info
                 .bold(false).text('Cliente: ')
-                .bold(true).size(1, 1).text(`${order.profiles?.full_name || 'Invitado'}`) // Big Name
+                .bold(true).size(1, 1).text(`${order.client_name || order.profiles?.full_name || 'Invitado'}`) // Big Name
                 .size(0, 0).bold(false) // Reset
                 .newline(2)
 
@@ -392,8 +392,8 @@ const OrdersManager = () => {
             if (order.delivery_address) {
                 encoder.text(order.delivery_address).newline()
             }
-            if (order.profiles?.phone) {
-                encoder.text(`Tel: ${order.profiles.phone}`).newline()
+            if (order.client_phone || order.profiles?.phone) {
+                encoder.text(`Tel: ${order.client_phone || order.profiles?.phone}`).newline()
             }
 
             encoder.newline()
@@ -461,9 +461,9 @@ const OrdersManager = () => {
                 created_at: order.created_at,
                 total: order.total,
                 // Customer Details
-                client_name: order.profiles?.full_name || 'Invitado',
-                client_address: order.profiles?.address || order.delivery_address || '',
-                client_phone: order.profiles?.phone || '',
+                client_name: order.client_name || order.profiles?.full_name || 'Invitado',
+                client_address: order.delivery_address || order.profiles?.address || '',
+                client_phone: order.client_phone || order.profiles?.phone || '',
                 client_shift: order.scheduled_time || '',
                 delivery_time: order.scheduled_time || '', // Redundant key for compatibility
 
@@ -762,42 +762,36 @@ const OrdersManager = () => {
                                     </div>
                                 )}
 
-                                {/* Customer Details */}
-                                {order.profiles ? (
-                                    <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/5 text-xs text-gray-300">
-                                        <div className="font-bold text-white flex items-center gap-1">
-                                            {order.profiles.full_name}
-                                            {order.profiles.customer_id && (
-                                                <span className="bg-[var(--color-primary)] text-white px-1 py-0.5 rounded text-[10px] items-center text-center">#{order.profiles.customer_id}</span>
-                                            )}
+                                {/* Customer Details - Prioritize Snapshot Name */}
+                                <div className="mt-2 text-xs">
+                                    <div className="font-bold text-white text-sm">
+                                        {order.client_name || order.profiles?.full_name || 'Invitado'}
+                                    </div>
+
+                                    {/* ID Badge if Profile Exists */}
+                                    {order.profiles?.customer_id && (
+                                        <div className="mt-1">
+                                            <span className="bg-[var(--color-primary)] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                                #{order.profiles.customer_id}
+                                            </span>
                                         </div>
-                                        {/* Address logic: Prefer order delivery_address, fallback to profile address */}
+                                    )}
+
+                                    {/* Address */}
+                                    {(order.delivery_address || order.profiles?.address) && (
                                         <div className="flex items-start gap-1 mt-1 text-[var(--color-text-muted)]">
                                             <span>📍</span>
-                                            <span>{order.delivery_address || order.profiles.address || 'Sin dirección'}</span>
+                                            <span className="italic">{order.delivery_address || order.profiles?.address}</span>
                                         </div>
-                                        {order.profiles.phone && (
-                                            <div className="flex items-center gap-1 mt-0.5 text-[var(--color-text-muted)]">
-                                                <span>📞</span> {order.profiles.phone}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    // Guest or Manual Name
-                                    <div className="mt-2 text-xs">
-                                        <div className="font-bold text-white">{order.client_name || 'Invitado'}</div>
-                                        {order.client_phone && (
-                                            <div className="flex items-center gap-1 mt-0.5 text-[var(--color-text-muted)]">
-                                                <span>📞</span> {order.client_phone}
-                                            </div>
-                                        )}
-                                        {order.delivery_address && (
-                                            <div className="text-white/70 italic mt-0.5 max-w-[150px] truncate">
-                                                📍 {order.delivery_address}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                    )}
+
+                                    {/* Phone - Prioritize Snapshot Phone */}
+                                    {(order.client_phone || order.profiles?.phone) && (
+                                        <div className="flex items-center gap-1 mt-1 text-[var(--color-text-muted)]">
+                                            <span>📞</span> {order.client_phone || order.profiles?.phone}
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* WhatsApp Contact Button */}
                                 {(order.profiles?.phone || order.client_phone) && (
