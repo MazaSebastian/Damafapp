@@ -33,7 +33,26 @@ export const SettingsProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        fetchSettings()
+        let mounted = true
+
+        // Safety timeout (Force load after 3s if DB hangs)
+        const timeout = setTimeout(() => {
+            if (mounted) {
+                setLoading((current) => {
+                    if (current) console.warn('Settings loading safety timeout triggered')
+                    return false
+                })
+            }
+        }, 3000)
+
+        fetchSettings().then(() => {
+            if (mounted) clearTimeout(timeout)
+        })
+
+        return () => {
+            mounted = false
+            clearTimeout(timeout)
+        }
     }, [])
 
     // Helper to get a setting with a default value and optional type casting

@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
                     return false
                 })
             }
-        }, 4000)
+        }, 2500)
 
         // Check active sessions and sets the user
         const initAuth = async () => {
