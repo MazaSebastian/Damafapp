@@ -119,8 +119,13 @@ const UserHome = () => {
                 {/* News Feed */}
                 {loading ? (
                     <NewsSkeleton />
-                ) : (
+                ) : news.length > 0 ? (
                     news.map(item => <NewsCard key={item.id} item={item} />)
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-10 opacity-50">
+                        <UtensilsCrossed className="w-12 h-12 mb-2 text-white/50" />
+                        <p className="text-sm font-bold">No hay promociones activas</p>
+                    </div>
                 )}
             </main>
 
