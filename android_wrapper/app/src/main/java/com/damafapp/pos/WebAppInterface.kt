@@ -234,6 +234,30 @@ class WebAppInterface(private val context: Context) {
         sb.append("\n") // More space at bottom
         
         sb.append("[C]www.damaf.com\n")
+        
+        // 7. Fiscal Data (CAE)
+        val invoices = order.optJSONArray("invoices")
+        if (invoices != null && invoices.length() > 0) {
+            val inv = invoices.getJSONObject(0)
+            val cae = inv.optString("cae", "")
+            val caeDue = inv.optString("cae_due_date", "")
+            val cbteTipo = inv.optInt("cbte_tipo", 6) // 6=B, 11=C
+            val ptoVta = inv.optInt("pt_vta", 0)
+            val cbteNro = inv.optLong("cbte_nro", 0)
+            
+            val letter = if (cbteTipo == 11) "C" else if (cbteTipo == 1) "A" else "B"
+            
+            // Separator
+            sb.append("[C]--------------------------------\n")
+            sb.append("\n")
+            
+            // Fiscal Details
+            sb.append("[C]<b>FACTURA $letter</b>\n")
+            sb.append("[C]NRO: ${ptoVta.toString().padStart(4, '0')}-${cbteNro.toString().padStart(8, '0')}\n")
+            sb.append("[C]CAE: $cae\n")
+            sb.append("[C]VTO: $caeDue\n")
+        }
+        
         sb.append("\n\n\n\n") // Extra Feed before cut (Requested to avoid cutting text)
         
         return sb.toString()

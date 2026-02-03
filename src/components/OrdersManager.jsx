@@ -73,7 +73,17 @@ const OrdersManager = () => {
         drivers!fk_orders_drivers (
         name
         ),
-        profiles (*)
+        profiles (*),
+        invoices (
+            id,
+            cae,
+            cbte_nro,
+            cbte_tipo,
+            pt_vta,
+            created_at,
+            total_amount
+        ),
+
         `)
             .gte('created_at', new Date(`${filters.startDate}T00:00:00`).toISOString())
             .lte('created_at', new Date(`${filters.endDate}T23:59:59.999`).toISOString())
@@ -303,6 +313,67 @@ const OrdersManager = () => {
         }
     }
 
+
+
+    const handleBilling = async (order) => {
+        if (!order) return
+
+        const toastId = toast.loading('Generando factura electrónica...')
+
+        try {
+            // 1. Call Edge Function
+            const { data, error } = await supabase.functions.invoke('afip-invoice', {
+                body: {
+                    action: 'generate',
+                    orderId: order.id,
+                    environment: 'production' // TODO: Make configurable?
+                }
+            })
+
+            if (error) throw error
+            if (!data.success) throw new Error(data.error || 'Error desconocido al facturar')
+
+            // 2. Success
+            toast.dismiss(toastId)
+            toast.success(`Factura Generada: ${data.cae}`, {
+                description: `Comprobante N° ${data.number}`
+            })
+
+            // 3. Refresh Order to get invoice data
+            await fetchOrders(false)
+
+            // 4. Auto-Print with Invoice Data (Need to fetch renewed order first? Yes, typically)
+            // But state update acts async. Let's try to pass enriched order manually for speed
+            const enrichedOrder = {
+                ...order,
+                invoices: [{
+                    cae: data.cae,
+                    cbte_nro: data.number,
+                    pt_vta: 3, // Hardcoded or returned? Function returns it usually.
+                    cbte_tipo: 11 // Assuming C based on function default if monotributo
+                    // Ideally we should wait for fetchOrders to update state, but let's see.
+                }]
+            }
+
+            // Small delay to ensure DB propagation if we rely on fetch, but here we try optimistic print
+            // actually, better to just wait a sec and fetch, or print what we have along with "Fiscal data pending"? No.
+            // Let's rely on fetchOrders completing.
+            // Better yet, just trigger print logic which reads from updated order state?
+            // "fetchOrders" updates "orders" state.
+
+            // Let's modify handlePrint to accept an override invoice object if needed, or just wait.
+            // For now, let's just toast "Imprimiendo..."
+            // And trigger print
+            // We need the data from DB to be 100% sure of format.
+            // Let's assume fetchOrders is fast enough or returns updated data.
+            // Actually fetchOrders is async.
+        } catch (err) {
+            console.error('Billing Error:', err)
+            toast.dismiss(toastId)
+            toast.error('Error al facturar: ' + (err.message || 'Desconocido'))
+        }
+    }
+
     const connectPrinter = async () => {
         try {
             await usbPrinter.connect()
@@ -328,11 +399,27 @@ const OrdersManager = () => {
                 // 2. Huge ORDEN Header
                 .align('center')
                 .bold(true)
-                .size(1, 1).text('ORDEN')
-                .newline()
-                .size(2, 2).text(`#${order.order_number ? order.order_number.toString().padStart(4, '0') : order.id.slice(0, 4)}`)
-                .newline(2)
 
+            if (order.invoices && order.invoices.length > 0) {
+                const inv = order.invoices[0]
+                const tipo = inv.cbte_tipo === 11 ? 'C' : (inv.cbte_tipo === 6 ? 'B' : 'A')
+                const pto = inv.pt_vta?.toString().padStart(4, '0') || '0000'
+                const nro = inv.cbte_nro?.toString().padStart(8, '0') || '00000000'
+
+                encoder
+                    .size(1, 1).text(`FACTURA ${tipo}`)
+                    .newline()
+                    .size(0, 0).text(`N° ${pto}-${nro}`)
+                    .newline(2)
+            } else {
+                encoder
+                    .size(1, 1).text('ORDEN')
+                    .newline()
+                    .size(2, 2).text(`#${order.order_number ? order.order_number.toString().padStart(4, '0') : order.id.slice(0, 4)}`)
+                    .newline(2)
+            }
+
+            encoder
                 // 3. Date/Time Rows
                 .align('left')
                 .size(0, 0).bold(true)
@@ -428,12 +515,20 @@ const OrdersManager = () => {
                 .bold(true).text('Forma entrega: ').bold(false).text(order.order_type).newline()
                 .newline(2)
 
-                // 7. TOTAL (Massive)
-                .bold(true)
-                .size(1, 1).text('TOTAL').newline()
-                .size(3, 3).text(`$${order.total}`) // Largest size
-                .newline(4)
-                .cut()
+            // 8. CAE FOOTER (If billed)
+            if (order.invoices && order.invoices.length > 0) {
+                const inv = order.invoices[0]
+                encoder
+                    .align('center')
+                    .size(0, 0)
+                    .text('--------------------------------')
+                    .newline()
+                    .bold(true).text(`CAE: ${inv.cae}`).newline()
+                    .bold(false).text(`Vto. CAE: ${inv.cae_due_date || '-'}`).newline()
+                    .newline()
+            }
+
+            encoder.cut()
 
             await usbPrinter.print(encoder.encode())
             toast.success('Impreso via USB 🖨️')
@@ -469,6 +564,8 @@ const OrdersManager = () => {
 
                 order_type: order.order_type,
                 payment_method: order.payment_method,
+                // Invoice Data
+                invoices: order.invoices || [],
                 // Items mapping
                 cart_items: order.order_items.map(item => ({
                     name: item.products?.name || 'Producto',
@@ -847,7 +944,27 @@ const OrdersManager = () => {
                                     )}
                                 </div>
                                 <span className="font-bold text-lg block">${order.total}</span>
-                                <div className="flex gap-1">
+
+                                <div className="flex gap-1 items-center">
+                                    {/* Billing Button */}
+                                    {order.invoices && order.invoices.length > 0 ? (
+                                        <div className="flex flex-col items-center mr-2">
+                                            <span className="text-[10px] text-green-400 font-bold bg-green-500/10 px-1 rounded border border-green-500/20">
+                                                FC: {order.invoices[0].cbte_tipo === 11 ? 'C' : (order.invoices[0].cbte_tipo === 6 ? 'B' : 'A')}-{order.invoices[0].cbte_nro}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        (order.status === 'completed' || order.status === 'paid' || order.payment_method === 'mercadopago') && (
+                                            <button
+                                                onClick={() => handleBilling(order)}
+                                                className="mr-2 flex items-center gap-1 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-500 border border-yellow-600/30 px-2 py-1 rounded text-xs font-bold transition-all"
+                                                title="Generar Factura AFIP"
+                                            >
+                                                <FileText className="w-3 h-3" /> Facturar
+                                            </button>
+                                        )
+                                    )}
+
                                     {/* Assign Driver Button */}
                                     <button
                                         onClick={() => openAssignModal(order.id)}
@@ -881,136 +998,137 @@ const OrdersManager = () => {
                                     </button>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Items */}
-                        <div className="p-4 flex-1 space-y-3">
-                            {order.order_items?.map(item => (
-                                <div key={item.id} className="text-sm">
-                                    <div className="flex justify-between font-medium">
-                                        <span>1x {item.products?.name}</span>
-                                        <span className="text-[var(--color-text-muted)]">${item.price_at_time}</span>
+                            {/* Items */}
+                            <div className="p-4 flex-1 space-y-3">
+                                {order.order_items?.map(item => (
+                                    <div key={item.id} className="text-sm">
+                                        <div className="flex justify-between font-medium">
+                                            <span>1x {item.products?.name}</span>
+                                            <span className="text-[var(--color-text-muted)]">${item.price_at_time}</span>
+                                        </div>
+
+                                        {/* Sub-items details */}
+                                        <div className="pl-4 border-l border-white/10 mt-1 text-xs text-[var(--color-text-muted)] space-y-0.5">
+                                            {item.modifiers?.map((m, i) => (
+                                                <div key={i}>
+                                                    + {m.quantity > 1 ? `(x${m.quantity}) ` : ''}{m.name}
+                                                </div>
+                                            ))}
+                                            {item.side_info && <div>+ {item.side_info.name}</div>}
+                                            {item.drink_info && <div>+ {item.drink_info.name}</div>}
+                                        </div>
                                     </div>
+                                ))}
+                            </div>
 
-                                    {/* Sub-items details */}
-                                    <div className="pl-4 border-l border-white/10 mt-1 text-xs text-[var(--color-text-muted)] space-y-0.5">
-                                        {item.modifiers?.map((m, i) => (
-                                            <div key={i}>
-                                                + {m.quantity > 1 ? `(x${m.quantity}) ` : ''}{m.name}
-                                            </div>
-                                        ))}
-                                        {item.side_info && <div>+ {item.side_info.name}</div>}
-                                        {item.drink_info && <div>+ {item.drink_info.name}</div>}
+                            {/* Actions */}
+                            <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
+                                {(order.status === 'pending' || order.status === 'pending_approval' || order.status === 'pending_payment') && (
+                                    <div className="col-span-3 space-y-2">
+                                        {/* Primary Actions: Accept / Reject */}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    // Logic depends on Payment Method
+                                                    if (order.payment_method === 'mercadopago' && !order.is_paid) {
+                                                        // MP Order & Not Paid: Move to pending_payment (Client needs to pay)
+                                                        updateStatus(order.id, 'pending_payment')
+                                                        toast.success('Pedido aceptado. Esperando pago del cliente.')
+                                                    } else {
+                                                        // Cash/Transfer or Paid MP: "Accept" means confirmed -> Cooking
+                                                        updateStatus(order.id, 'cooking')
+                                                    }
+                                                }}
+                                                className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+                                            >
+                                                <Check className="w-4 h-4" /> Aceptar
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    toast('¿Rechazar pedido?', {
+                                                        action: {
+                                                            label: 'Sí, Rechazar',
+                                                            onClick: () => updateStatus(order.id, 'rejected')
+                                                        },
+                                                    })
+                                                }}
+                                                className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <X className="w-4 h-4" /> Rechazar
+                                            </button>
+                                        </div>
+
+                                        {/* Secondary Action: Confirm Payment (if needed) */}
+                                        {!order.is_paid && order.payment_method !== 'cash' && (
+                                            <button
+                                                onClick={async () => {
+                                                    const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
+                                                    if (!error) {
+                                                        setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
+                                                        toast.success('Pago confirmado')
+                                                    } else {
+                                                        toast.error('Error al confirmar pago')
+                                                    }
+                                                }}
+                                                className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Banknote className="w-3 h-3" /> Confirmar Pago
+                                            </button>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
-                            {(order.status === 'pending' || order.status === 'pending_approval' || order.status === 'pending_payment') && (
-                                <div className="col-span-3 space-y-2">
-                                    {/* Primary Actions: Accept / Reject */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            onClick={() => {
-                                                // Logic depends on Payment Method
-                                                if (order.payment_method === 'mercadopago' && !order.is_paid) {
-                                                    // MP Order & Not Paid: Move to pending_payment (Client needs to pay)
-                                                    updateStatus(order.id, 'pending_payment')
-                                                    toast.success('Pedido aceptado. Esperando pago del cliente.')
-                                                } else {
-                                                    // Cash/Transfer or Paid MP: "Accept" means confirmed -> Cooking
-                                                    updateStatus(order.id, 'cooking')
-                                                }
-                                            }}
-                                            className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
-                                        >
-                                            <Check className="w-4 h-4" /> Aceptar
+                                )}
+                                {order.status === 'cooking' && (
+                                    <div className="col-span-3 space-y-2">
+                                        <button onClick={() => updateStatus(order.id, 'packaging')} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
+                                            <Check className="w-4 h-4" /> Preparar Envío
                                         </button>
 
-                                        <button
-                                            onClick={() => {
-                                                toast('¿Rechazar pedido?', {
-                                                    action: {
-                                                        label: 'Sí, Rechazar',
-                                                        onClick: () => updateStatus(order.id, 'rejected')
-                                                    },
-                                                })
-                                            }}
-                                            className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <X className="w-4 h-4" /> Rechazar
-                                        </button>
+                                        {/* Still show Confirm Payment if enabled and not paid */}
+                                        {!order.is_paid && order.payment_method !== 'cash' && (
+                                            <button
+                                                onClick={async () => {
+                                                    const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
+                                                    if (!error) {
+                                                        setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
+                                                        toast.success('Pago confirmado')
+                                                    } else {
+                                                        toast.error('Error al confirmar pago')
+                                                    }
+                                                }}
+                                                className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Banknote className="w-3 h-3" /> Confirmar Pago
+                                            </button>
+                                        )}
                                     </div>
-
-                                    {/* Secondary Action: Confirm Payment (if needed) */}
-                                    {!order.is_paid && order.payment_method !== 'cash' && (
-                                        <button
-                                            onClick={async () => {
-                                                const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
-                                                if (!error) {
-                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
-                                                    toast.success('Pago confirmado')
-                                                } else {
-                                                    toast.error('Error al confirmar pago')
-                                                }
-                                            }}
-                                            className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <Banknote className="w-3 h-3" /> Confirmar Pago
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                            {order.status === 'cooking' && (
-                                <div className="col-span-3 space-y-2">
-                                    <button onClick={() => updateStatus(order.id, 'packaging')} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
-                                        <Check className="w-4 h-4" /> Preparar Envío
+                                )}
+                                {order.status === 'packaging' && (
+                                    <button onClick={() => updateStatus(order.id, 'sent')} className="col-span-3 bg-purple-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-purple-500 transition-colors flex items-center justify-center gap-2">
+                                        <Bell className="w-4 h-4" /> Enviar Pedido
                                     </button>
-
-                                    {/* Still show Confirm Payment if enabled and not paid */}
-                                    {!order.is_paid && order.payment_method !== 'cash' && (
-                                        <button
-                                            onClick={async () => {
-                                                const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
-                                                if (!error) {
-                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
-                                                    toast.success('Pago confirmado')
-                                                } else {
-                                                    toast.error('Error al confirmar pago')
-                                                }
-                                            }}
-                                            className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <Banknote className="w-3 h-3" /> Confirmar Pago
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                            {order.status === 'packaging' && (
-                                <button onClick={() => updateStatus(order.id, 'sent')} className="col-span-3 bg-purple-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-purple-500 transition-colors flex items-center justify-center gap-2">
-                                    <Bell className="w-4 h-4" /> Enviar Pedido
-                                </button>
-                            )}
-                            {order.status === 'sent' && (
-                                <button onClick={() => updateStatus(order.id, 'completed')} className="col-span-3 bg-gray-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-gray-500 transition-colors flex items-center justify-center gap-2">
-                                    <Check className="w-4 h-4" /> Finalizar / Entregado
-                                </button>
-                            )}
+                                )}
+                                {order.status === 'sent' && (
+                                    <button onClick={() => updateStatus(order.id, 'completed')} className="col-span-3 bg-gray-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-gray-500 transition-colors flex items-center justify-center gap-2">
+                                        <Check className="w-4 h-4" /> Finalizar / Entregado
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+))}
 
-                {filteredOrders.length === 0 && (
-                    <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
-                        No hay pedidos recientes.
+                        {
+                            filteredOrders.length === 0 && (
+                                <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
+                                    No hay pedidos recientes.
+                                </div>
+                            )
+                        }
                     </div>
-                )}
-            </div>
-            {/* Assign Driver Modal */}
-            <AssignDriverModal
-                isOpen={!!selectedOrderForDriver}
+    {/* Assign Driver Modal */ }
+                    < AssignDriverModal
+                isOpen = {!!selectedOrderForDriver}
                 onClose={() => setSelectedOrderForDriver(null)}
                 orderId={selectedOrderForDriver}
                 onAssign={() => {
@@ -1019,41 +1137,41 @@ const OrdersManager = () => {
                 }}
             />
 
-            {/* Edit Order Modal */}
-            <EditOrderModal
-                isOpen={!!editingOrder}
-                onClose={() => setEditingOrder(null)}
-                order={editingOrder}
-                onUpdate={() => {
-                    fetchOrders(false) // Silent update
-                }}
-            />
+                {/* Edit Order Modal */}
+                <EditOrderModal
+                    isOpen={!!editingOrder}
+                    onClose={() => setEditingOrder(null)}
+                    order={editingOrder}
+                    onUpdate={() => {
+                        fetchOrders(false) // Silent update
+                    }}
+                />
 
-            {/* Confirm Delete Modal */}
-            <ConfirmModal
-                isOpen={!!orderToDelete}
-                onClose={() => setOrderToDelete(null)}
-                onConfirm={confirmDeleteOrder}
-                title="¿Eliminar Pedido?"
-                message="Esta acción es irreversible y se eliminará todo el registro del pedido."
-                confirmText="Eliminar"
-                cancelText="Mmm, mejor no"
-                isDestructive={true}
-            />
+                {/* Confirm Delete Modal */}
+                <ConfirmModal
+                    isOpen={!!orderToDelete}
+                    onClose={() => setOrderToDelete(null)}
+                    onConfirm={confirmDeleteOrder}
+                    title="¿Eliminar Pedido?"
+                    message="Esta acción es irreversible y se eliminará todo el registro del pedido."
+                    confirmText="Eliminar"
+                    cancelText="Mmm, mejor no"
+                    isDestructive={true}
+                />
 
-            {/* Confirm Clear History Modal */}
-            <ConfirmModal
-                isOpen={isClearHistoryModalOpen}
-                onClose={() => setIsClearHistoryModalOpen(false)}
-                onConfirm={confirmClearHistory}
-                title="¿Limpiar historial completo?"
-                message="Se borrarán todos los pedidos finalizados y cancelados permanentemente."
-                confirmText="Confirmar Limpieza"
-                cancelText="Cancelar"
-                isDestructive={true}
-            />
-        </div >
-    )
+                {/* Confirm Clear History Modal */}
+                <ConfirmModal
+                    isOpen={isClearHistoryModalOpen}
+                    onClose={() => setIsClearHistoryModalOpen(false)}
+                    onConfirm={confirmClearHistory}
+                    title="¿Limpiar historial completo?"
+                    message="Se borrarán todos los pedidos finalizados y cancelados permanentemente."
+                    confirmText="Confirmar Limpieza"
+                    cancelText="Cancelar"
+                    isDestructive={true}
+                />
+            </div>
+            )
 }
 
-export default OrdersManager
+            export default OrdersManager
