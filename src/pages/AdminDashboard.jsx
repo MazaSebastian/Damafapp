@@ -149,7 +149,33 @@ const AdminDashboard = () => {
         </div>
     )
 
-    if (!user || (role !== 'admin' && role !== 'owner')) return null
+    if (!user || (role !== 'admin' && role !== 'owner')) {
+        // If we have a user but no role (and not loading), it means Profile Fetch Failed.
+        if (user && !role) {
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-background)] p-4 text-center">
+                    <div className="bg-red-500/10 p-4 rounded-full mb-4">
+                        <X className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2">Error al cargar perfil</h2>
+                    <p className="text-[var(--color-text-muted)] mb-6">No se pudo obtener tu rol de usuario.</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg font-bold hover:brightness-110 transition-all"
+                    >
+                        Reintentar
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="mt-4 text-sm text-[var(--color-text-muted)] hover:text-white"
+                    >
+                        Cerrar Sesión
+                    </button>
+                </div>
+            )
+        }
+        return null
+    }
 
     return (
         <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-main)] flex">

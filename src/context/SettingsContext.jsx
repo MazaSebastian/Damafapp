@@ -35,7 +35,7 @@ export const SettingsProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true
 
-        // Safety timeout (Force load after 3s if DB hangs)
+        // Safety timeout (Force load after 5s if DB hangs)
         const timeout = setTimeout(() => {
             if (mounted) {
                 setLoading((current) => {
@@ -43,9 +43,10 @@ export const SettingsProvider = ({ children }) => {
                     return false
                 })
             }
-        }, 3000)
+        }, 5000)
 
         fetchSettings().then(() => {
+            // Clear timeout if loaded successfully
             if (mounted) clearTimeout(timeout)
         })
 

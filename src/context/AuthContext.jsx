@@ -12,8 +12,9 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         let mounted = true
+        let retryCount = 0
 
-        // Safety timeout (Force load after 4s if DB hangs)
+        // Safety timeout (Force load after 6s if DB hangs in bad networks)
         const timeout = setTimeout(() => {
             if (mounted) {
                 setLoading((current) => {
@@ -21,29 +22,15 @@ export const AuthProvider = ({ children }) => {
                     return false
                 })
             }
-        }, 2500)
+        }, 6000)
 
         // Check active sessions and sets the user
         const initAuth = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession()
-
-                if (mounted) {
-                    setUser(session?.user ?? null)
-
-                    if (session?.user) {
-                        // Fetch profile BEFORE setting loading to false
-                        await fetchProfile(session.user.id)
-                    }
-                }
-            } catch (error) {
-                console.error('Auth initialization error:', error)
-            } finally {
-                if (mounted) setLoading(false)
-            }
+            // Redundant explicitly calling getSession is fine, but we rely on onAuthStateChange for the main flow usually.
+            // However, strictly getting it once is safe.
+            // We will depend on onAuthStateChange for the logic to avoid double-fetching.
+            pass
         }
-
-        initAuth()
 
         // Listen for changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -53,14 +40,22 @@ export const AuthProvider = ({ children }) => {
             setUser(session?.user ?? null)
 
             if (session?.user) {
-                // Await profile fetch to prevent "Vecino" flash
-                await fetchProfile(session.user.id)
+                // Await profile fetch
+                try {
+                    await fetchProfile(session.user.id)
+                } catch (e) {
+                    console.error("Profile fetch sequence failed")
+                }
             } else {
                 setProfile(null)
                 setRole(null)
             }
-            // Immediate load
-            setLoading(false)
+
+            // Critical: Clean up timeout if we successfully loaded
+            if (mounted) {
+                clearTimeout(timeout)
+                setLoading(false)
+            }
         })
 
         return () => {
@@ -70,7 +65,7 @@ export const AuthProvider = ({ children }) => {
         }
     }, [])
 
-    const fetchProfile = async (userId) => {
+    const fetchProfile = async (userId, retries = 3) => {
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -80,8 +75,14 @@ export const AuthProvider = ({ children }) => {
 
             if (error) {
                 console.error('Error fetching profile:', error)
-                // Don't show toast on initial load, only on refresh
-                // Even if there's an error, we should clear the profile/role
+                // Retry logic
+                if (retries > 0) {
+                    console.log(`Retrying profile fetch in 1s... (${retries} left)`)
+                    await new Promise(r => setTimeout(r, 1000))
+                    return await fetchProfile(userId, retries - 1)
+                }
+
+                // If all retries failed
                 setProfile(null)
                 setRole(null)
                 return
@@ -93,7 +94,11 @@ export const AuthProvider = ({ children }) => {
                 setRole(data.role)
             }
         } catch (error) {
-            console.error('Error fetching profile:', error)
+            console.error('Exception fetching profile:', error)
+            if (retries > 0) {
+                await new Promise(r => setTimeout(r, 1000))
+                return await fetchProfile(userId, retries - 1)
+            }
             setProfile(null)
             setRole(null)
         }
