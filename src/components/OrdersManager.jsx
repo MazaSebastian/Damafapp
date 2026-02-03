@@ -1123,53 +1123,54 @@ const OrdersManager = () => {
                                 No hay pedidos recientes.
                             </div>
                         )}
-
-                        {/* Assign Driver Modal */}
-                        <AssignDriverModal
-                            isOpen={!!selectedOrderForDriver}
-                            onClose={() => setSelectedOrderForDriver(null)}
-                            orderId={selectedOrderForDriver}
-                            onAssign={() => {
-                                fetchOrders()
-                                setSelectedOrderForDriver(null)
-                            }}
-                        />
-
-                        {/* Edit Order Modal */}
-                        <EditOrderModal
-                            isOpen={!!editingOrder}
-                            onClose={() => setEditingOrder(null)}
-                            order={editingOrder}
-                            onUpdate={() => {
-                                fetchOrders(false) // Silent update
-                            }}
-                        />
-
-                        {/* Confirm Delete Modal */}
-                        <ConfirmModal
-                            isOpen={!!orderToDelete}
-                            onClose={() => setOrderToDelete(null)}
-                            onConfirm={confirmDeleteOrder}
-                            title="¿Eliminar Pedido?"
-                            message="Esta acción es irreversible y se eliminará todo el registro del pedido."
-                            confirmText="Eliminar"
-                            cancelText="Mmm, mejor no"
-                            isDestructive={true}
-                        />
-
-                        {/* Confirm Clear History Modal */}
-                        <ConfirmModal
-                            isOpen={isClearHistoryModalOpen}
-                            onClose={() => setIsClearHistoryModalOpen(false)}
-                            onConfirm={confirmClearHistory}
-                            title="¿Limpiar historial completo?"
-                            message="Se borrarán todos los pedidos finalizados y cancelados permanentemente."
-                            confirmText="Confirmar Limpieza"
-                            cancelText="Cancelar"
-                            isDestructive={true}
-                        />
                     </div>
-                )
+
+            {/* Assign Driver Modal */ }
+                    < AssignDriverModal
+                            isOpen = {!!selectedOrderForDriver}
+                onClose={() => setSelectedOrderForDriver(null)}
+                orderId={selectedOrderForDriver}
+                onAssign={() => {
+                    fetchOrders()
+                    setSelectedOrderForDriver(null)
+                }}
+                        />
+
+                {/* Edit Order Modal */}
+                <EditOrderModal
+                    isOpen={!!editingOrder}
+                    onClose={() => setEditingOrder(null)}
+                    order={editingOrder}
+                    onUpdate={() => {
+                        fetchOrders(false) // Silent update
+                    }}
+                />
+
+                {/* Confirm Delete Modal */}
+                <ConfirmModal
+                    isOpen={!!orderToDelete}
+                    onClose={() => setOrderToDelete(null)}
+                    onConfirm={confirmDeleteOrder}
+                    title="¿Eliminar Pedido?"
+                    message="Esta acción es irreversible y se eliminará todo el registro del pedido."
+                    confirmText="Eliminar"
+                    cancelText="Mmm, mejor no"
+                    isDestructive={true}
+                />
+
+                {/* Confirm Clear History Modal */}
+                <ConfirmModal
+                    isOpen={isClearHistoryModalOpen}
+                    onClose={() => setIsClearHistoryModalOpen(false)}
+                    onConfirm={confirmClearHistory}
+                    title="¿Limpiar historial completo?"
+                    message="Se borrarán todos los pedidos finalizados y cancelados permanentemente."
+                    confirmText="Confirmar Limpieza"
+                    cancelText="Cancelar"
+                    isDestructive={true}
+                />
+            </div>
+            )
 }
 
-                export default OrdersManager
+            export default OrdersManager
