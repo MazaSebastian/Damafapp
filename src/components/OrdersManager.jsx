@@ -1126,8 +1126,8 @@ const OrdersManager = () => {
                     </div>
 
                 {/* Assign Driver Modal */ }
-                    < AssignDriverModal
-                    isOpen = {!!selectedOrderForDriver}
+                    <AssignDriverModal
+                    isOpen= {!!selectedOrderForDriver}
                 onClose={() => setSelectedOrderForDriver(null)}
                 orderId={selectedOrderForDriver}
                 onAssign={() => {
