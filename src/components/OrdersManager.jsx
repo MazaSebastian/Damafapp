@@ -64,27 +64,7 @@ const OrdersManager = () => {
         // Base query with date range
         let query = supabase
             .from('orders')
-            .select(`
-        *,
-        order_items (
-        *,
-        products (name)
-        ),
-        drivers!fk_orders_drivers (
-        name
-        ),
-        profiles (*),
-        invoices (
-            id,
-            cae,
-            cbte_nro,
-            cbte_tipo,
-            pt_vta,
-            created_at,
-            total_amount
-        ),
-
-        `)
+            .select('*,order_items(*,products(name)),drivers!fk_orders_drivers(name),profiles(*),invoices(id,cae,cbte_nro,cbte_tipo,pt_vta,created_at,total_amount)')
             .gte('created_at', new Date(`${filters.startDate}T00:00:00`).toISOString())
             .lte('created_at', new Date(`${filters.endDate}T23:59:59.999`).toISOString())
             .order('created_at', { ascending: false })
@@ -107,15 +87,8 @@ const OrdersManager = () => {
 
     // ... (rest of code) ...
 
-    
-<EditOrderModal
-        isOpen={!!editingOrder}
-        onClose={() => setEditingOrder(null)}
-        order={editingOrder}
-        onUpdate={() => {
-            fetchOrders(false) // Silent update
-        }}
-    />
+
+
 
     // Client-side filtering
     const filteredOrders = orders.filter(order => {
@@ -760,17 +733,17 @@ const OrdersManager = () => {
                                 </div>
                                 <span className="text-xs text-[var(--color-text-muted)]">{new Date(order.created_at).toLocaleString()}</span>
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                     {order.scheduled_time && (
+                                    {order.scheduled_time && (
                                         <div className="flex items-center gap-1.5 text-xs text-white font-bold bg-orange-600 px-3 py-1.5 rounded-lg w-fit">
                                             <Clock className="w-4 h-4 text-white" />
                                             <span>{formatScheduledTime(order)}</span>
                                         </div>
-                                     )}
-                                     {order.order_type === 'delivery' ? (
+                                    )}
+                                    {order.order_type === 'delivery' ? (
                                         <div className="flex items-center gap-1 text-xs text-white font-bold bg-blue-600 px-3 py-1 rounded-lg w-fit"><Bell className="w-3.5 h-3.5" /> DELIVERY</div>
-                                     ) : (
+                                    ) : (
                                         <div className="flex items-center gap-1 text-xs text-white font-bold bg-green-600 px-3 py-1 rounded-lg w-fit"><ChefHat className="w-3.5 h-3.5" /> RETIRO</div>
-                                     )}
+                                    )}
                                 </div>
                                 {/* Address / Customer info placeholder simplified */}
                                 <div className="mt-2 text-xs font-bold text-white">{order.client_name || 'Cliente'}</div>
@@ -778,19 +751,19 @@ const OrdersManager = () => {
                             <div className="text-right">
                                 <span className="font-bold text-lg block">${order.total}</span>
                                 <div className="flex gap-1 mt-2">
-                                     <button onClick={() => updateStatus(order.id, 'cooking')} className="bg-green-600 text-white px-2 py-1 rounded text-xs">Accept</button>
-                                     <button onClick={() => deleteOrder(order.id)} className="text-red-400 p-1"><Trash2 className="w-4 h-4" /></button>
+                                    <button onClick={() => updateStatus(order.id, 'cooking')} className="bg-green-600 text-white px-2 py-1 rounded text-xs">Accept</button>
+                                    <button onClick={() => deleteOrder(order.id)} className="text-red-400 p-1"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                             </div>
                         </div>
                         {/* Items */}
                         <div className="p-4 flex-1 space-y-3">
-                             {order.order_items?.map(item => (
-                                 <div key={item.id} className="text-sm flex justify-between">
-                                     <span>1x {item.products?.name}</span>
-                                     <span className="text-gray-400">${item.price_at_time}</span>
-                                 </div>
-                             ))}
+                            {order.order_items?.map(item => (
+                                <div key={item.id} className="text-sm flex justify-between">
+                                    <span>1x {item.products?.name}</span>
+                                    <span className="text-gray-400">${item.price_at_time}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ))}
