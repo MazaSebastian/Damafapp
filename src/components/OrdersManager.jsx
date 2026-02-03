@@ -1116,7 +1116,7 @@ const OrdersManager = () => {
                                 )}
                             </div>
                         </div>
-            ))}
+                    ))}
 
                         {filteredOrders.length === 0 && (
                             <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
@@ -1125,16 +1125,16 @@ const OrdersManager = () => {
                         )}
                     </div>
 
-            {/* Assign Driver Modal */ }
+                {/* Assign Driver Modal */ }
                     < AssignDriverModal
-                            isOpen = {!!selectedOrderForDriver}
+                    isOpen = {!!selectedOrderForDriver}
                 onClose={() => setSelectedOrderForDriver(null)}
                 orderId={selectedOrderForDriver}
                 onAssign={() => {
                     fetchOrders()
                     setSelectedOrderForDriver(null)
                 }}
-                        />
+                />
 
                 {/* Edit Order Modal */}
                 <EditOrderModal
