@@ -78,7 +78,6 @@ const SettingsManager = () => {
         'loyalty_benefits_welcome': 'Beneficios Nivel Welcome (separados por coma)',
         'loyalty_benefits_green': 'Beneficios Nivel Green (separados por coma)',
         'loyalty_benefits_gold': 'Beneficios Nivel Gold (separados por coma)',
-        'loyalty_benefits_gold': 'Beneficios Nivel Gold (separados por coma)',
         'bank_cbu': 'CBU/CVU (Transferencias)',
         'bank_alias': 'Alias (Transferencias)',
         'bank_holder': 'Titular de Cuenta',

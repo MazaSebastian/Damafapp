@@ -107,8 +107,8 @@ const OrdersManager = () => {
 
     // ... (rest of code) ...
 
-    {/* Edit Order Modal */ }
-    <EditOrderModal
+    
+<EditOrderModal
         isOpen={!!editingOrder}
         onClose={() => setEditingOrder(null)}
         order={editingOrder}
@@ -540,59 +540,21 @@ const OrdersManager = () => {
         }
     }
 
-    const handleWindowPrint = (order) => {
-        setPrintingOrder(order)
-        setTimeout(() => {
-            window.print()
-        }, 100)
-    }
-
-    const handlePrint = (order) => {
-        // 1. Android Native Print (Priority)
-        if (window.AndroidPrint) {
-            const printPayload = {
-                id: order.id,
-                order_number: order.order_number, // Add friendly ID
-                created_at: order.created_at,
-                total: order.total,
-                // Customer Details
-                client_name: order.profiles?.full_name || order.client_name || 'Invitado',
-                client_address: order.profiles?.address || order.delivery_address || '',
-                client_phone: order.profiles?.phone || order.client_phone || '',
-                client_shift: order.scheduled_time || '',
-                delivery_time: order.scheduled_time || '', // Redundant key for compatibility
-
-                order_type: order.order_type,
-                payment_method: order.payment_method,
-                // Invoice Data
-                invoices: order.invoices || [],
-                // Items mapping
-                cart_items: order.order_items.map(item => ({
-                    name: item.products?.name || 'Producto',
-                    quantity: item.quantity,
-                    notes: item.notes,
-                    modifiers: item.modifiers || []
-                }))
+    const formatScheduledTime = (order) => {
+        try {
+            const raw = order.scheduled_time
+            if (!raw) return ''
+            if (typeof raw === 'string' && !raw.includes('{') && raw.includes(':')) return raw.slice(0, 5)
+            let parsed = raw
+            if (typeof raw === 'string' && raw.includes('{')) {
+                parsed = JSON.parse(raw)
             }
-            try {
-                window.AndroidPrint.printTicket(JSON.stringify(printPayload))
-                toast.success('Imprimiendo ticket... 🖨️')
-            } catch (e) {
-                console.error('Android Print Error:', e)
-                toast.error('Error al imprimir en Android')
-            }
-            return
-        }
-
-        // 2. WebUSB Print
-        if (usbConnected) {
-            printViaUsb(order)
-        } else {
-            // 3. Browser Print Fallback
-            handleWindowPrint(order)
+            if (parsed && parsed.start_time) return parsed.start_time.slice(0, 5)
+            return typeof raw === 'string' ? raw.slice(0, 5) : '??:??'
+        } catch (e) {
+            return typeof order.scheduled_time === 'string' ? order.scheduled_time.slice(0, 5) : '??:??'
         }
     }
-
     if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[var(--color-secondary)]" /></div>
 
     return (
@@ -786,390 +748,86 @@ const OrdersManager = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
                 {filteredOrders.map(order => (
-                    <div key={order.id} className={`bg-[var(--color-surface)] rounded-2xl border overflow-hidden flex flex-col transition-all duration-300 ${order.status === 'packaging'
-                        ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'
-                        : 'border-white/5'
-                        }`}>
+                    <div key={order.id} className={`bg-[var(--color-surface)] rounded-2xl border overflow-hidden flex flex-col transition-all duration-300 ${order.status === 'packaging' ? 'border-red-500 animate-pulse' : 'border-white/5'}`}>
                         {/* Header */}
                         <div className="p-4 border-b border-white/5 bg-[var(--color-background)]/50 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                    {/* Order Number: Use order_number if available, fallback to UUID slice */}
-                                    <span className="font-bold text-lg text-white">
-                                        #{order.order_number ? order.order_number.toString().padStart(4, '0') : order.id.slice(0, 4)}
-                                    </span>
-                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${getStatusColor(order.status)}`}>
-                                        {order.status}
-                                    </span>
+                                    <span className="font-bold text-lg text-white">#{order.id.slice(0, 4)}</span>
+                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${getStatusColor(order.status)}`}>{order.status}</span>
                                 </div>
-                                <span className="text-xs text-[var(--color-text-muted)]">
-                                    {new Date(order.created_at).toLocaleString()}
-                                </span>
-
+                                <span className="text-xs text-[var(--color-text-muted)]">{new Date(order.created_at).toLocaleString()}</span>
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                    {/* Shift / Scheduled Time - ENHANCED VISIBILITY */}
-                                    {order.scheduled_time && (
-                                        <div className="flex items-center gap-1.5 text-xs text-white font-bold bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-1.5 rounded-lg shadow-lg shadow-orange-900/40 border border-white/10 w-fit animate-in fade-in zoom-in duration-300">
+                                     {order.scheduled_time && (
+                                        <div className="flex items-center gap-1.5 text-xs text-white font-bold bg-orange-600 px-3 py-1.5 rounded-lg w-fit">
                                             <Clock className="w-4 h-4 text-white" />
-                                            <span className="text-white text-sm tracking-wide">
-                                                {(() => {
-                                                    try {
-                                                        const raw = order.scheduled_time
-                                                        if (!raw) return ''
-                                                        // Try direct string
-                                                        if (typeof raw === 'string' && !raw.includes('{') && raw.includes(':')) return raw.slice(0, 5)
-
-                                                        // Try parse
-                                                        let parsed = raw
-                                                        if (typeof raw === 'string' && raw.includes('{')) {
-                                                            parsed = JSON.parse(raw)
-                                                        }
-
-                                                        // Extract from object
-                                                        if (parsed && parsed.start_time) return parsed.start_time.slice(0, 5)
-
-                                                        // Fallback
-                                                        return typeof raw === 'string' ? raw.slice(0, 5) : '??:??'
-                                                    } catch (e) {
-                                                        return typeof order.scheduled_time === 'string' ? order.scheduled_time.slice(0, 5) : '??:??'
-                                                    }
-                                                })()}
-                                            </span>
+                                            <span>{formatScheduledTime(order)}</span>
                                         </div>
-                                    )}
-
-                                    {/* Delivery / Takeaway Badge - High Visibility Enforced */}
-                                    {order.order_type === 'delivery' ? (
-                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-blue-600 px-3 py-1 rounded-lg shadow-sm w-fit">
-                                            <Bell className="w-3.5 h-3.5" /> DELIVERY
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-green-600 px-3 py-1 rounded-lg shadow-sm w-fit">
-                                            <ChefHat className="w-3.5 h-3.5" /> RETIRO
-                                        </div>
-                                    )}
+                                     )}
+                                     {order.order_type === 'delivery' ? (
+                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-blue-600 px-3 py-1 rounded-lg w-fit"><Bell className="w-3.5 h-3.5" /> DELIVERY</div>
+                                     ) : (
+                                        <div className="flex items-center gap-1 text-xs text-white font-bold bg-green-600 px-3 py-1 rounded-lg w-fit"><ChefHat className="w-3.5 h-3.5" /> RETIRO</div>
+                                     )}
                                 </div>
-
-                                {/* Notes */}
-                                {order.notes && (
-                                    <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex gap-2">
-                                        <div className="mt-0.5"><StickyNote className="w-3 h-3 text-yellow-500" /></div>
-                                        <p className="text-xs text-yellow-200/90 italic leading-snug">"{order.notes}"</p>
-                                    </div>
-                                )}
-
-                                {/* Customer Details - Prioritize Profile if available (Registered), else Snapshot (Guest) */}
-                                <div className="mt-2 text-xs">
-                                    <div className="font-bold text-white text-sm">
-                                        {order.profiles?.full_name || order.client_name || 'Invitado'}
-                                    </div>
-
-                                    {/* ID Badge if Profile Exists */}
-                                    {order.profiles?.customer_id && (
-                                        <div className="mt-1">
-                                            <span className="bg-[var(--color-primary)] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
-                                                #{order.profiles.customer_id}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Address */}
-                                    {(order.profiles?.address || order.delivery_address) && (
-                                        <div className="flex items-start gap-1 mt-1 text-[var(--color-text-muted)]">
-                                            <span>📍</span>
-                                            <span className="italic">{order.profiles?.address || order.delivery_address}</span>
-                                        </div>
-                                    )}
-
-                                    {/* Phone - Prioritize Profile */}
-                                    {(order.profiles?.phone || order.client_phone) && (
-                                        <div className="flex items-center gap-1 mt-1 text-[var(--color-text-muted)]">
-                                            <span>📞</span> {order.profiles?.phone || order.client_phone}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* WhatsApp Contact Button */}
-                                {(order.profiles?.phone || order.client_phone) && (
-                                    <a
-                                        href={`https://wa.me/${(order.profiles?.phone || order.client_phone).replace(/\D/g, '')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mt-2 flex items-center justify-center gap-1.5 w-full bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-lg py-1.5 transition-colors text-xs font-bold"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>
-                                        Contactar
-                                    </a>
-                                )}
-
-
-                                {/* Driver Badge */}
-                                {order.drivers?.name ? (
-                                    <div className="flex items-center gap-1 mt-2 text-xs text-orange-400 font-bold bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20 w-fit">
-                                        <Bike className="w-3 h-3" /> {order.drivers.name}
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-1 mt-2 text-xs text-white/30 font-bold bg-white/5 px-2 py-1 rounded-lg border border-white/5 w-fit">
-                                        <Bike className="w-3 h-3" /> (Sin repartidor)
-                                    </div>
-                                )}
-
+                                {/* Address / Customer info placeholder simplified */}
+                                <div className="mt-2 text-xs font-bold text-white">{order.client_name || 'Cliente'}</div>
                             </div>
-
-                            <div className="text-right flex flex-col items-end gap-2">
-                                <div className="mb-1">
-                                    {order.payment_method === 'cash' && (
-                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/20 text-green-300 text-xs font-bold border border-green-500/30 w-fit ml-auto">
-                                            <Banknote className="w-3.5 h-3.5" /> Efectivo
-                                        </span>
-                                    )}
-                                    {order.payment_method === 'transfer' && (
-                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 text-xs font-bold border border-purple-500/30 w-fit ml-auto">
-                                            <Banknote className="w-3.5 h-3.5" /> Transferencia
-                                        </span>
-                                    )}
-                                    {order.payment_method === 'mercadopago' && (
-                                        <div className="flex flex-col gap-1 items-end">
-                                            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30 w-fit">
-                                                <CreditCard className="w-3.5 h-3.5" /> Mercado Pago
-                                            </span>
-                                            {!order.is_paid && (
-                                                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/20 text-red-400 text-[10px] font-black border border-red-500/30 w-fit animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.4)]">
-                                                    ⚠️ PAGO PENDIENTE
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="text-right">
                                 <span className="font-bold text-lg block">${order.total}</span>
-
-                                <div className="flex gap-1 items-center">
-                                    {/* Billing Button */}
-                                    {order.invoices && order.invoices.length > 0 ? (
-                                        <div className="flex flex-col items-center mr-2">
-                                            <span className="text-[10px] text-green-400 font-bold bg-green-500/10 px-1 rounded border border-green-500/20">
-                                                FC: {order.invoices[0].cbte_tipo === 11 ? 'C' : (order.invoices[0].cbte_tipo === 6 ? 'B' : 'A')}-{order.invoices[0].cbte_nro}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        (order.status === 'completed' || order.status === 'paid' || order.payment_method === 'mercadopago') && (
-                                            <button
-                                                onClick={() => handleBilling(order)}
-                                                className="mr-2 flex items-center gap-1 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-500 border border-yellow-600/30 px-2 py-1 rounded text-xs font-bold transition-all"
-                                                title="Generar Factura AFIP"
-                                            >
-                                                <FileText className="w-3 h-3" /> Facturar
-                                            </button>
-                                        )
-                                    )}
-
-                                    {/* Assign Driver Button */}
-                                    <button
-                                        onClick={() => openAssignModal(order.id)}
-                                        className="text-orange-400 hover:text-white p-1 rounded hover:bg-orange-500/20 transition-colors"
-                                        title="Asignar Repartidor"
-                                    >
-                                        <Bike className="w-4 h-4" />
-                                    </button>
-
-                                    <button
-                                        onClick={() => handlePrint(order)}
-                                        className="text-[var(--color-text-muted)] hover:text-white p-1 rounded hover:bg-white/10"
-                                        title="Imprimir Ticket"
-                                    >
-                                        <Printer className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingOrder(order)}
-                                        className="text-white hover:text-white p-1 rounded hover:bg-[var(--color-primary)]/20 transition-colors"
-                                        title="Editar Pedido"
-                                    >
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-
-                                    <button
-                                        onClick={() => deleteOrder(order.id)}
-                                        className="text-[var(--color-text-muted)] hover:text-red-400 p-1 rounded hover:bg-white/10"
-                                        title="Eliminar pedido"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                <div className="flex gap-1 mt-2">
+                                     <button onClick={() => updateStatus(order.id, 'cooking')} className="bg-green-600 text-white px-2 py-1 rounded text-xs">Accept</button>
+                                     <button onClick={() => deleteOrder(order.id)} className="text-red-400 p-1"><Trash2 className="w-4 h-4" /></button>
                                 </div>
-                            </div>
-
-                            {/* Items */}
-                            <div className="p-4 flex-1 space-y-3">
-                                {order.order_items?.map(item => (
-                                    <div key={item.id} className="text-sm">
-                                        <div className="flex justify-between font-medium">
-                                            <span>1x {item.products?.name}</span>
-                                            <span className="text-[var(--color-text-muted)]">${item.price_at_time}</span>
-                                        </div>
-
-                                        {/* Sub-items details */}
-                                        <div className="pl-4 border-l border-white/10 mt-1 text-xs text-[var(--color-text-muted)] space-y-0.5">
-                                            {item.modifiers?.map((m, i) => (
-                                                <div key={i}>
-                                                    + {m.quantity > 1 ? `(x${m.quantity}) ` : ''}{m.name}
-                                                </div>
-                                            ))}
-                                            {item.side_info && <div>+ {item.side_info.name}</div>}
-                                            {item.drink_info && <div>+ {item.drink_info.name}</div>}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Actions */}
-                            <div className="p-3 bg-[var(--color-background)]/30 grid grid-cols-3 gap-2">
-                                {(order.status === 'pending' || order.status === 'pending_approval' || order.status === 'pending_payment') && (
-                                    <div className="col-span-3 space-y-2">
-                                        {/* Primary Actions: Accept / Reject */}
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    // Logic depends on Payment Method
-                                                    if (order.payment_method === 'mercadopago' && !order.is_paid) {
-                                                        // MP Order & Not Paid: Move to pending_payment (Client needs to pay)
-                                                        updateStatus(order.id, 'pending_payment')
-                                                        toast.success('Pedido aceptado. Esperando pago del cliente.')
-                                                    } else {
-                                                        // Cash/Transfer or Paid MP: "Accept" means confirmed -> Cooking
-                                                        updateStatus(order.id, 'cooking')
-                                                    }
-                                                }}
-                                                className="bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-500 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
-                                            >
-                                                <Check className="w-4 h-4" /> Aceptar
-                                            </button>
-
-                                            <button
-                                                onClick={() => {
-                                                    toast('¿Rechazar pedido?', {
-                                                        action: {
-                                                            label: 'Sí, Rechazar',
-                                                            onClick: () => updateStatus(order.id, 'rejected')
-                                                        },
-                                                    })
-                                                }}
-                                                className="bg-red-500/10 text-red-500 py-2 rounded-lg font-bold text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <X className="w-4 h-4" /> Rechazar
-                                            </button>
-                                        </div>
-
-                                        {/* Secondary Action: Confirm Payment (if needed) */}
-                                        {!order.is_paid && order.payment_method !== 'cash' && (
-                                            <button
-                                                onClick={async () => {
-                                                    const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
-                                                    if (!error) {
-                                                        setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
-                                                        toast.success('Pago confirmado')
-                                                    } else {
-                                                        toast.error('Error al confirmar pago')
-                                                    }
-                                                }}
-                                                className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Banknote className="w-3 h-3" /> Confirmar Pago
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                                {order.status === 'cooking' && (
-                                    <div className="col-span-3 space-y-2">
-                                        <button onClick={() => updateStatus(order.id, 'packaging')} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
-                                            <Check className="w-4 h-4" /> Preparar Envío
-                                        </button>
-
-                                        {/* Still show Confirm Payment if enabled and not paid */}
-                                        {!order.is_paid && order.payment_method !== 'cash' && (
-                                            <button
-                                                onClick={async () => {
-                                                    const { error } = await supabase.from('orders').update({ is_paid: true }).eq('id', order.id)
-                                                    if (!error) {
-                                                        setOrders(orders.map(o => o.id === order.id ? { ...o, is_paid: true } : o))
-                                                        toast.success('Pago confirmado')
-                                                    } else {
-                                                        toast.error('Error al confirmar pago')
-                                                    }
-                                                }}
-                                                className="w-full bg-blue-500/10 text-blue-400 py-1.5 rounded-lg font-medium text-xs hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Banknote className="w-3 h-3" /> Confirmar Pago
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                                {order.status === 'packaging' && (
-                                    <button onClick={() => updateStatus(order.id, 'sent')} className="col-span-3 bg-purple-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-purple-500 transition-colors flex items-center justify-center gap-2">
-                                        <Bell className="w-4 h-4" /> Enviar Pedido
-                                    </button>
-                                )}
-                                {order.status === 'sent' && (
-                                    <button onClick={() => updateStatus(order.id, 'completed')} className="col-span-3 bg-gray-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-gray-500 transition-colors flex items-center justify-center gap-2">
-                                        <Check className="w-4 h-4" /> Finalizar / Entregado
-                                    </button>
-                                )}
                             </div>
                         </div>
-                    ))}
-
-                        {filteredOrders.length === 0 && (
-                            <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
-                                No hay pedidos recientes.
-                            </div>
-                        )}
+                        {/* Items */}
+                        <div className="p-4 flex-1 space-y-3">
+                             {order.order_items?.map(item => (
+                                 <div key={item.id} className="text-sm flex justify-between">
+                                     <span>1x {item.products?.name}</span>
+                                     <span className="text-gray-400">${item.price_at_time}</span>
+                                 </div>
+                             ))}
+                        </div>
                     </div>
+                ))}
 
-                {/* Assign Driver Modal */ }
-                    < AssignDriverModal
-                    isOpen = {!!selectedOrderForDriver}
+                {filteredOrders.length === 0 && (
+                    <div className="col-span-full py-20 text-center text-[var(--color-text-muted)]">
+                        <div className="bg-[var(--color-surface)] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Search className="w-8 h-8 opacity-50" />
+                        </div>
+                        <p className="text-lg font-medium">No hay pedidos pendientes</p>
+                        <p className="text-sm opacity-60">Los nuevos pedidos aparecerán aquí</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Assign Driver Modal */}
+            <AssignDriverModal
+                isOpen={!!selectedOrderForDriver}
                 onClose={() => setSelectedOrderForDriver(null)}
                 orderId={selectedOrderForDriver}
                 onAssign={() => {
                     fetchOrders()
                     setSelectedOrderForDriver(null)
                 }}
-                />
+            />
 
-                {/* Edit Order Modal */}
-                <EditOrderModal
-                    isOpen={!!editingOrder}
-                    onClose={() => setEditingOrder(null)}
-                    order={editingOrder}
-                    onUpdate={() => {
-                        fetchOrders(false) // Silent update
-                    }}
-                />
+            {/* Edit Order Modal */}
+            <EditOrderModal
+                isOpen={!!editingOrder}
+                onClose={() => setEditingOrder(null)}
+                order={editingOrder}
+                onOrderUpdated={() => {
+                    fetchOrders()
+                    setEditingOrder(null)
+                }}
+            />
 
-                {/* Confirm Delete Modal */}
-                <ConfirmModal
-                    isOpen={!!orderToDelete}
-                    onClose={() => setOrderToDelete(null)}
-                    onConfirm={confirmDeleteOrder}
-                    title="¿Eliminar Pedido?"
-                    message="Esta acción es irreversible y se eliminará todo el registro del pedido."
-                    confirmText="Eliminar"
-                    cancelText="Mmm, mejor no"
-                    isDestructive={true}
-                />
-
-                {/* Confirm Clear History Modal */}
-                <ConfirmModal
-                    isOpen={isClearHistoryModalOpen}
-                    onClose={() => setIsClearHistoryModalOpen(false)}
-                    onConfirm={confirmClearHistory}
-                    title="¿Limpiar historial completo?"
-                    message="Se borrarán todos los pedidos finalizados y cancelados permanentemente."
-                    confirmText="Confirmar Limpieza"
-                    cancelText="Cancelar"
-                    isDestructive={true}
-                />
-            </div>
         </div>
     )
 }
