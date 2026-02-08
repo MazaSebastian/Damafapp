@@ -15,8 +15,15 @@ export const AuthProvider = ({ children }) => {
 
         // Listen for auth state changes (login, logout, token refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            console.log('Auth state changed:', _event)
+            console.log('Auth state changed:', _event, session ? `(${session.user?.email})` : '(no session)')
             if (!mounted) return
+
+            // CRITICAL: Ignore spurious events without a session
+            // Supabase can fire SIGNED_IN before initialization completes
+            if (_event === 'SIGNED_IN' && !session) {
+                console.warn('Ignoring false SIGNED_IN event (no session)')
+                return
+            }
 
             if (session?.user) {
                 setUser(session.user)
