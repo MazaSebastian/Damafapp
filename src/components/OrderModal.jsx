@@ -193,7 +193,23 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
             onClose()
         } else {
             addToCart(comboItem)
-            toast.success('¡Combo completo agregado!')
+            toast.success('¡Combo completo agregado!', {
+                position: 'top-center',
+                duration: 3000,
+                style: {
+                    background: 'linear-gradient(135deg, #1e1b4b 0%, #3b3678 100%)',
+                    border: '2px solid #10b981',
+                    borderRadius: '16px',
+                    padding: '20px 24px',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.1)',
+                    transform: 'translateY(40px)',
+                    minWidth: '320px',
+                    textAlign: 'center'
+                },
+                icon: '✅',
+            })
             onClose()
             navigate('/checkout')
         }
