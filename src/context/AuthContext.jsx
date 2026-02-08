@@ -12,11 +12,18 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         let mounted = true
+        let isInitializing = true // CRITICAL: Block listener until initAuth completes
 
         // Listen for auth state changes (login, logout, token refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             console.log('Auth state changed:', _event, session ? `(${session.user?.email})` : '(no session)')
             if (!mounted) return
+
+            // CRITICAL: Ignore ALL events during initial mount - initAuth handles it
+            if (isInitializing) {
+                console.log('Ignoring event during initialization:', _event)
+                return
+            }
 
             // CRITICAL: Ignore INITIAL_SESSION - initAuth handles this
             // This prevents race condition on refresh where INITIAL_SESSION overwrites SIGNED_IN
@@ -67,6 +74,7 @@ export const AuthProvider = ({ children }) => {
                 if (mounted) {
                     console.log("Auth initialization complete")
                     setLoading(false)
+                    isInitializing = false // CRITICAL: Now listener can process events
                 }
             }
         }
