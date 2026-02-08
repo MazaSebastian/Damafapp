@@ -26,14 +26,6 @@ const UserHome = () => {
     useEffect(() => {
         let mounted = true
 
-        // Timeout force show
-        const timeout = setTimeout(() => {
-            if (mounted && loading) {
-                console.warn('Home news loading timed out - Forcing display')
-                setLoading(false)
-            }
-        }, 3000)
-
         const fetchNews = async () => {
             try {
                 console.log('Fetching news...')
@@ -58,7 +50,6 @@ const UserHome = () => {
 
         return () => {
             mounted = false
-            clearTimeout(timeout)
         }
     }, [])
 
