@@ -30,6 +30,9 @@ export const AuthProvider = ({ children }) => {
                 setProfile(null)
                 setRole(null)
             }
+
+            // CRITICAL: Always set loading to false after processing auth change
+            if (mounted) setLoading(false)
         })
 
         // CRITICAL FIX: Initialize auth state with proper error handling
