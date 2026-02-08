@@ -28,7 +28,7 @@ const UserHome = () => {
         const controller = new AbortController()
 
         const fetchNews = async () => {
-            const timeoutId = setTimeout(() => controller.abort(), 5000)
+            const timeoutId = setTimeout(() => controller.abort(), 3500)
 
             try {
                 console.log('Fetching news...')

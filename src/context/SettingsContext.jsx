@@ -9,7 +9,7 @@ export const SettingsProvider = ({ children }) => {
 
     const fetchSettings = async () => {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        const timeoutId = setTimeout(() => controller.abort(), 3500)
 
         try {
             const { data, error } = await supabase
