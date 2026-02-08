@@ -42,6 +42,8 @@ const BillingSettings = () => {
                 setCity(data.city || '');
                 setPhone(data.phone || '');
                 setEmail(data.email || '');
+                // CUIT might also be in business_settings or fetch from afip_credentials
+                if (data.cuit) setCuit(data.cuit);
             }
         } catch (error) {
             console.error("Error fetching business settings:", error);
@@ -217,6 +219,21 @@ const BillingSettings = () => {
                                 placeholder="Ej: Mi Negocio"
                                 className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-white/80">CUIT *</label>
+                            <input
+                                type="text"
+                                value={cuit}
+                                onChange={(e) => setCuit(e.target.value)}
+                                placeholder="Ej: 20-12345678-9"
+                                required
+                                pattern="\d{2}-\d{8}-\d{1}"
+                                title="Formato: XX-XXXXXXXX-X"
+                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                            />
+                            <p className="text-xs text-white/40">Este CUIT aparecerá en tus facturas y QR de AFIP</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
