@@ -103,21 +103,101 @@ function App() {
         richColors
         position="top-center"
         toastOptions={{
+          duration: 3000,
           style: {
-            background: 'rgba(59, 54, 120, 0.95)', // Matches --color-surface with slight transparency
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'linear-gradient(135deg, #1e1b4b 0%, #3b3678 100%)',
+            border: '2px solid rgba(255,255,255,0.1)',
+            borderRadius: '16px',
+            padding: '20px 24px',
+            fontSize: '16px',
+            fontWeight: '600',
             color: 'white',
             fontFamily: 'Outfit, sans-serif',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.1)',
+            transform: 'translateY(40px)',
+            minWidth: '320px',
+            textAlign: 'center',
           },
           className: 'premium-toast',
-          actionButtonStyle: {
-            background: 'var(--color-primary)',
-            color: 'white',
-            fontWeight: 'bold',
+
+          // Success Style (Green border)
+          success: {
+            style: {
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #3b3678 100%)',
+              border: '2px solid #10b981',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3), 0 0 0 1px rgba(255,255,255,0.1)',
+              minWidth: '320px',
+              textAlign: 'center',
+            },
+            icon: '✅',
           },
-          cancelButtonStyle: {
-            background: 'rgba(255, 255, 255, 0.05)',
-            color: 'var(--color-text-muted)',
+
+          // Error Style (Red border)
+          error: {
+            style: {
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #3b3678 100%)',
+              border: '2px solid #ef4444',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              boxShadow: '0 20px 40px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(255,255,255,0.1)',
+              minWidth: '320px',
+              textAlign: 'center',
+            },
+            icon: '❌',
+          },
+
+          // Warning Style (Orange border)
+          warning: {
+            style: {
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #3b3678 100%)',
+              border: '2px solid #f59e0b',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              boxShadow: '0 20px 40px rgba(245, 158, 11, 0.3), 0 0 0 1px rgba(255,255,255,0.1)',
+              minWidth: '320px',
+              textAlign: 'center',
+            },
+            icon: '⚠️',
+          },
+
+          // Info Style (Blue border)
+          info: {
+            style: {
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #3b3678 100%)',
+              border: '2px solid #3b82f6',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              boxShadow: '0 20px 40px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(255,255,255,0.1)',
+              minWidth: '320px',
+              textAlign: 'center',
+            },
+            icon: 'ℹ️',
+          },
+
+          // Loading Style (Cyan border)
+          loading: {
+            style: {
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #3b3678 100%)',
+              border: '2px solid #06b6d4',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              boxShadow: '0 20px 40px rgba(6, 182, 212, 0.3), 0 0 0 1px rgba(255,255,255,0.1)',
+              minWidth: '320px',
+              textAlign: 'center',
+            },
+            icon: '⏳',
           },
         }}
       />
