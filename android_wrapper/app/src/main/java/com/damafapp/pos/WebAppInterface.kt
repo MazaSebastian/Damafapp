@@ -12,15 +12,20 @@ import java.util.Locale
 
 class WebAppInterface(private val context: Context) {
 
+    private fun getRootView(): android.view.View {
+        return (context as? android.app.Activity)?.findViewById(android.R.id.content)
+            ?: throw IllegalStateException("Context must be an Activity")
+    }
+
     @JavascriptInterface
     fun printTicket(jsonOrder: String) {
         try {
             val order = JSONObject(jsonOrder)
             printUsb(order)
-            Toast.makeText(context, "Imprimiendo...", Toast.LENGTH_SHORT).show()
+            showStyledSnackbar(getRootView(), "Imprimiendo...", SnackbarType.INFO)
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "Error al imprimir: ${e.message}", Toast.LENGTH_LONG).show()
+            showStyledSnackbar(getRootView(), "Error al imprimir: ${e.message}", SnackbarType.ERROR)
         }
     }
 
@@ -31,25 +36,25 @@ class WebAppInterface(private val context: Context) {
             val deviceList = manager.deviceList
             
             if (deviceList.isEmpty()) {
-                Toast.makeText(context, "⚠️ No se detectan dispositivos USB conectados", Toast.LENGTH_LONG).show()
+                showStyledSnackbar(getRootView(), "⚠️ No se detectan dispositivos USB conectados", SnackbarType.WARNING)
                 return
             }
 
             val printer = UsbPrintersConnections.selectFirstConnected(context)
             if (printer != null) {
-                Toast.makeText(context, "✅ Impresora detectada: ${printer.device.productName}", Toast.LENGTH_LONG).show()
+                showStyledSnackbar(getRootView(), "✅ Impresora detectada: ${printer.device.productName}", SnackbarType.SUCCESS)
             } else {
                 val names = deviceList.values.joinToString { it.productName ?: "Sin nombre" }
-                Toast.makeText(context, "⚠️ USB detectado pero no es impresora: $names", Toast.LENGTH_LONG).show()
+                showStyledSnackbar(getRootView(), "⚠️ USB detectado pero no es impresora: $names", SnackbarType.WARNING)
             }
         } catch (e: Exception) {
-            Toast.makeText(context, "Error al verificar: ${e.message}", Toast.LENGTH_LONG).show()
+            showStyledSnackbar(getRootView(), "Error al verificar: ${e.message}", SnackbarType.ERROR)
         }
     }
 
     private fun printUsb(order: JSONObject) {
         try {
-            Toast.makeText(context, "Buscando impresora USB...", Toast.LENGTH_SHORT).show()
+            showStyledSnackbar(getRootView(), "Buscando impresora USB...", SnackbarType.INFO)
             
             val usbConnection = UsbPrintersConnections.selectFirstConnected(context)
             
@@ -58,15 +63,15 @@ class WebAppInterface(private val context: Context) {
                 val manager = context.getSystemService(Context.USB_SERVICE) as android.hardware.usb.UsbManager
                 val deviceList = manager.deviceList
                 if (deviceList.isEmpty()) {
-                    Toast.makeText(context, "❌ ERROR: Android no detecta ningún dispositivo USB. Revise el cable OTG.", Toast.LENGTH_LONG).show()
+                    showStyledSnackbar(getRootView(), "❌ ERROR: Android no detecta ningún dispositivo USB. Revise el cable OTG.", SnackbarType.ERROR)
                 } else {
                     val names = deviceList.values.joinToString { it.productName ?: "Desconocido" }
-                    Toast.makeText(context, "❌ Dispositivos USB encontrados pero no reconocidos como impresora: $names", Toast.LENGTH_LONG).show()
+                    showStyledSnackbar(getRootView(), "❌ Dispositivos USB encontrados pero no reconocidos como impresora: $names", SnackbarType.ERROR)
                 }
                 return
             }
 
-            Toast.makeText(context, "✅ Impresora conectada. Imprimiendo...", Toast.LENGTH_SHORT).show()
+            showStyledSnackbar(getRootView(), "✅ Impresora conectada. Imprimiendo...", SnackbarType.SUCCESS)
 
             // 80mm width, 46 chars per line to avoid edge cutoff (was 48)
             val printer = EscPosPrinter(usbConnection, 203, 80f, 46)
@@ -79,7 +84,7 @@ class WebAppInterface(private val context: Context) {
             
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "❌ Error crítico: ${e.message}", Toast.LENGTH_LONG).show()
+            showStyledSnackbar(getRootView(), "❌ Error crítico: ${e.message}", SnackbarType.ERROR)
         }
     }
 

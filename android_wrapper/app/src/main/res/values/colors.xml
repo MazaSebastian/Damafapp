@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Match DamafAPP web theme -->
+    <color name="dialog_background">#1e1b4b</color> <!-- Deep purple -->
+    <color name="dialog_surface">#3b3678</color> <!-- Slightly lighter purple -->
+    <color name="text_primary">#ffffff</color>
+    <color name="text_secondary">#9ca3af</color>
+    
+    <!-- Accent colors -->
+    <color name="primary_accent">#06b6d4</color> <!-- Cyan -->
+    <color name="secondary_accent">#f97316</color> <!-- Orange -->
+    
+    <!-- Status colors -->
+    <color name="error_color">#ef4444</color> <!-- Red -->
+    <color name="success_color">#10b981</color> <!-- Green -->
+    <color name="warning_color">#f59e0b</color> <!-- Orange/Yellow -->
+    <color name="info_color">#3b82f6</color> <!-- Blue -->
+</resources>

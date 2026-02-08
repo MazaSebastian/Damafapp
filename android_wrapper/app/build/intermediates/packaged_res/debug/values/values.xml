@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dialog_background">#1e1b4b</color>
+    <color name="dialog_surface">#3b3678</color>
+    <color name="error_color">#ef4444</color>
+    <color name="info_color">#3b82f6</color>
+    <color name="primary_accent">#06b6d4</color>
+    <color name="secondary_accent">#f97316</color>
+    <color name="success_color">#10b981</color>
+    <color name="text_primary">#ffffff</color>
+    <color name="text_secondary">#9ca3af</color>
+    <color name="warning_color">#f59e0b</color>
+    <style name="CustomAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
+        
+        <item name="android:background">@color/dialog_background</item>
+        <item name="android:windowBackground">@color/dialog_background</item>
+        
+        
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        
+        
+        <item name="colorAccent">@color/primary_accent</item>
+        <item name="buttonBarButtonStyle">@style/CustomDialogButton</item>
+    </style>
+    <style name="CustomDialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/primary_accent</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+</resources>

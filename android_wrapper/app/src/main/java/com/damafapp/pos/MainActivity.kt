@@ -19,14 +19,14 @@ class MainActivity : AppCompatActivity() {
         // Debugging
         WebView.setWebContentsDebuggingEnabled(true)
 
-        // 1. Setup Main Screen (Admin POS)
+        // 1. Setup Main Screen (Guest Home - Login cuando sea necesario)
         val mainWebView = findViewById<WebView>(R.id.main_webview)
-        // Production URL
-        setupWebView(mainWebView, "https://damafapp-six.vercel.app/admin/pos")
+        // Production URL - Carga Home Guest por defecto
+        setupWebView(mainWebView, "https://damafapp-six.vercel.app/")
         // Local Debugging (Network IP for Physical Device)
-        // setupWebView(mainWebView, "http://192.168.1.19:5173/admin/pos")
+        // setupWebView(mainWebView, "http://192.168.1.19:5173/")
         // Local Debugging (Emulator Loopback)
-        // setupWebView(mainWebView, "http://10.0.2.2:5173/admin/pos")
+        // setupWebView(mainWebView, "http://10.0.2.2:5173/")
 
         // 2. Setup Secondary Screen (Customer Presentation)
         val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
@@ -54,6 +54,9 @@ class MainActivity : AppCompatActivity() {
 
             override fun onDisplayChanged(displayId: Int) {}
         }, null)
+
+        // 4. Request Battery Optimization Exemption (for 24/7 POS operation)
+        requestBatteryExemption()
     }
 
     private fun showPresentation(display: Display) {
@@ -72,6 +75,23 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         customerPresentation?.dismiss()
         super.onDestroy()
+    }
+
+    private fun requestBatteryExemption() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        val packageName = packageName
+        
+        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            try {
+                val intent = android.content.Intent()
+                intent.action = android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+                intent.data = android.net.Uri.parse("package:$packageName")
+                startActivity(intent)
+            } catch (e: Exception) {
+                android.util.Log.w("MainActivity", "Could not request battery exemption", e)
+                showStyledSnackbar("No se pudo solicitar exención de batería", SnackbarType.WARNING)
+            }
+        }
     }
 
     @android.annotation.SuppressLint("SetJavaScriptEnabled")
@@ -124,11 +144,27 @@ class MainActivity : AppCompatActivity() {
                 error: android.webkit.WebResourceError?
             ) {
                 super.onReceivedError(view, request, error)
-                // Ignore "ERR_UNKNOWN_URL_SCHEME" if we missed it or if it happened during redirect
+                
+                // Ignore ERR_UNKNOWN_URL_SCHEME (handled by shouldOverrideUrlLoading)
                 if (error?.description?.toString()?.contains("net::ERR_UNKNOWN_URL_SCHEME") == true) {
                     return
                 }
-                android.widget.Toast.makeText(this@MainActivity, "Error: ${error?.description}", android.widget.Toast.LENGTH_LONG).show()
+                
+                // Handle offline errors gracefully
+                if (error?.errorCode == android.webkit.WebViewClient.ERROR_CONNECT || 
+                    error?.errorCode == android.webkit.WebViewClient.ERROR_TIMEOUT ||
+                    error?.errorCode == android.webkit.WebViewClient.ERROR_HOST_LOOKUP) {
+                    showStyledSnackbar(
+                        "❌ Sin conexión a internet. Verifica WiFi/Datos móviles",
+                        SnackbarType.ERROR
+                    )
+                    return
+                }
+                
+                showStyledSnackbar(
+                    "Error cargando página: ${error?.description}",
+                    SnackbarType.ERROR
+                )
             }
         }
 
@@ -137,6 +173,34 @@ class MainActivity : AppCompatActivity() {
                 if (consoleMessage != null) {
                     android.util.Log.d("WebViewConsole", "${consoleMessage.message()} -- From line ${consoleMessage.lineNumber()} of ${consoleMessage.sourceId()}")
                 }
+                return true
+            }
+
+            // Override browser alert() with custom styled dialog
+            override fun onJsAlert(
+                view: WebView?,
+                url: String?,
+                message: String?,
+                result: android.webkit.JsResult?
+            ): Boolean {
+                showCustomAlert("Alerta", message ?: "")
+                result?.confirm()
+                return true
+            }
+
+            // Override browser confirm() with custom styled dialog
+            override fun onJsConfirm(
+                view: WebView?,
+                url: String?,
+                message: String?,
+                result: android.webkit.JsResult?
+            ): Boolean {
+                showCustomConfirm(
+                    "Confirmar", 
+                    message ?: "",
+                    onConfirm = { result?.confirm() },
+                    onCancel = { result?.cancel() }
+                )
                 return true
             }
         }
