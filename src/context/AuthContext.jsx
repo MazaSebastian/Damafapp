@@ -18,6 +18,13 @@ export const AuthProvider = ({ children }) => {
             console.log('Auth state changed:', _event, session ? `(${session.user?.email})` : '(no session)')
             if (!mounted) return
 
+            // CRITICAL: Ignore INITIAL_SESSION - initAuth handles this
+            // This prevents race condition on refresh where INITIAL_SESSION overwrites SIGNED_IN
+            if (_event === 'INITIAL_SESSION') {
+                console.log('Ignoring INITIAL_SESSION (handled by initAuth)')
+                return
+            }
+
             // CRITICAL: Ignore spurious events without a session
             // Supabase can fire SIGNED_IN before initialization completes
             if (_event === 'SIGNED_IN' && !session) {
