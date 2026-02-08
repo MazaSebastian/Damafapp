@@ -12,41 +12,35 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         let mounted = true
-        let retryCount = 0
 
-        // Safety timeout (Force load after 6s if DB hangs in bad networks)
+        // Safety timeout (Force load after 4s if DB hangs / slow network)
         const timeout = setTimeout(() => {
             if (mounted) {
                 setLoading((current) => {
-                    if (current) console.warn('Auth loading safety timeout triggered')
+                    if (current) {
+                        console.warn('Auth loading safety timeout triggered - forcing app load')
+                        // If we timed out, assume strict no-user state to let app render
+                    }
                     return false
                 })
             }
-        }, 6000)
-
-        // Check active sessions and sets the user
-        const initAuth = async () => {
-            // Redundant explicitly calling getSession is fine, but we rely on onAuthStateChange for the main flow usually.
-            // However, strictly getting it once is safe.
-            // We will depend on onAuthStateChange for the logic to avoid double-fetching.
-            pass
-        }
+        }, 4000)
 
         // Listen for changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             console.log('Auth state changed:', _event)
             if (!mounted) return
 
-            setUser(session?.user ?? null)
-
             if (session?.user) {
+                setUser(session.user)
                 // Await profile fetch
                 try {
                     await fetchProfile(session.user.id)
                 } catch (e) {
-                    console.error("Profile fetch sequence failed")
+                    console.error("Profile fetch sequence failed", e)
                 }
             } else {
+                setUser(null)
                 setProfile(null)
                 setRole(null)
             }
@@ -56,6 +50,18 @@ export const AuthProvider = ({ children }) => {
                 clearTimeout(timeout)
                 setLoading(false)
             }
+        })
+
+        // Initial explicit check to catch session if event doesn't fire immediately
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (mounted && !session) {
+                // If no session exists, we can stop loading immediately
+                // If session exists, onAuthStateChange will handle it (INITIAL_SESSION event)
+                setLoading(false)
+            }
+        }).catch(err => {
+            console.error("Session check error", err)
+            if (mounted) setLoading(false)
         })
 
         return () => {
