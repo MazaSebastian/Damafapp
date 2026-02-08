@@ -67,22 +67,23 @@ export const AuthProvider = ({ children }) => {
 
     const fetchProfile = async (userId, retries = 3) => {
         try {
+            // using maybeSingle() instead of single() avoids the 406 error when no rows are found
+            // This is cleaner and allows us to distinguish between "network error" and "not found"
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
-                .single()
+                .maybeSingle()
 
             if (error) {
                 console.error('Error fetching profile:', error)
-                // Retry logic
+                // Retry specific errors (e.g. network timeout), but maybe restrict logic
                 if (retries > 0) {
                     console.log(`Retrying profile fetch in 1s... (${retries} left)`)
                     await new Promise(r => setTimeout(r, 1000))
                     return await fetchProfile(userId, retries - 1)
                 }
 
-                // If all retries failed
                 setProfile(null)
                 setRole(null)
                 return
@@ -92,6 +93,17 @@ export const AuthProvider = ({ children }) => {
                 console.log('Profile loaded:', data.email, 'Role:', data.role)
                 setProfile(data)
                 setRole(data.role)
+            } else {
+                console.warn('Profile not found for user:', userId)
+                // If the user exists but profile is missing, it might be an RLS issue or true missing data.
+                // We'll retry once after a delay if we haven't already, just in case of a race condition with token propagation.
+                if (retries === 3) {
+                    console.log('Profile missing on first attempt. Retrying once in 500ms in case of RLS/Token delay...')
+                    await new Promise(r => setTimeout(r, 500))
+                    return await fetchProfile(userId, 0) // No more retries after this custom one
+                }
+                setProfile(null)
+                setRole(null)
             }
         } catch (error) {
             console.error('Exception fetching profile:', error)
