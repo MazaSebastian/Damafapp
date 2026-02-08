@@ -65,11 +65,13 @@ export const SettingsProvider = ({ children }) => {
         return value
     }
 
-    settings,
+    const value = {
+        settings,
         getSetting,
         refreshSettings: fetchSettings,
-            loading,
-            isHydrated: !loading
+        loading,
+        isHydrated: !loading
+    }
 
     return (
         <SettingsContext.Provider value={value}>
