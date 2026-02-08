@@ -12,9 +12,41 @@ const BillingSettings = () => {
     const [keyFile, setKeyFile] = useState(null);
     const [existingConfig, setExistingConfig] = useState(null);
 
+    // Business Settings State
+    const [businessName, setBusinessName] = useState('');
+    const [tradeName, setTradeName] = useState('');
+    const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');
+    const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
+    const [businessSettings, setBusinessSettings] = useState(null);
+
     useEffect(() => {
         fetchConfig();
+        fetchBusinessSettings();
     }, []);
+
+    const fetchBusinessSettings = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('business_settings')
+                .select('*')
+                .eq('is_active', true)
+                .single();
+
+            if (data) {
+                setBusinessSettings(data);
+                setBusinessName(data.business_name || '');
+                setTradeName(data.trade_name || '');
+                setAddress(data.address || '');
+                setCity(data.city || '');
+                setPhone(data.phone || '');
+                setEmail(data.email || '');
+            }
+        } catch (error) {
+            console.error("Error fetching business settings:", error);
+        }
+    };
 
     const fetchConfig = async () => {
         try {
@@ -110,8 +142,153 @@ const BillingSettings = () => {
         }
     };
 
+    const handleSaveBusinessSettings = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        try {
+            const payload = {
+                business_name: businessName,
+                trade_name: tradeName,
+                address: address,
+                city: city,
+                cuit: cuit,
+                tax_condition: taxCondition,
+                phone: phone,
+                email: email,
+                is_active: true
+            };
+
+            let saveError;
+            if (businessSettings) {
+                const { error } = await supabase
+                    .from('business_settings')
+                    .update({ ...payload, updated_at: new Date() })
+                    .eq('id', businessSettings.id);
+                saveError = error;
+            } else {
+                const { error } = await supabase
+                    .from('business_settings')
+                    .insert(payload);
+                saveError = error;
+            }
+
+            if (saveError) throw saveError;
+
+            toast.success('Datos empresariales guardados exitosamente');
+            fetchBusinessSettings();
+        } catch (error) {
+            console.error('Error saving business settings:', error);
+            toast.error('Error al guardar: ' + (error.message || error));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="max-w-3xl mx-auto space-y-6">
+            {/* Business Settings Form */}
+            <form onSubmit={handleSaveBusinessSettings} className="bg-[var(--color-surface)] border border-white/10 p-6 rounded-3xl space-y-6">
+                <div>
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        🏢 Datos Empresariales
+                    </h3>
+                    <p className="text-sm text-white/60 mb-4">Estos datos aparecerán en tus comprobantes fiscales</p>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-white/80">Razón Social *</label>
+                            <input
+                                type="text"
+                                value={businessName}
+                                onChange={(e) => setBusinessName(e.target.value)}
+                                placeholder="Ej: MI EMPRESA S.A."
+                                required
+                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-white/80">Nombre de Fantasía</label>
+                            <input
+                                type="text"
+                                value={tradeName}
+                                onChange={(e) => setTradeName(e.target.value)}
+                                placeholder="Ej: Mi Negocio"
+                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white/80">Dirección *</label>
+                                <input
+                                    type="text"
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    placeholder="Ej: Av. Corrientes 1234"
+                                    required
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white/80">Ciudad *</label>
+                                <input
+                                    type="text"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    placeholder="Ej: Buenos Aires"
+                                    required
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white/80">Teléfono</label>
+                                <input
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="Ej: +54 11 1234-5678"
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-white/80">Email</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Ej: info@miempresa.com"
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[var(--color-primary)] outline-none"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="pt-4">
+                    <button
+                        disabled={isLoading}
+                        type="submit"
+                        className="w-full bg-[var(--color-primary)] hover:bg-[#a3e635] text-black font-black py-4 rounded-xl shadow-lg shadow-[var(--color-primary)]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {isLoading ? (
+                            <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></span>
+                        ) : (
+                            <>
+                                <Save size={20} />
+                                Guardar Datos Empresariales
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
+
             <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl flex items-start gap-3">
                 <AlertTriangle className="text-yellow-500 shrink-0 mt-0.5" size={20} />
                 <div className="text-sm text-yellow-200/80">

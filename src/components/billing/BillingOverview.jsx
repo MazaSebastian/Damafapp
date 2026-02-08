@@ -1,16 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DollarSign, FileText, CheckCircle, AlertCircle, PlayCircle, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../supabaseClient';
 
 const BillingOverview = ({ setTab }) => {
     const [isTesting, setIsTesting] = useState(false);
+    const [stats, setStats] = useState({
+        totalToday: 0,
+        invoiceCount: 0,
+        lastInvoice: null,
+        status: 'online'
+    });
+    const [isConfigured, setIsConfigured] = useState(false);
 
-    // Mock Data for UI Dev
-    const stats = {
-        totalToday: 154200.50,
-        lastInvoice: { type: 'Factura C', number: '0002-00001234', amount: 4500.00 },
-        status: 'online' // online, offline, error
+    useEffect(() => {
+        fetchStats();
+        checkConfiguration();
+    }, []);
+
+    const checkConfiguration = async () => {
+        try {
+            const { data: afipCreds } = await supabase
+                .from('afip_credentials')
+                .select('id')
+                .eq('environment', 'production')
+                .eq('is_active', true)
+                .maybeSingle();
+
+            const { data: businessSettings } = await supabase
+                .from('business_settings')
+                .select('id')
+                .eq('is_active', true)
+                .maybeSingle();
+
+            setIsConfigured(!!(afipCreds && businessSettings));
+        } catch (error) {
+            console.error('Error checking config:', error);
+        }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+
+            // Total facturado hoy
+            const { data: invoices, error: invoicesError } = await supabase
+                .from('invoices')
+                .select('total_amount')
+                .gte('created_at', today)
+                .eq('status', 'authorized');
+
+            if (invoicesError) throw invoicesError;
+
+            const totalToday = invoices?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0;
+
+            // Última factura
+            const { data: lastInvoice, error: lastError } = await supabase
+                .from('invoices')
+                .select('*')
+                .eq('status', 'authorized')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (lastError) console.error('Error fetching last invoice:', lastError);
+
+            setStats({
+                totalToday,
+                invoiceCount: invoices?.length || 0,
+                lastInvoice: lastInvoice ? {
+                    type: lastInvoice.cbte_tipo === 11 ? 'Factura C' : (lastInvoice.cbte_tipo === 6 ? 'Factura B' : 'Factura A'),
+                    number: `${lastInvoice.pt_vta.toString().padStart(4, '0')}-${lastInvoice.cbte_nro.toString().padStart(8, '0')}`,
+                    amount: lastInvoice.total_amount
+                } : null,
+                status: isConfigured ? 'online' : 'offline'
+            });
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
     };
 
     const handleTestInvoice = async () => {
@@ -63,6 +130,9 @@ const BillingOverview = ({ setTab }) => {
             toast.dismiss(toastId);
             toast.success(`Factura Generada! CAE: ${invoiceData.cae}`);
 
+            // Refresh stats
+            fetchStats();
+
             // Switch to history tab
             if (setTab) {
                 setTab('Invoices');
@@ -93,25 +163,30 @@ const BillingOverview = ({ setTab }) => {
                     </p>
                     <div className="mt-4 flex items-center gap-2 text-emerald-400 text-sm font-medium bg-emerald-500/10 px-3 py-1 rounded-full w-fit">
                         <CheckCircle size={14} />
-                        12 Comprobantes
+                        {stats.invoiceCount} Comprobantes
                     </div>
                 </div>
 
-                {/* Último Comprobante */}
                 <div className="bg-[var(--color-surface)] border border-white/10 p-6 rounded-3xl relative overflow-hidden group hover:border-blue-500/30 transition-colors">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <FileText size={80} />
                     </div>
                     <h3 className="text-white/60 font-medium mb-1">Último Comprobante</h3>
-                    <p className="text-2xl font-bold text-white">
-                        {stats.lastInvoice.type}
-                    </p>
-                    <p className="text-white/80 font-mono text-sm mt-1">
-                        {stats.lastInvoice.number}
-                    </p>
-                    <p className="text-xl font-bold text-[var(--color-primary)] mt-2">
-                        ${stats.lastInvoice.amount.toLocaleString('es-AR')}
-                    </p>
+                    {stats.lastInvoice ? (
+                        <>
+                            <p className="text-2xl font-bold text-white">
+                                {stats.lastInvoice.type}
+                            </p>
+                            <p className="text-white/80 font-mono text-sm mt-1">
+                                {stats.lastInvoice.number}
+                            </p>
+                            <p className="text-xl font-bold text-[var(--color-primary)] mt-2">
+                                ${stats.lastInvoice.amount.toLocaleString('es-AR')}
+                            </p>
+                        </>
+                    ) : (
+                        <p className="text-white/40 text-sm mt-2">Aún no hay comprobantes emitidos</p>
+                    )}
                 </div>
 
                 {/* Estado del Servicio */}

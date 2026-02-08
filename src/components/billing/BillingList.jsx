@@ -95,14 +95,18 @@ const BillingList = () => {
     };
 
     const handleDownloadPDF = async (invoice) => {
-        // Mock Company Data (In real app, fetch from settings/context)
-        const companyData = {
-            business_name: 'DamafAPP S.A.',
-            address: 'Calle Falsa 123',
-            city: 'Buenos Aires',
-            cuit: '20-12345678-9',
-            start_date: '01/01/2024'
-        };
+        // Fetch REAL company data from database
+        const { data: companyData, error: companyError } = await (await import('../../supabaseClient')).supabase
+            .from('business_settings')
+            .select('*')
+            .eq('is_active', true)
+            .single();
+
+        if (companyError || !companyData) {
+            console.error('Error fetching company data:', companyError);
+            alert('Error: Configure datos empresariales en Configuración antes de generar PDFs');
+            return;
+        }
 
         const invoiceData = {
             cbte_tipo: invoice.cbte_tipo,
@@ -124,7 +128,7 @@ const BillingList = () => {
                 await generateInvoicePDF(invoiceData, companyData);
             } catch (e) {
                 console.error("Error generating PDF:", e);
-                alert("Error generando PDF");
+                alert("Error generando PDF: " + e.message);
             }
         }
     };

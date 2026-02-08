@@ -60,7 +60,13 @@ export const generateInvoicePDF = async (invoice, company) => {
     y += 4;
     y += centerText(company.address || 'Dirección Comercial', y, 8);
     y += 4;
-    y += centerText('IVA Responsable Inscripto', y, 8); // Ajustar según condición
+    // Dynamic tax condition based on company settings
+    const taxConditionLabel = company.tax_condition === 'inscripto'
+        ? 'IVA Responsable Inscripto'
+        : company.tax_condition === 'monotributo'
+            ? 'IVA Responsable Monotributo'
+            : 'IVA Exento';
+    y += centerText(taxConditionLabel, y, 8);
     y += 4;
     y += centerText(`CUIT: ${company.cuit}`, y, 8);
     y += 4; // Spacing

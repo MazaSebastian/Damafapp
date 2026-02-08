@@ -1,13 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FileText, Settings, List, TrendingUp, AlertCircle } from 'lucide-react'
 import BillingOverview from './BillingOverview'
 import BillingList from './BillingList'
 import BillingSettings from './BillingSettings'
+import { supabase } from '../../supabaseClient'
 
 const BillingManager = () => {
     const [activeTab, setActiveTab] = useState('Overview')
-    // Mock configuration check (This would come from DB later)
     const [isConfigured, setIsConfigured] = useState(false)
+
+    useEffect(() => {
+        checkConfiguration()
+    }, [])
+
+    const checkConfiguration = async () => {
+        try {
+            // Check AFIP credentials
+            const { data: afipCreds } = await supabase
+                .from('afip_credentials')
+                .select('id')
+                .eq('environment', 'production')
+                .eq('is_active', true)
+                .maybeSingle()
+
+            // Check business settings
+            const { data: businessSettings } = await supabase
+                .from('business_settings')
+                .select('id')
+                .eq('is_active', true)
+                .maybeSingle()
+
+            setIsConfigured(!!(afipCreds && businessSettings))
+        } catch (error) {
+            console.error('Error checking configuration:', error)
+        }
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
