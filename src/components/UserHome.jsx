@@ -1,29 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { UtensilsCrossed, Loader2 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabaseClient'
-import { toast } from 'sonner'
-import LoyaltyBanner from './LoyaltyBanner'
-import NewsCard from './NewsCard'
-import BottomNav from './BottomNav'
-import FloatingOrderButton from './FloatingOrderButton'
-import { NewsSkeleton } from './skeletons/NewsSkeleton'
-import StoreInfoHeader from './StoreInfoHeader'
+import { useSettings } from '../context/SettingsContext'
 
 const UserHome = () => {
     const { user, profile, role, signOut } = useAuth()
+    const { isHydrated } = useSettings()
     const [news, setNews] = useState([])
     const [loading, setLoading] = useState(true)
 
-    // Use stars from global profile if available
-    const stars = profile?.stars || 0
-
-    console.log('UserHome Render. Loading:', loading, 'Stars:', stars)
-
-    // ... useEffect remains the same ...
+    // ... (stars logic remains) ...
 
     useEffect(() => {
+        // Wait for hydration (Settings loaded) before fetching News
+        if (!isHydrated) return
+
         let mounted = true
         const controller = new AbortController()
 
@@ -59,7 +50,7 @@ const UserHome = () => {
             mounted = false
             controller.abort()
         }
-    }, [])
+    }, [isHydrated])
 
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-24">
