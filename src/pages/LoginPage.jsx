@@ -120,6 +120,23 @@ const LoginPage = () => {
                                 Regístrate
                             </Link>
                         </p>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                const toastId = toast.loading("Probando conexión...")
+                                try {
+                                    const { count, error } = await supabase.from('app_settings').select('count', { count: 'exact', head: true })
+                                    if (error) throw error
+                                    toast.success("Conexión exitosa a Supabase", { id: toastId })
+                                } catch (e) {
+                                    console.error(e)
+                                    toast.error("Error de conexión: " + e.message, { id: toastId })
+                                }
+                            }}
+                            className="text-xs text-gray-600 mt-4 hover:text-gray-400 underline"
+                        >
+                            Probar Conexión
+                        </button>
                     </div>
                 </div>
             </div>
