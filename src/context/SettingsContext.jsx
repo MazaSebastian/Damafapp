@@ -8,13 +8,18 @@ export const SettingsProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     const fetchSettings = async () => {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+
         try {
             const { data, error } = await supabase
                 .from('app_settings')
                 .select('*')
+                .abortSignal(controller.signal)
 
             if (error) {
-                console.error('Error fetching settings:', error)
+                if (error.name === 'AbortError') console.warn('Settings fetch timed out')
+                else console.error('Error fetching settings:', error)
                 return
             }
 
@@ -28,6 +33,7 @@ export const SettingsProvider = ({ children }) => {
         } catch (err) {
             console.error('Unexpected error fetching settings:', err)
         } finally {
+            clearTimeout(timeoutId)
             setLoading(false)
         }
     }
@@ -35,24 +41,10 @@ export const SettingsProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true
 
-        // Safety timeout (Force load after 10s if DB hangs)
-        const timeout = setTimeout(() => {
-            if (mounted) {
-                setLoading((current) => {
-                    if (current) console.warn('Settings loading safety timeout triggered')
-                    return false
-                })
-            }
-        }, 10000)
-
-        fetchSettings().then(() => {
-            // Clear timeout if loaded successfully
-            if (mounted) clearTimeout(timeout)
-        })
+        fetchSettings()
 
         return () => {
             mounted = false
-            clearTimeout(timeout)
         }
     }, [])
 

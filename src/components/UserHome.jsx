@@ -25,14 +25,18 @@ const UserHome = () => {
 
     useEffect(() => {
         let mounted = true
+        const controller = new AbortController()
 
         const fetchNews = async () => {
+            const timeoutId = setTimeout(() => controller.abort(), 5000)
+
             try {
                 console.log('Fetching news...')
                 const { data: newsData, error: newsError } = await supabase
                     .from('news_events')
                     .select('*')
                     .order('created_at', { ascending: false })
+                    .abortSignal(controller.signal)
 
                 if (newsError) throw newsError
 
@@ -40,8 +44,11 @@ const UserHome = () => {
                     setNews(newsData)
                 }
             } catch (error) {
-                console.error('Error fetching news:', error)
+                if (error.name !== 'AbortError') {
+                    console.error('Error fetching news:', error)
+                }
             } finally {
+                clearTimeout(timeoutId)
                 if (mounted) setLoading(false)
             }
         }
@@ -50,6 +57,7 @@ const UserHome = () => {
 
         return () => {
             mounted = false
+            controller.abort()
         }
     }, [])
 
