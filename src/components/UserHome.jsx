@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { UtensilsCrossed, Loader2 } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../supabaseClient'
+import { toast } from 'sonner'
 
 const UserHome = () => {
     const { user, profile, role, signOut } = useAuth()
