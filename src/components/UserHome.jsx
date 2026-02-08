@@ -5,6 +5,12 @@ import { useSettings } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
+import LoyaltyBanner from './LoyaltyBanner'
+import NewsCard from './NewsCard'
+import BottomNav from './BottomNav'
+import FloatingOrderButton from './FloatingOrderButton'
+import { NewsSkeleton } from './skeletons/NewsSkeleton'
+import StoreInfoHeader from './StoreInfoHeader'
 
 const UserHome = () => {
     const { user, profile, role, signOut } = useAuth()
@@ -12,7 +18,7 @@ const UserHome = () => {
     const [news, setNews] = useState([])
     const [loading, setLoading] = useState(true)
 
-    // ... (stars logic remains) ...
+    const stars = profile?.stars || 0
 
     useEffect(() => {
         // Wait for hydration (Settings loaded) before fetching News

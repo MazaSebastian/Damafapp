@@ -13,83 +13,73 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true
 
-        // Safety timeout (Force load after 4s if DB hangs / slow network)
-        const timeout = setTimeout(() => {
-            if (mounted) {
-                setLoading((current) => {
-                    if (current) {
-                        console.warn('Auth loading safety timeout triggered - forcing app load')
-                        // If we timed out, assume strict no-user state to let app render
-                    }
-                    return false
-                })
-            }
-        }, 4000)
-
-        // Listen for changes
+        // Listen for auth state changes (login, logout, token refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             console.log('Auth state changed:', _event)
             if (!mounted) return
 
             if (session?.user) {
                 setUser(session.user)
-                // Await profile fetch
                 try {
                     await fetchProfile(session.user.id)
                 } catch (e) {
-                    console.error("Profile fetch sequence failed", e)
+                    console.error("Profile fetch failed", e)
                 }
             } else {
                 setUser(null)
                 setProfile(null)
                 setRole(null)
             }
-
-            // Critical: Clean up timeout if we successfully loaded
-            if (mounted) {
-                clearTimeout(timeout)
-                setLoading(false)
-            }
         })
 
-        // Initial explicit check to catch session if event doesn't fire immediately
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (mounted && !session) {
-                // If no session exists, we can stop loading immediately
-                // If session exists, onAuthStateChange will handle it (INITIAL_SESSION event)
-                setLoading(false)
+        // CRITICAL FIX: Initialize auth state with proper error handling
+        const initAuth = async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession()
+                if (error) throw error
+
+                if (mounted && session?.user) {
+                    console.log("Session found on mount, loading profile...")
+                    setUser(session.user)
+                    await fetchProfile(session.user.id)
+                }
+            } catch (err) {
+                console.error("Auth initialization error:", err)
+            } finally {
+                // GUARANTEE: Always set loading to false, no matter what
+                if (mounted) {
+                    console.log("Auth initialization complete")
+                    setLoading(false)
+                }
             }
-        }).catch(err => {
-            console.error("Session check error", err)
-            if (mounted) setLoading(false)
-        })
+        }
+
+        initAuth()
 
         return () => {
             mounted = false
             subscription.unsubscribe()
-            clearTimeout(timeout)
         }
     }, [])
 
-    const fetchProfile = async (userId, retries = 3) => {
+    const fetchProfile = async (userId) => {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3500)
+
         try {
-            // using maybeSingle() instead of single() avoids the 406 error when no rows are found
-            // This is cleaner and allows us to distinguish between "network error" and "not found"
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
                 .maybeSingle()
+                .abortSignal(controller.signal)
 
             if (error) {
-                console.error('Error fetching profile:', error)
-                // Retry specific errors (e.g. network timeout), but maybe restrict logic
-                if (retries > 0) {
-                    console.log(`Retrying profile fetch in 1s... (${retries} left)`)
-                    await new Promise(r => setTimeout(r, 1000))
-                    return await fetchProfile(userId, retries - 1)
+                if (error.name === 'AbortError') {
+                    console.warn('Profile fetch aborted (timeout)')
+                } else {
+                    console.error('Profile fetch error:', error)
                 }
-
                 setProfile(null)
                 setRole(null)
                 return
@@ -101,24 +91,17 @@ export const AuthProvider = ({ children }) => {
                 setRole(data.role)
             } else {
                 console.warn('Profile not found for user:', userId)
-                // If the user exists but profile is missing, it might be an RLS issue or true missing data.
-                // We'll retry once after a delay if we haven't already, just in case of a race condition with token propagation.
-                if (retries === 3) {
-                    console.log('Profile missing on first attempt. Retrying once in 500ms in case of RLS/Token delay...')
-                    await new Promise(r => setTimeout(r, 500))
-                    return await fetchProfile(userId, 0) // No more retries after this custom one
-                }
                 setProfile(null)
                 setRole(null)
             }
         } catch (error) {
-            console.error('Exception fetching profile:', error)
-            if (retries > 0) {
-                await new Promise(r => setTimeout(r, 1000))
-                return await fetchProfile(userId, retries - 1)
+            if (error.name !== 'AbortError') {
+                console.error('Unexpected profile error:', error)
             }
             setProfile(null)
             setRole(null)
+        } finally {
+            clearTimeout(timeoutId)
         }
     }
 
