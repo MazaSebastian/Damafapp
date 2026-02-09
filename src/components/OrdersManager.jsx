@@ -778,8 +778,17 @@ const OrdersManager = () => {
                                         <div className="flex items-center gap-1 text-xs text-white font-bold bg-green-600 px-3 py-1 rounded-lg w-fit"><ChefHat className="w-3.5 h-3.5" /> RETIRO</div>
                                     )}
                                 </div>
-                                {/* Address / Customer info placeholder simplified */}
-                                <div className="mt-2 text-xs font-bold text-white">{order.client_name || 'Cliente'}</div>
+                                {/* Customer Name */}
+                                <div className="mt-2 text-sm font-bold text-white">
+                                    {order.profiles?.full_name || order.customer_name || order.client_name || 'Cliente'}
+                                </div>
+                                {/* Delivery Address */}
+                                {order.order_type === 'delivery' && order.delivery_address && (
+                                    <div className="mt-1 text-xs text-[var(--color-text-muted)] flex items-start gap-1">
+                                        <Truck className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                        <span className="line-clamp-2">{order.delivery_address}</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="text-right">
                                 <span className="font-bold text-lg block">${order.total}</span>
@@ -801,15 +810,66 @@ const OrdersManager = () => {
                                 </div>
                             </div>
                         </div>
-                        {/* Items */}
-                        <div className="p-4 flex-1 space-y-3">
+
+                        {/* Order Items */}
+                        <div className="p-4 border-b border-white/5 space-y-3">
+                            <h4 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Productos</h4>
                             {order.order_items?.map(item => (
-                                <div key={item.id} className="text-sm flex justify-between">
-                                    <span>1x {item.products?.name}</span>
-                                    <span className="text-gray-400">${item.price_at_time}</span>
+                                <div key={item.id} className="bg-[var(--color-background)]/30 rounded-lg p-3 space-y-1">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <span className="font-bold text-white">{item.quantity}x {item.products?.name || 'Producto'}</span>
+                                        </div>
+                                        <span className="text-[var(--color-secondary)] font-bold text-sm">${item.price_at_time}</span>
+                                    </div>
+
+                                    {/* Modifiers */}
+                                    {item.modifiers && item.modifiers.length > 0 && (
+                                        <div className="ml-4 space-y-0.5">
+                                            {item.modifiers.map((mod, idx) => (
+                                                <div key={idx} className="text-xs text-[var(--color-text-muted)]">
+                                                    + {mod.name} {mod.quantity > 1 && `(x${mod.quantity})`}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Side */}
+                                    {item.side_info && (
+                                        <div className="ml-4 text-xs text-[var(--color-text-muted)]">
+                                            + {item.side_info.name}
+                                        </div>
+                                    )}
+
+                                    {/* Drink */}
+                                    {item.drink_info && (
+                                        <div className="ml-4 text-xs text-[var(--color-text-muted)]">
+                                            + {item.drink_info.name}
+                                        </div>
+                                    )}
+
+                                    {/* Item Notes */}
+                                    {item.notes && (
+                                        <div className="ml-4 mt-1 text-xs text-orange-400 italic">
+                                            📝 {item.notes}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
+
+                        {/* Order Notes */}
+                        {order.delivery_notes && (
+                            <div className="p-4 bg-yellow-500/10 border-l-4 border-yellow-500">
+                                <div className="flex items-start gap-2">
+                                    <StickyNote className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-bold text-yellow-500 uppercase mb-1">Notas del Cliente</p>
+                                        <p className="text-sm text-white">{order.delivery_notes}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ))}
 
