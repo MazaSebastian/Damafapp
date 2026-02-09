@@ -77,7 +77,10 @@ const OrdersManager = () => {
             toast.error(`Error: ${error.message || 'Error al cargar pedidos'}`)
         }
 
+
         if (ordersData) {
+            console.log('📦 ORDERS DATA:', JSON.stringify(ordersData, null, 2))
+            console.log('📦 First order items:', ordersData[0]?.order_items)
             setOrders(ordersData)
             // We do NOT update editingOrder here anymore to prevent modal re-renders/blinking.
             // The modal handles its own optimistic state.
