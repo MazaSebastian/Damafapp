@@ -233,7 +233,9 @@ const CheckoutPage = () => {
                 order_id: order.id,
                 product_id: item.main.id,
                 quantity: 1,
-                price_at_time: item.main.price,
+                // TEMPORARY FIX: price_at_time commented until SQL migration is run
+                // Uncomment after running: ALTER TABLE order_items ADD COLUMN price_at_time DECIMAL(10,2)
+                // price_at_time: item.main.price,
                 modifiers: item.modifiers || [],
                 side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
                 drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
