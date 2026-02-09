@@ -148,7 +148,8 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 delivery_address: orderType === 'delivery'
                     ? (selectedCustomer?.address || deliveryAddress || 'Sin Dirección')
                     : 'Retiro en Local',
-                scheduled_time: selectedSlot ? selectedSlot.start_time.slice(0, 5) : null
+                scheduled_time: selectedSlot ? selectedSlot.start_time.slice(0, 5) : null,
+                notes: notes || '' // ADD: Save order notes
             }
 
             const { data: orderData, error: orderError } = await supabase
@@ -172,11 +173,20 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 drink_info: item.drink_info
             }))
 
+            console.log('🔥 POS - INSERTING ORDER ITEMS:', JSON.stringify(orderItems, null, 2))
+
             const { error: itemsError } = await supabase
                 .from('order_items')
                 .insert(orderItems)
 
-            if (itemsError) throw itemsError
+            console.log('🔥 POS - INSERT RESULT - Error:', itemsError)
+
+            if (itemsError) {
+                console.error('❌ POS - ORDER ITEMS INSERT FAILED:', itemsError)
+                throw itemsError
+            }
+
+            console.log('✅ POS - ORDER ITEMS INSERTED SUCCESSFULLY')
 
             // ... (Payment Processing) -> Remains same but uses finalName/finalPhone for print payloads
 

@@ -233,19 +233,26 @@ const CheckoutPage = () => {
                 order_id: order.id,
                 product_id: item.main.id,
                 quantity: 1,
-                // TEMPORARY FIX: price_at_time commented until SQL migration is run
-                // Uncomment after running: ALTER TABLE order_items ADD COLUMN price_at_time DECIMAL(10,2)
-                // price_at_time: item.main.price,
+                price_at_time: item.main.price, // Now works - SQL migration executed
                 modifiers: item.modifiers || [],
                 side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
                 drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
             }))
 
+            console.log('🔥 INSERTING ORDER ITEMS:', JSON.stringify(orderItems, null, 2))
+
             const { error: itemsError } = await supabase
                 .from('order_items')
                 .insert(orderItems)
 
-            if (itemsError) throw itemsError
+            console.log('🔥 INSERT RESULT - Error:', itemsError)
+
+            if (itemsError) {
+                console.error('❌ ORDER ITEMS INSERT FAILED:', itemsError)
+                throw itemsError
+            }
+
+            console.log('✅ ORDER ITEMS INSERTED SUCCESSFULLY')
 
             // Save order locally if guest
             if (!user) {

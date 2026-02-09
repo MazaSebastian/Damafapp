@@ -862,13 +862,13 @@ const OrdersManager = () => {
                         </div>
 
                         {/* Order Notes */}
-                        {order.delivery_notes && (
+                        {(order.delivery_notes || order.notes) && (
                             <div className="p-4 bg-yellow-500/10 border-l-4 border-yellow-500">
                                 <div className="flex items-start gap-2">
                                     <StickyNote className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <p className="text-xs font-bold text-yellow-500 uppercase mb-1">Notas del Cliente</p>
-                                        <p className="text-sm text-white">{order.delivery_notes}</p>
+                                        <p className="text-sm text-white">{order.delivery_notes || order.notes}</p>
                                     </div>
                                 </div>
                             </div>
