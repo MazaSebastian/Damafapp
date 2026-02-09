@@ -173,7 +173,10 @@ const CheckoutPage = () => {
     const [pendingOrderId, setPendingOrderId] = useState(null)
 
     const processOrder = async (confirmedPhone = null, confirmedName = null) => {
+        console.log('🔥🔥🔥 PROCESS ORDER CALLED! Phone:', confirmedPhone, 'Name:', confirmedName)
+
         const { data: { user } } = await supabase.auth.getUser()
+        console.log('🔥 User fetched:', user?.id, user?.email)
 
         // Validation logic
         const userPhone = profile?.phone || user?.phone || user?.user_metadata?.phone || confirmedPhone
@@ -188,6 +191,8 @@ const CheckoutPage = () => {
         } else if (!userName) {
             userName = 'Cliente Web'
         }
+
+        console.log('🔥 Final contact data - Name:', userName, 'Phone:', userPhone)
 
         try {
             // 1. Create Order
@@ -217,7 +222,12 @@ const CheckoutPage = () => {
                 .select()
                 .single()
 
-            if (orderError) throw orderError
+            if (orderError) {
+                console.error('❌ ORDER INSERT FAILED:', orderError)
+                throw orderError
+            }
+
+            console.log('✅ ORDER CREATED! ID:', order.id)
 
             // If user provided phone and didn't have one, maybe update profile?
             if (user && confirmedPhone && !user.phone) {
