@@ -174,7 +174,9 @@ const OrdersManager = () => {
 
             // Auto-Print on Acceptance (Cooking)
             if (newStatus === 'cooking') {
-                toast.info('Autoprint cooking...')
+                toast.info('Imprimiendo comanda de cocina...', {
+                    icon: '🖨️'
+                })
                 // Wait briefly for state or simply trigger
                 setTimeout(() => {
                     handlePrint({ ...order, status: newStatus })
@@ -513,6 +515,21 @@ const OrdersManager = () => {
         }
     }
 
+    const handlePrint = (order) => {
+        if (!order) return
+
+        if (usbConnected) {
+            printViaUsb(order)
+        } else {
+            toast.warning('Impresora USB no conectada. Conecta para imprimir.', {
+                action: {
+                    label: 'Conectar',
+                    onClick: connectPrinter
+                }
+            })
+        }
+    }
+
     const formatScheduledTime = (order) => {
         try {
             const raw = order.scheduled_time
@@ -526,6 +543,22 @@ const OrdersManager = () => {
             return typeof raw === 'string' ? raw.slice(0, 5) : '??:??'
         } catch (e) {
             return typeof order.scheduled_time === 'string' ? order.scheduled_time.slice(0, 5) : '??:??'
+        }
+    }
+
+    const getNextStatusButton = (status) => {
+        switch (status) {
+            case 'pending':
+            case 'pending_approval':
+                return { text: 'Enviar a Cocina', next: 'cooking', color: 'bg-green-600 hover:bg-green-500' }
+            case 'cooking':
+                return { text: 'Preparar Envío', next: 'packaging', color: 'bg-orange-600 hover:bg-orange-500' }
+            case 'packaging':
+                return { text: 'Enviar', next: 'sent', color: 'bg-purple-600 hover:bg-purple-500' }
+            case 'sent':
+                return { text: 'Marcar Entregado', next: 'completed', color: 'bg-blue-600 hover:bg-blue-500' }
+            default:
+                return null // No button for completed/cancelled/rejected
         }
     }
     if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-[var(--color-secondary)]" /></div>
@@ -751,8 +784,20 @@ const OrdersManager = () => {
                             <div className="text-right">
                                 <span className="font-bold text-lg block">${order.total}</span>
                                 <div className="flex gap-1 mt-2">
-                                    <button onClick={() => updateStatus(order.id, 'cooking')} className="bg-green-600 text-white px-2 py-1 rounded text-xs">Accept</button>
-                                    <button onClick={() => deleteOrder(order.id)} className="text-red-400 p-1"><Trash2 className="w-4 h-4" /></button>
+                                    {getNextStatusButton(order.status) && (
+                                        <button
+                                            onClick={() => updateStatus(order.id, getNextStatusButton(order.status).next)}
+                                            className={`${getNextStatusButton(order.status).color} text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg`}
+                                        >
+                                            {getNextStatusButton(order.status).text}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => deleteOrder(order.id)}
+                                        className="text-red-400 p-1 hover:bg-red-500/10 rounded transition-all"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
                         </div>
