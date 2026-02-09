@@ -231,12 +231,21 @@ const CheckoutPage = () => {
 
             // If user provided phone and didn't have one, maybe update profile?
             if (user && confirmedPhone && !user.phone) {
-                // Update profile phone silently
-                await supabase.auth.updateUser({
-                    data: { phone: confirmedPhone }
-                })
-                await supabase.from('profiles').update({ phone: confirmedPhone }).eq('id', user.id)
+                console.log('🔥 Updating user phone...')
+                try {
+                    // Update profile phone silently
+                    await supabase.auth.updateUser({
+                        data: { phone: confirmedPhone }
+                    })
+                    await supabase.from('profiles').update({ phone: confirmedPhone }).eq('id', user.id)
+                    console.log('✅ Phone updated')
+                } catch (profileError) {
+                    console.error('⚠️ Profile update failed (non-critical):', profileError)
+                    // Don't throw - this is non-critical, order should continue
+                }
             }
+
+            console.log('🔥 About to create order items...')
 
             // 2. Create Order Items
             const orderItems = cart.map(item => ({
