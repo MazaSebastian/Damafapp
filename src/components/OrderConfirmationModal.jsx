@@ -1,4 +1,4 @@
-import { ShoppingBag, X, Banknote } from 'lucide-react'
+import { ShoppingBag, X, Banknote, Loader2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 
@@ -49,15 +49,17 @@ const OrderConfirmationModal = ({ isOpen, onClose, onConfirm, orderData }) => {
             : orderData?.customerName || ''
     )
 
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
     const handleConfirm = () => {
         // Validation: Must have Name and Phone
-        // Use existing data if valid, otherwise check inputs
         const finalPhone = orderData?.customerPhone || phoneInput.trim()
         const isGenericName = ['Cliente Web', 'Cliente', 'Invitado'].includes(orderData?.customerName)
         const finalName = (orderData?.customerName && !isGenericName) ? orderData.customerName : nameInput.trim()
 
         if (!finalPhone || !finalName) return
 
+        setIsSubmitting(true)
         onConfirm({ phone: finalPhone, name: finalName })
     }
 
@@ -138,13 +140,14 @@ const OrderConfirmationModal = ({ isOpen, onClose, onConfirm, orderData }) => {
                             <button
                                 onClick={handleConfirm}
                                 disabled={
+                                    isSubmitting ||
                                     (!orderData?.customerPhone && !phoneInput.trim()) ||
                                     ((!orderData?.customerName || ['Cliente Web', 'Cliente', 'Invitado'].includes(orderData?.customerName)) && !nameInput.trim())
                                 }
-                                className="w-full text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95 transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95 transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 style={{ backgroundColor: content.color, boxShadow: `0 10px 15px -3px ${content.color}40` }}
                             >
-                                {content.buttonText}
+                                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : content.buttonText}
                             </button>
 
                             <button

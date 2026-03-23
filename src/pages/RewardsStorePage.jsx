@@ -6,9 +6,11 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import BottomNav from '../components/BottomNav'
 import { RewardSkeleton } from '../components/skeletons/RewardSkeleton'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const RewardsStorePage = () => {
     const { user } = useAuth()
+    const tenantNav = useTenantNav()
     const [stars, setStars] = useState(0)
     const [rewards, setRewards] = useState([])
     const [loading, setLoading] = useState(true)
@@ -55,7 +57,7 @@ const RewardsStorePage = () => {
         <div className="min-h-screen bg-[var(--color-background)] pb-24">
             {/* Header with Back Button */}
             <header className="p-4 flex items-center justify-between sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
-                <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                <Link to={tenantNav.path('/')} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6" />
                 </Link>
                 <div className="flex items-center gap-1">

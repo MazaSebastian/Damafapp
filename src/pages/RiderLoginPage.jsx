@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabaseClient' // Adjust path if needed
+import { supabase } from '../supabaseClient'
 import { Bike, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const RiderLoginPage = () => {
     const [pin, setPin] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantName } = useTenant()
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -29,9 +33,9 @@ const RiderLoginPage = () => {
             } else {
                 toast.success(`Bienvenido, ${data.name}! 🚀`)
                 // Persist Session (Simple ID storage for now)
-                localStorage.setItem('damaf_driver_id', data.id)
-                localStorage.setItem('damaf_driver_name', data.name)
-                navigate('/rider')
+                localStorage.setItem('stacked_driver_id', data.id)
+                localStorage.setItem('stacked_driver_name', data.name)
+                tenantNav.navigate('/rider')
             }
         } catch (err) {
             console.error(err)
@@ -48,7 +52,7 @@ const RiderLoginPage = () => {
                     <div className="mx-auto bg-[var(--color-primary)] w-20 h-20 rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-purple-900/40 rotate-3">
                         <Bike className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-3xl font-black mb-2 tracking-tight">Damaf Drivers</h1>
+                    <h1 className="text-3xl font-black mb-2 tracking-tight">{tenantName} Drivers</h1>
                     <p className="text-[var(--color-text-muted)]">Ingresa tu PIN para comenzar tu turno</p>
                 </div>
 

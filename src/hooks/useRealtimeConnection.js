@@ -11,18 +11,15 @@ import { supabase } from '../supabaseClient'
  */
 export const useRealtimeConnection = (refreshCallback, dependencies = [], debugLabel = 'Component', intervalMs = 0) => {
     useEffect(() => {
+        let lastRefreshTime = 0
+        const THROTTLE_MS = 2000 // Minimum 2 seconds between visibility refreshes
+
         const handleInteraction = () => {
             if (document.visibilityState === 'visible') {
-                // console.log(`[${debugLabel}] App visible/focused: Refreshing data...`)
+                const now = Date.now()
+                if (now - lastRefreshTime < THROTTLE_MS) return // Throttle
+                lastRefreshTime = now
                 refreshCallback()
-
-                // Optional: Check Supabase connection health
-                // const state = supabase.channel('ping').state
-                // if (state === 'closed' || state === 'errored') {
-                //     console.warn(`[${debugLabel}] Realtime seems disconnected, reconnecting...`)
-                //     supabase.removeAllChannels() // Reset
-                //     refreshCallback() // Fetch again
-                // }
             }
         }
 

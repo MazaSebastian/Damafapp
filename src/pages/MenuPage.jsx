@@ -1,32 +1,37 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
-import { ArrowLeft, Search, ShoppingBag } from 'lucide-react' // ShoppingBag icon can stay as "Link to orders" or removed
+import { ArrowLeft, Search, ShoppingBag } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MenuSkeleton } from '../components/skeletons/MenuSkeleton'
 import { motion } from 'framer-motion'
 import BottomNav from '../components/BottomNav'
-import { Badge } from 'lucide-react' // Optional
+import { Badge } from 'lucide-react'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const MenuPage = () => {
     const [categories, setCategories] = useState([])
     const [products, setProducts] = useState([])
     const [selectedCategory, setSelectedCategory] = useState('all')
+    const [searchQuery, setSearchQuery] = useState('')
     const [loading, setLoading] = useState(true)
     const scrollContainerRef = useRef(null)
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantId } = useTenant()
 
     useEffect(() => {
-        fetchData()
-    }, [])
+        if (tenantId) fetchData()
+    }, [tenantId])
 
     const fetchData = async () => {
         setLoading(true)
         // Fetch Categories
-        const { data: cats } = await supabase.from('categories').select('*').order('sort_order', { ascending: true })
+        const { data: cats } = await supabase.from('categories').select('*').eq('tenant_id', tenantId).order('sort_order', { ascending: true })
         if (cats) setCategories(cats)
 
         // Fetch Products
-        const { data: prods } = await supabase.from('products').select('*').eq('is_available', true)
+        const { data: prods } = await supabase.from('products').select('*').eq('tenant_id', tenantId).eq('is_available', true)
         if (prods) setProducts(prods)
 
         setLoading(false)
@@ -34,9 +39,11 @@ const MenuPage = () => {
 
     // Real-time Updates
     useEffect(() => {
+        if (!tenantId) return
+
         const channel = supabase
-            .channel('public:products')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+            .channel(`products:${tenantId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `tenant_id=eq.${tenantId}` }, (payload) => {
                 if (payload.eventType === 'UPDATE') {
                     setProducts(prev => prev.map(p => p.id === payload.new.id ? payload.new : p))
                 } else if (payload.eventType === 'INSERT') {
@@ -53,7 +60,7 @@ const MenuPage = () => {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [])
+    }, [tenantId])
 
     const getCategoryIcon = (name) => {
         const lower = name.toLowerCase()
@@ -67,15 +74,19 @@ const MenuPage = () => {
         return <span className="text-2xl">🍽️</span>
     }
 
-    const filteredProducts = selectedCategory === 'all'
+    const filteredProducts = (selectedCategory === 'all'
         ? products
         : products.filter(p => p.category_id === selectedCategory)
+    ).filter(p => {
+        if (!searchQuery.trim()) return true
+        return p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    })
 
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-24">
             {/* Header */}
             <header className="px-4 py-4 flex items-center gap-3 sticky top-0 bg-[var(--color-background)]/95 backdrop-blur-md z-40 border-b border-white/5">
-                <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                <Link to={tenantNav.path('/')} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6" />
                 </Link>
                 <div className="flex-1 relative">
@@ -83,6 +94,8 @@ const MenuPage = () => {
                     <input
                         type="text"
                         placeholder="Buscar por productos"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-[var(--color-surface)] rounded-2xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-secondary)] text-white placeholder-gray-500 shadow-sm"
                     />
                 </div>

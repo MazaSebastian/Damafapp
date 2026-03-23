@@ -12,8 +12,10 @@ import AssignDriverModal from './AssignDriverModal'
 import EditOrderModal from './EditOrderModal'
 import ConfirmModal from './ConfirmModal'
 import { useRealtimeConnection } from '../hooks/useRealtimeConnection'
+import { useTenant } from '../context/TenantContext'
 
 const OrdersManager = () => {
+    const { tenantId } = useTenant()
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [usbConnected, setUsbConnected] = useState(false)
@@ -79,8 +81,6 @@ const OrdersManager = () => {
 
 
         if (ordersData) {
-            console.log('📦 ORDERS DATA:', JSON.stringify(ordersData, null, 2))
-            console.log('📦 First order items:', ordersData[0]?.order_items)
             setOrders(ordersData)
             // We do NOT update editingOrder here anymore to prevent modal re-renders/blinking.
             // The modal handles its own optimistic state.
@@ -189,7 +189,7 @@ const OrdersManager = () => {
             // Log Cash Sale if Completed
             if (newStatus === 'completed' || newStatus === 'paid') {
                 const { logCashSale } = await import('../utils/cashUtils')
-                const result = await logCashSale(orderId, order.total, order.payment_method, supabase)
+                const result = await logCashSale(orderId, order.total, order.payment_method, supabase, tenantId)
                 if (result.message && newStatus === 'completed' && order.payment_method === 'cash') {
                     if (result.success) toast.success(result.message)
                     else toast.warning(result.message)
@@ -473,14 +473,22 @@ const OrdersManager = () => {
                     .newline()
                     .size(0, 0).bold(false) // Reset
 
+                // Removed Ingredients - CRITICAL for kitchen
+                if (item.removed_ingredients?.length > 0) {
+                    item.removed_ingredients.forEach(ing => {
+                        encoder.bold(true).text(`   🚫 SIN ${ing.toUpperCase()}`).bold(false).newline()
+                    })
+                }
+
                 // Modifiers
                 if (item.modifiers?.length > 0) {
                     item.modifiers.forEach(m => {
-                        encoder.text(`   ${m.name}`).newline()
+                        encoder.text(`   + ${m.name}${m.quantity > 1 ? ` (x${m.quantity})` : ''}`).newline()
                     })
                 }
-                if (item.side_info) encoder.text(`   + ${item.side_info.name}`).newline()
-                if (item.drink_info) encoder.text(`   + ${item.drink_info.name}`).newline()
+                if (item.side_info) encoder.text(`   🍟 ${item.side_info.name}`).newline()
+                if (item.drink_info) encoder.text(`   🥤 ${item.drink_info.name}`).newline()
+                if (item.notes) encoder.text(`   📝 ${item.notes}`).newline()
 
                 encoder.newline()
             })
@@ -826,11 +834,22 @@ const OrdersManager = () => {
                                         <span className="text-[var(--color-secondary)] font-bold text-sm">${item.price_at_time}</span>
                                     </div>
 
+                                    {/* Removed Ingredients */}
+                                    {item.removed_ingredients?.length > 0 && (
+                                        <div className="ml-4 flex flex-wrap gap-1 mt-1">
+                                            {item.removed_ingredients.map((ing, idx) => (
+                                                <span key={idx} className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">
+                                                    🚫 Sin {ing}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     {/* Modifiers */}
                                     {item.modifiers && item.modifiers.length > 0 && (
                                         <div className="ml-4 space-y-0.5">
                                             {item.modifiers.map((mod, idx) => (
-                                                <div key={idx} className="text-xs text-[var(--color-text-muted)]">
+                                                <div key={idx} className="text-xs text-emerald-400/80 font-medium">
                                                     + {mod.name} {mod.quantity > 1 && `(x${mod.quantity})`}
                                                 </div>
                                             ))}
@@ -840,14 +859,14 @@ const OrdersManager = () => {
                                     {/* Side */}
                                     {item.side_info && (
                                         <div className="ml-4 text-xs text-[var(--color-text-muted)]">
-                                            + {item.side_info.name}
+                                            🍟 {item.side_info.name}
                                         </div>
                                     )}
 
                                     {/* Drink */}
                                     {item.drink_info && (
                                         <div className="ml-4 text-xs text-[var(--color-text-muted)]">
-                                            + {item.drink_info.name}
+                                            🥤 {item.drink_info.name}
                                         </div>
                                     )}
 

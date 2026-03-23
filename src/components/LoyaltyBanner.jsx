@@ -2,10 +2,12 @@ import { Star, Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useLoyaltyLevels } from '../hooks/useLoyaltyLevels'
 import { useAuth } from '../context/AuthContext'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const LoyaltyBanner = ({ stars = 0 }) => {
     const { profile } = useAuth()
     const { currentLevel, nextLevel, progress, starsToNext, loading } = useLoyaltyLevels()
+    const tenantNav = useTenantNav()
 
     // While settings load, we might flicker or show default. 
     // Ideally we could show a skeleton, but for now we render gracefully.
@@ -45,7 +47,7 @@ const LoyaltyBanner = ({ stars = 0 }) => {
                     </div>
                     <p className="text-xs opacity-80 mt-1">Estrellas en billetera</p>
                 </div>
-                <Link to="/club-info" className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-white/20 transition-colors">
+                <Link to={tenantNav.path('/club-info')} className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-white/20 transition-colors">
                     MI CLUB ➜
                 </Link>
             </div>

@@ -1,19 +1,24 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { useTenant } from './TenantContext'
 
 const ThemeContext = createContext()
 
 export const useTheme = () => useContext(ThemeContext)
 
 export const ThemeProvider = ({ children }) => {
+    const { tenantId, tenantTheme } = useTenant()
     const [themeSettings, setThemeSettings] = useState({})
     const [loading, setLoading] = useState(true)
 
     const fetchThemeSettings = async () => {
+        if (!tenantId) return
+
         try {
             const { data, error } = await supabase
                 .from('app_settings')
                 .select('*')
+                .eq('tenant_id', tenantId)
                 .like('key', 'theme_%')
 
             if (error) throw error
@@ -36,38 +41,36 @@ export const ThemeProvider = ({ children }) => {
     const applyTheme = (settings) => {
         const root = document.documentElement
 
-        // Map database keys to CSS variables
+        // Step 1: Apply fallback from tenant.theme JSONB (used if no app_settings exist yet)
+        if (tenantTheme) {
+            if (tenantTheme.primary) root.style.setProperty('--color-primary', tenantTheme.primary)
+            if (tenantTheme.secondary) root.style.setProperty('--color-secondary', tenantTheme.secondary)
+            if (tenantTheme.background) root.style.setProperty('--color-background', tenantTheme.background)
+            if (tenantTheme.surface) root.style.setProperty('--color-surface', tenantTheme.surface)
+        }
+
+        // Step 2: Apply app_settings OVERRIDES (single source of truth for admin-configured themes)
         if (settings.theme_color_primary) root.style.setProperty('--color-primary', settings.theme_color_primary)
         if (settings.theme_color_secondary) root.style.setProperty('--color-secondary', settings.theme_color_secondary)
         if (settings.theme_color_background) root.style.setProperty('--color-background', settings.theme_color_background)
         if (settings.theme_color_surface) root.style.setProperty('--color-surface', settings.theme_color_surface)
         if (settings.theme_color_text_main) root.style.setProperty('--color-text-main', settings.theme_color_text_main)
         if (settings.theme_color_text_muted) root.style.setProperty('--color-text-muted', settings.theme_color_text_muted)
-
-
     }
 
-    // Allow updating theme locally (optimistic) and saving
     const updateThemeSetting = async (key, value) => {
-        // 1. Apply locally immediately
         const newSettings = { ...themeSettings, [key]: value }
         setThemeSettings(newSettings)
         applyTheme(newSettings)
-
-        // 2. Persist
-        // The implementation in SettingsManager will handle the DB update logic usually, 
-        // but if we want this context to be the source of truth, we can expose a refresh function
-        // or just let SettingsManager call applyTheme/refresh.
-        // For simple flow: SettingsManager updates DB -> Calls refresh here OR we rely on realtime/reload.
-        // Let's expect SettingsManager to call a function here to sync if needed, or we just rely on fetch.
     }
 
-    // Listen for changes? Or simple refresh method
     const refreshTheme = () => fetchThemeSettings()
 
     useEffect(() => {
-        fetchThemeSettings()
-    }, [])
+        if (tenantId) {
+            fetchThemeSettings()
+        }
+    }, [tenantId])
 
     return (
         <ThemeContext.Provider value={{ themeSettings, loading, refreshTheme, updateThemeSetting }}>

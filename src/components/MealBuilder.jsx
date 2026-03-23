@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { X, ChevronRight, Check, Plus, Minus, ArrowLeft } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useNavigate } from 'react-router-dom'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const MealBuilder = ({ product, isOpen, onClose, categorySlug }) => {
     const [step, setStep] = useState(1) // 1: Customize, 2: Side, 3: Drink
@@ -19,6 +20,7 @@ const MealBuilder = ({ product, isOpen, onClose, categorySlug }) => {
 
     const { addToCart } = useCart()
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
 
     useEffect(() => {
         if (isOpen && product) {
@@ -81,7 +83,7 @@ const MealBuilder = ({ product, isOpen, onClose, categorySlug }) => {
                 drink: selectedDrink
             })
             onClose()
-            navigate('/checkout')
+            tenantNav.navigate('/checkout')
         }
     }
 

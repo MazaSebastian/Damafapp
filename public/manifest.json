@@ -1,20 +1,20 @@
 {
-    "name": "DamafAPP",
-    "short_name": "DamafAPP",
-    "description": "Tu comida favorita, rápido y fácil.",
+    "name": "Stacked",
+    "short_name": "Stacked",
+    "description": "Plataforma de gestión gastronómica SaaS.",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#1a1a1a",
-    "theme_color": "#e00201",
+    "background_color": "#0a0a0a",
+    "theme_color": "#f97316",
     "orientation": "portrait",
     "icons": [
         {
-            "src": "/logo-damaf.png",
+            "src": "/logo-stacked.png",
             "sizes": "192x192",
             "type": "image/png"
         },
         {
-            "src": "/logo-damaf.png",
+            "src": "/logo-stacked.png",
             "sizes": "512x512",
             "type": "image/png"
         }

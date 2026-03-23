@@ -27,7 +27,10 @@ serve(async (req) => {
             throw new Error("Invalid JSON Body: " + e.message);
         }
 
-        const { action, orderId, environment = 'production' } = body;
+        const { action, orderId, environment = 'production', tenant_id: requestTenantId } = body;
+
+        // Tenant isolation: extract tenant_id from request or will be derived from order
+        let tenantId = requestTenantId || null;
 
         // 1. Authenticate (WSAA)
         // This will either get existing token or try to generate new one (which might fail if signing not implemented)
@@ -40,6 +43,7 @@ serve(async (req) => {
             .from('afip_credentials')
             .select('*')
             .eq('environment', environment)
+            .eq('tenant_id', tenantId)
             .single();
 
         if (!credentials) {
@@ -60,6 +64,7 @@ serve(async (req) => {
                 .from('afip_credentials')
                 .select('id')
                 .eq('environment', payload.environment)
+                .eq('tenant_id', payload.tenant_id || tenantId)
                 .single();
 
             let saveError;
@@ -114,6 +119,9 @@ serve(async (req) => {
 
             if (!order) throw new Error("Order not found with ID: " + orderId);
 
+            // Override tenantId from order (most reliable source)
+            if (order.tenant_id) tenantId = order.tenant_id;
+
             // Determine Invoice Details
             const isMonotributo = credentials.tax_condition === 'monotributo';
             const cbteTipo = isMonotributo ? 11 : 6; // 11=Factura C, 6=Factura B
@@ -142,8 +150,9 @@ serve(async (req) => {
                 // Success: update DB
                 await supabaseClient.from('invoices').insert({
                     order_id: orderId,
+                    tenant_id: tenantId,
                     cae: result.cae,
-                    cae_due_date: result.caeFchVto, // Format matches? check
+                    cae_due_date: result.caeFchVto,
                     cbte_tipo: cbteTipo,
                     cbte_nro: nextCbte,
                     pt_vta: credentials.sales_point,

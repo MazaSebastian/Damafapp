@@ -78,13 +78,21 @@ const TicketTemplate = ({ order }) => {
                             <span>{item.products?.name}</span>
                         </div>
 
+                        {/* Removed Ingredients */}
+                        <div className="pl-6 text-sm font-bold text-black space-y-0.5">
+                            {item.removed_ingredients?.map((ing, i) => (
+                                <div key={i} className="font-black">🚫 SIN {ing.toUpperCase()}</div>
+                            ))}
+                        </div>
+
                         {/* Modifiers & Extras */}
                         <div className="pl-6 text-sm font-medium text-gray-800 space-y-0.5">
                             {item.modifiers?.map((m, i) => (
-                                <div key={i}>{m.name}</div>
+                                <div key={i}>+ {m.name} {m.quantity > 1 ? `(x${m.quantity})` : ''}</div>
                             ))}
-                            {item.side_info && <div>+ {item.side_info.name}</div>}
-                            {item.drink_info && <div>+ {item.drink_info.name}</div>}
+                            {item.side_info && <div>🍟 {item.side_info.name}</div>}
+                            {item.drink_info && <div>🥤 {item.drink_info.name}</div>}
+                            {item.notes && <div className="italic">📝 {item.notes}</div>}
                         </div>
                     </div>
                 ))}

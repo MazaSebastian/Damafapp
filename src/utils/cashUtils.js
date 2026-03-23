@@ -1,4 +1,4 @@
-export const logCashSale = async (orderId, total, paymentMethod, supabase) => {
+export const logCashSale = async (orderId, total, paymentMethod, supabase, tenantId) => {
     // We now log ALL payment methods to provide a complete report.
     // However, only 'cash' will increase the "Calculated Total" in the UI logic.
 
@@ -8,6 +8,7 @@ export const logCashSale = async (orderId, total, paymentMethod, supabase) => {
             .from('cash_registers')
             .select('id')
             .eq('status', 'open')
+            .eq('tenant_id', tenantId)
             .single()
 
         if (registerError || !openRegister) {
@@ -37,9 +38,10 @@ export const logCashSale = async (orderId, total, paymentMethod, supabase) => {
             .insert([{
                 register_id: openRegister.id,
                 amount: total,
-                type: 'sale', // We might differentiate later, or keep 'sale' and use description
+                type: 'sale',
                 description: `Venta #${orderId.slice(0, 6)} ${typeTag}`,
-                related_order_id: orderId
+                related_order_id: orderId,
+                tenant_id: tenantId
             }])
 
         if (moveError) throw moveError

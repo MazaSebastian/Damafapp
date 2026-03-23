@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { toast } from 'sonner'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null, isPOS = false, onDraftChange = null }) => {
     const [step, setStep] = useState(1) // 1: Burger, 1.5: Modifiers, 2: Sides, 3: Drinks
@@ -23,6 +24,7 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
 
     const navigate = useNavigate()
     const { addToCart } = useCart()
+    const tenantNav = useTenantNav()
 
     // Real-time Draft Sync
     useEffect(() => {
@@ -195,7 +197,7 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
             addToCart(comboItem)
             toast.success('¡Combo completo agregado!')
             onClose()
-            navigate('/checkout')
+            tenantNav.navigate('/checkout')
         }
     }
 
@@ -560,7 +562,7 @@ const OrderModal = ({ isOpen, onClose, initialProduct = null, onAddToCart = null
                                     )}
 
                                     {step === 1 && (
-                                        <button onClick={() => { onClose(); navigate('/menu') }} className="w-full py-4 text-center text-[var(--color-text-muted)] text-sm underline mt-4">
+                                        <button onClick={() => { onClose(); tenantNav.navigate('/menu') }} className="w-full py-4 text-center text-[var(--color-text-muted)] text-sm underline mt-4">
                                             Ver menú completo
                                         </button>
                                     )}

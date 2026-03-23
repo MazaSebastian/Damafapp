@@ -1,20 +1,28 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, Clock, ChefHat, Check, ShoppingBag, ArrowRight, Bell, X, Lock } from 'lucide-react'
+import { Loader2, Clock, ChefHat, Check, ShoppingBag, ArrowRight, Bell, X, ChevronRight } from 'lucide-react'
 import BottomNav from '../components/BottomNav'
 import { Link, useNavigate } from 'react-router-dom'
 import { OrderSkeleton } from '../components/skeletons/OrderSkeleton'
-import LiveTrackingMap from '../components/LiveTrackingMap'
 import OrderModal from '../components/OrderModal'
+import OrderDetailModal from '../components/OrderDetailModal'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const MyOrdersPage = () => {
     const { user } = useAuth()
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantLogo, tenantName } = useTenant()
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('active') // 'active' or 'history'
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
+    const [selectedOrderId, setSelectedOrderId] = useState(null)
+
+    // Derive selectedOrder from live orders array
+    const selectedOrder = selectedOrderId ? orders.find(o => o.id === selectedOrderId) || null : null
 
     useEffect(() => {
         if (user) {
@@ -45,28 +53,71 @@ const MyOrdersPage = () => {
         }
     }, [user])
 
+    // Lazy-load order_items when an order is selected and its items are empty
+    useEffect(() => {
+        if (selectedOrderId && selectedOrder && (!selectedOrder.order_items || selectedOrder.order_items.length === 0)) {
+            fetchItemsForOrder(selectedOrderId)
+        }
+    }, [selectedOrderId])
+
+    const fetchItemsForOrder = async (orderId) => {
+        const { data: items } = await supabase
+            .from('order_items')
+            .select('*, products (name, image_url)')
+            .eq('order_id', orderId)
+
+        if (items && items.length > 0) {
+            setOrders(prev => prev.map(o =>
+                o.id === orderId ? { ...o, order_items: items } : o
+            ))
+        }
+    }
+
     const fetchOrders = async () => {
         setLoading(true)
-        const { data } = await supabase
+
+        // Step 1: Fetch orders
+        const { data: ordersData } = await supabase
             .from('orders')
-            .select(`
-                *,
-                order_items (
-                    *,
-                    products (name, image_url)
-                )
-            `)
+            .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
 
-        if (data) setOrders(data)
+        if (!ordersData || ordersData.length === 0) {
+            setOrders(ordersData || [])
+            setLoading(false)
+            return
+        }
+
+        // Step 2: Fetch order_items separately (avoids nested-select RLS issues)
+        const orderIds = ordersData.map(o => o.id)
+        const { data: itemsData } = await supabase
+            .from('order_items')
+            .select('*, products (name, image_url)')
+            .in('order_id', orderIds)
+
+        // Step 3: Merge items into orders
+        const itemsByOrderId = {}
+        if (itemsData) {
+            itemsData.forEach(item => {
+                if (!itemsByOrderId[item.order_id]) itemsByOrderId[item.order_id] = []
+                itemsByOrderId[item.order_id].push(item)
+            })
+        }
+
+        const ordersWithItems = ordersData.map(order => ({
+            ...order,
+            order_items: itemsByOrderId[order.id] || []
+        }))
+
+        setOrders(ordersWithItems)
         setLoading(false)
     }
 
     const fetchGuestOrders = () => {
         setLoading(true)
         try {
-            const guestOrders = JSON.parse(localStorage.getItem('damaf_guest_orders') || '[]')
+            const guestOrders = JSON.parse(localStorage.getItem('stacked_guest_orders') || '[]')
             setOrders(guestOrders)
         } catch (e) {
             console.error('Error reading guest orders:', e)
@@ -77,19 +128,22 @@ const MyOrdersPage = () => {
 
     const getStatusInfo = (status) => {
         switch (status) {
+            case 'pending_approval': return { label: 'Esperando aprobación', color: 'text-amber-500', bg: 'bg-amber-500/10', icon: Clock }
             case 'pending': return { label: 'Pendiente', color: 'text-yellow-500', bg: 'bg-yellow-500/10', icon: Clock }
+            case 'paid': return { label: 'Pago confirmado', color: 'text-emerald-500', bg: 'bg-emerald-500/10', icon: Check }
             case 'cooking': return { label: 'Cocinando', color: 'text-orange-500', bg: 'bg-orange-500/10', icon: ChefHat }
             case 'packaging': return { label: 'Preparando envío', color: 'text-blue-500', bg: 'bg-blue-500/10', icon: ShoppingBag }
             case 'sent': return { label: 'Pedido Enviado', color: 'text-purple-500', bg: 'bg-purple-500/10', icon: Bell }
             case 'completed': return { label: 'Entregado', color: 'text-gray-400', bg: 'bg-white/5', icon: Check }
             case 'cancelled': return { label: 'Cancelado', color: 'text-red-400', bg: 'bg-red-500/10', icon: X }
+            case 'rejected': return { label: 'Rechazado', color: 'text-red-400', bg: 'bg-red-500/10', icon: X }
             default: return { label: status, color: 'text-gray-400', bg: 'bg-white/5', icon: Clock }
         }
     }
 
     // Filter orders
-    const activeOrders = orders.filter(o => ['paid', 'pending', 'cooking', 'packaging', 'sent'].includes(o.status))
-    const historyOrders = orders.filter(o => ['completed', 'cancelled'].includes(o.status))
+    const activeOrders = orders.filter(o => ['pending_approval', 'paid', 'pending', 'cooking', 'packaging', 'sent'].includes(o.status))
+    const historyOrders = orders.filter(o => ['completed', 'cancelled', 'rejected'].includes(o.status))
 
     const displayOrders = activeTab === 'active' ? activeOrders : historyOrders
 
@@ -127,7 +181,11 @@ const MyOrdersPage = () => {
                         const StatusIcon = status.icon
 
                         return (
-                            <div key={order.id} className="bg-[var(--color-surface)] rounded-2xl p-4 border border-white/5">
+                            <div
+                                key={order.id}
+                                onClick={() => setSelectedOrderId(order.id)}
+                                className="bg-[var(--color-surface)] rounded-2xl p-4 border border-white/5 cursor-pointer hover:border-white/15 hover:bg-white/[0.03] transition-all active:scale-[0.98]"
+                            >
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
                                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${status.color} ${status.bg} mb-2`}>
@@ -145,7 +203,7 @@ const MyOrdersPage = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <span className="text-xl font-bold">${order.total}</span>
+                                    <span className="text-xl font-bold">${Number(order.total).toFixed(2)}</span>
                                 </div>
 
                                 {/* Items Preview (Show first 2 items) */}
@@ -157,53 +215,53 @@ const MyOrdersPage = () => {
                                             </div>
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium leading-tight">{item.products?.name}</p>
-                                                <p className="text-xs text-[var(--color-text-muted)]">
-                                                    {item.modifiers?.length > 0 ? `+ ${item.modifiers.length} extras` : ''}
-                                                    {item.side_info ? `, ${item.side_info.name}` : ''}
-                                                </p>
+                                                {/* Removed Ingredients */}
+                                                {item.removed_ingredients?.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {item.removed_ingredients.map((ing, i) => (
+                                                            <span key={i} className="text-[9px] bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded-full font-bold">
+                                                                Sin {ing}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {/* Extras */}
+                                                {item.modifiers?.length > 0 && (
+                                                    <p className="text-[10px] text-emerald-400/60 mt-0.5">
+                                                        {item.modifiers.map(m => `+ ${m.name}${m.quantity > 1 ? ` x${m.quantity}` : ''}`).join(', ')}
+                                                    </p>
+                                                )}
+                                                {item.side_info && (
+                                                    <p className="text-[10px] text-[var(--color-text-muted)]">🍟 {item.side_info.name}</p>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
 
                                 {activeTab === 'active' && (
-                                    <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                                        {/* Simple Progress Bar - Static for guests unless we simulate it */}
+                                    <div className="flex items-center justify-between mt-2">
+                                        <div className="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden" />
+                                        <ChevronRight className="w-4 h-4 text-white/30 ml-2 flex-shrink-0" />
+                                    </div>
+                                )}
+
+                                {activeTab === 'history' && (
+                                    <div className="flex justify-end mt-2">
+                                        <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
+                                            Ver detalle <ChevronRight className="w-3 h-3" />
+                                        </span>
                                     </div>
                                 )}
 
                                 {order.status === 'sent' && order.order_type === 'delivery' && (
-                                    <div className="mb-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                        <div className="flex items-center gap-2 mb-2 text-sm font-bold text-orange-400">
-                                            <span className="relative flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
-                                            </span>
-                                            {user ? 'Seguimiento en Vivo' : 'Seguimiento Limitado'}
-                                        </div>
-
-                                        {user ? (
-                                            <LiveTrackingMap order={order} />
-                                        ) : (
-                                            <div className="bg-black/30 rounded-xl p-4 border border-white/10 flex flex-col items-center text-center backdrop-blur-sm relative overflow-hidden group hover:border-orange-500/30 transition-colors">
-                                                {/* Blurred Map Background Effect */}
-                                                <div className="absolute inset-0 bg-[url('https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/-58.5228,34.5202,13,0/600x300?access_token=pk.eyJ1IjoiZGFtYWZhcHAiLCJhIjoiY2xranR5aDNzMDBiZDN1bnp4Z3h4Z3h6ayJ9.J_f_J_f_J_f')] opacity-20 blur-sm scale-110"></div>
-
-                                                <div className="relative z-10 bg-[var(--color-surface)]/80 p-3 rounded-full mb-2">
-                                                    <Lock className="w-6 h-6 text-orange-500" />
-                                                </div>
-                                                <h3 className="relative z-10 font-bold text-white mb-1">Seguimiento en Vivo Bloqueado</h3>
-                                                <p className="relative z-10 text-xs text-white/70 mb-3 max-w-[250px]">
-                                                    Solo los usuarios registrados pueden ver la ubicación del repartidor en tiempo real.
-                                                </p>
-                                                <button
-                                                    onClick={() => navigate('/register')}
-                                                    className="relative z-10 bg-[var(--color-primary)] text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-purple-700 transition-colors"
-                                                >
-                                                    Registrarse para ver
-                                                </button>
-                                            </div>
-                                        )}
+                                    <div className="mt-3 flex items-center gap-2 text-xs font-bold text-orange-400">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                                        </span>
+                                        Seguimiento en vivo disponible
+                                        <ChevronRight className="w-3 h-3 ml-auto" />
                                     </div>
                                 )}
                             </div>
@@ -213,7 +271,7 @@ const MyOrdersPage = () => {
                     <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
                         <div className="bg-[var(--color-surface)] border border-white/5 p-8 rounded-3xl shadow-2xl max-w-sm w-full">
                             <div className="w-40 h-40 mx-auto mb-4">
-                                <img src="/logo-damaf.png" alt="Logo" className="w-full h-full object-contain drop-shadow-md" />
+                                <img src={tenantLogo || '/logo-stacked.png'} alt="Logo" className="w-full h-full object-contain drop-shadow-md" />
                             </div>
 
                             <h2 className="text-2xl font-black uppercase leading-none mb-2 tracking-tighter text-white">
@@ -243,6 +301,11 @@ const MyOrdersPage = () => {
             </main>
 
             <OrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} />
+            <OrderDetailModal
+                isOpen={!!selectedOrder}
+                onClose={() => setSelectedOrderId(null)}
+                order={selectedOrder}
+            />
             <BottomNav />
         </div>
     )

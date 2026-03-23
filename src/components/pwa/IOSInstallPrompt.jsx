@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Share, PlusSquare, X } from 'lucide-react';
+import { useTenant } from '../../context/TenantContext';
 
 const IOSInstallPrompt = () => {
+    const { tenantLogo, tenantName } = useTenant();
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -43,10 +45,10 @@ const IOSInstallPrompt = () => {
                 </button>
 
                 <div className="flex items-start gap-4">
-                    <img src="/logo-damaf.png" alt="DamafAPP" className="w-14 h-14 rounded-2xl shadow-lg border border-white/10 object-cover" />
+                    <img src={tenantLogo || '/logo-stacked.png'} alt={tenantName} className="w-14 h-14 rounded-2xl shadow-lg border border-white/10 object-cover" />
                     <div className="space-y-2">
                         <h3 className="font-bold text-white text-lg leading-tight">
-                            Instala DamafAPP
+                            Instala {tenantName}
                         </h3>
                         <p className="text-sm text-[var(--color-text-muted)]">
                             Para recibir notificaciones y tener la mejor experiencia, agrega la App a tu inicio.

@@ -1,9 +1,11 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Shield, Home } from 'lucide-react'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const PrivacyPolicyPage = () => {
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
 
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-24 text-white">
@@ -17,7 +19,7 @@ const PrivacyPolicyPage = () => {
                         <h1 className="text-xl font-bold">Políticas de Privacidad</h1>
                     </div>
 
-                    <Link to="/" className="p-2 -mr-2 hover:bg-white/10 rounded-full transition-colors">
+                    <Link to={tenantNav.path('/')} className="p-2 -mr-2 hover:bg-white/10 rounded-full transition-colors">
                         <Home className="w-6 h-6 text-[var(--color-primary)]" />
                     </Link>
                 </div>
@@ -34,22 +36,22 @@ const PrivacyPolicyPage = () => {
                     <section>
                         <h3 className="text-lg font-bold text-white mb-2">1. Identificación del Responsable y del Ecosistema</h3>
                         <p>
-                            BurgAPP (en adelante "La Plataforma") es una solución tecnológica desarrollada por [Tu Nombre/Empresa]. La Plataforma provee el software de gestión y pedidos denominado Damafapp a distintos comercios independientes (en adelante "El Comercio").
+                            Stacked (en adelante "La Plataforma") es una solución tecnológica desarrollada por [Tu Nombre/Empresa]. La Plataforma provee el software de gestión y pedidos denominado Stacked a distintos comercios independientes (en adelante "El Comercio").
                         </p>
                         <p className="mt-2">
-                            Al utilizar la aplicación de un Comercio específico o la aplicación centralizada BurgAPP, usted acepta que sus datos sean tratados bajo los términos aquí descritos.
+                            Al utilizar la aplicación de un Comercio específico o la aplicación centralizada Stacked, usted acepta que sus datos sean tratados bajo los términos aquí descritos.
                         </p>
                     </section>
 
                     <section>
-                        <h3 className="text-lg font-bold text-white mb-2">2. Relación entre BurgAPP y los Locales</h3>
+                        <h3 className="text-lg font-bold text-white mb-2">2. Relación entre Stacked y los Locales</h3>
                         <p>Es fundamental aclarar al usuario:</p>
                         <ul className="list-disc pl-5 mt-2 space-y-2">
                             <li>
-                                <strong className="text-white">Independencia:</strong> Cada local que utiliza la tecnología Damafapp es un ente jurídico independiente.
+                                <strong className="text-white">Independencia:</strong> Cada local que utiliza la tecnología Stacked es un ente jurídico independiente.
                             </li>
                             <li>
-                                <strong className="text-white">Datos Compartidos:</strong> Los datos que el usuario ingresa en la app de un local específico son almacenados en la infraestructura centralizada de BurgAPP para garantizar el funcionamiento del servicio, la logística y el sistema de fidelidad.
+                                <strong className="text-white">Datos Compartidos:</strong> Los datos que el usuario ingresa en la app de un local específico son almacenados en la infraestructura centralizada de Stacked para garantizar el funcionamiento del servicio, la logística y el sistema de fidelidad.
                             </li>
                         </ul>
                     </section>
@@ -71,18 +73,18 @@ const PrivacyPolicyPage = () => {
                         <ul className="list-disc pl-5 mt-2 space-y-2">
                             <li>Procesar y gestionar pedidos de comida.</li>
                             <li>Gestionar la logística de entrega a través de repartidores.</li>
-                            <li>Administrar el sistema de puntos y recompensas del ecosistema BurgAPP.</li>
+                            <li>Administrar el sistema de puntos y recompensas del ecosistema Stacked.</li>
                             <li>Enviar notificaciones críticas sobre el estado de la compra.</li>
                         </ul>
                     </section>
 
                     <section>
                         <h3 className="text-lg font-bold text-white mb-2">5. Transferencia de Datos a Terceros</h3>
-                        <p>El usuario acepta que BurgAPP comparta sus datos con:</p>
+                        <p>El usuario acepta que Stacked comparta sus datos con:</p>
                         <ul className="list-disc pl-5 mt-2 space-y-2">
                             <li><strong className="text-white">El Comercio:</strong> Para que puedan preparar y facturar su pedido.</li>
                             <li><strong className="text-white">Repartidores:</strong> Únicamente nombre, dirección y teléfono para concretar la entrega.</li>
-                            <li><strong className="text-white">Pasarelas de Pago:</strong> (Ej. Mercado Pago) para procesar transacciones de forma segura. BurgAPP no almacena datos de tarjetas de crédito/débito.</li>
+                            <li><strong className="text-white">Pasarelas de Pago:</strong> (Ej. Mercado Pago) para procesar transacciones de forma segura. Stacked no almacena datos de tarjetas de crédito/débito.</li>
                         </ul>
                     </section>
 

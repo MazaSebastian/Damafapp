@@ -3,23 +3,27 @@ import { supabase } from '../supabaseClient'
 import { Bike, MapPin, Navigation, Power, CheckCircle, Clock, Smartphone, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const RiderInterface = () => {
+    const tenantNav = useTenantNav()
+    const { tenantId } = useTenant()
     const [activeOrderId, setActiveOrderId] = useState(null)
     const [isTracking, setIsTracking] = useState(false)
     const [orders, setOrders] = useState([])
     const watchIdRef = useRef(null)
 
     // Load Driver Info
-    const driverId = localStorage.getItem('damaf_driver_id')
-    const driverName = localStorage.getItem('damaf_driver_name')
+    const driverId = localStorage.getItem('stacked_driver_id')
+    const driverName = localStorage.getItem('stacked_driver_name')
 
     // Fetch assigned orders
     useEffect(() => {
         if (!driverId) {
             toast.error('Sesión inválida. Vuelve a ingresar.')
             // Redirect to login (simulate)
-            window.location.href = '/rider/login'
+            tenantNav.navigate('/rider/login')
             return
         }
 
@@ -136,7 +140,7 @@ const RiderInterface = () => {
             if (order) {
                 // Dynamically import to avoid top-level await issues if bundler is strict
                 const { logCashSale } = await import('../utils/cashUtils')
-                await logCashSale(orderId, order.total, order.payment_method, supabase)
+                await logCashSale(orderId, order.total, order.payment_method, supabase, tenantId)
             }
 
             // Refresh list immediately

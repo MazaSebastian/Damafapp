@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { DollarSign, FileText, CheckCircle, AlertCircle, PlayCircle, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../supabaseClient';
+import { useTenant } from '../../context/TenantContext';
 
 const BillingOverview = ({ setTab }) => {
+    const { tenantId } = useTenant();
     const [isTesting, setIsTesting] = useState(false);
     const [stats, setStats] = useState({
         totalToday: 0,
@@ -93,7 +95,8 @@ const BillingOverview = ({ setTab }) => {
                     status: 'completed',
                     order_type: 'takeaway',
                     payment_method: 'cash',
-                    notes: 'PRUEBA DE FACTURACIÓN'
+                    notes: 'PRUEBA DE FACTURACIÓN',
+                    tenant_id: tenantId
                 })
                 .select()
                 .single();

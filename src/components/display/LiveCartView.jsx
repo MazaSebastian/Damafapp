@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'react-qr-code'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabaseClient'
+import { useTenant } from '../../context/TenantContext'
 
 const LiveCartView = ({ session }) => {
+    const { tenantLogo } = useTenant()
     const { cart_items, subtotal, total, status, payment_method, qr_code_url, current_action } = session
     const [bankDetails, setBankDetails] = useState(null)
 
@@ -131,7 +133,7 @@ const LiveCartView = ({ session }) => {
             <div className="w-[35%] bg-[var(--color-surface)] p-8 flex flex-col h-full shadow-2xl relative">
                 {/* Logo Top Right */}
                 <div className="absolute top-8 right-8 mix-blend-screen opacity-50">
-                    <img src="/logo-damaf.png" alt="" className="w-20" />
+                    <img src={tenantLogo || '/logo-stacked.png'} alt="" className="w-20" />
                 </div>
 
                 <div className="mt-auto space-y-6">

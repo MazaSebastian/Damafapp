@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
 
@@ -8,7 +8,13 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [profile, setProfile] = useState(null)
     const [role, setRole] = useState(null)
+    const [tenantId, setTenantId] = useState(null)
     const [loading, setLoading] = useState(true)
+    // Ref to track current user ID — used to prevent redundant state updates
+    // from auth events that fire without an actual user change (TOKEN_REFRESHED,
+    // SIGNED_IN on reconnect, etc.), which would create new object references
+    // and cascade useEffect([user]) re-runs across all pages.
+    const currentUserIdRef = useRef(null)
 
     useEffect(() => {
         let mounted = true
@@ -16,30 +22,27 @@ export const AuthProvider = ({ children }) => {
 
         // Listen for auth state changes (login, logout, token refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            console.log('Auth state changed:', _event, session ? `(${session.user?.email})` : '(no session)')
             if (!mounted) return
 
             // CRITICAL: Ignore ALL events during initial mount - initAuth handles it
             if (isInitializing) {
-                console.log('Ignoring event during initialization:', _event)
                 return
             }
 
             // CRITICAL: Ignore INITIAL_SESSION - initAuth handles this
-            // This prevents race condition on refresh where INITIAL_SESSION overwrites SIGNED_IN
             if (_event === 'INITIAL_SESSION') {
-                console.log('Ignoring INITIAL_SESSION (handled by initAuth)')
-                return
-            }
-
-            // CRITICAL: Ignore spurious events without a session
-            // Supabase can fire SIGNED_IN before initialization completes
-            if (_event === 'SIGNED_IN' && !session) {
-                console.warn('Ignoring false SIGNED_IN event (no session)')
                 return
             }
 
             if (session?.user) {
+                // CRITICAL FIX: Skip if the user hasn't actually changed.
+                // Supabase fires TOKEN_REFRESHED, SIGNED_IN (on reconnect), etc.
+                // when the tab regains focus. These carry the same user but create
+                // new object references → useEffect([user]) re-runs → skeleton flash.
+                if (session.user.id === currentUserIdRef.current) {
+                    return
+                }
+                currentUserIdRef.current = session.user.id
                 setUser(session.user)
                 try {
                     await fetchProfile(session.user.id)
@@ -47,9 +50,11 @@ export const AuthProvider = ({ children }) => {
                     console.error("Profile fetch failed", e)
                 }
             } else {
+                currentUserIdRef.current = null
                 setUser(null)
                 setProfile(null)
                 setRole(null)
+                setTenantId(null)
             }
 
             // CRITICAL: Always set loading to false after processing auth change
@@ -63,7 +68,7 @@ export const AuthProvider = ({ children }) => {
                 if (error) throw error
 
                 if (mounted && session?.user) {
-                    console.log("Session found on mount, loading profile...")
+                    currentUserIdRef.current = session.user.id
                     setUser(session.user)
                     await fetchProfile(session.user.id)
                 }
@@ -72,7 +77,6 @@ export const AuthProvider = ({ children }) => {
             } finally {
                 // GUARANTEE: Always set loading to false, no matter what
                 if (mounted) {
-                    console.log("Auth initialization complete")
                     setLoading(false)
                     isInitializing = false // CRITICAL: Now listener can process events
                 }
@@ -111,20 +115,23 @@ export const AuthProvider = ({ children }) => {
             }
 
             if (data) {
-                console.log('Profile loaded:', data.email, 'Role:', data.role)
                 setProfile(data)
                 setRole(data.role)
+                setTenantId(data.tenant_id)
             } else {
                 console.warn('Profile not found for user:', userId)
                 setProfile(null)
                 setRole(null)
+                setTenantId(null)
             }
         } catch (error) {
-            if (error.name !== 'AbortError') {
+            const isAbort = error.name === 'AbortError' || error.message?.includes('AbortError')
+            if (!isAbort) {
                 console.error('Unexpected profile error:', error)
             }
             setProfile(null)
             setRole(null)
+            setTenantId(null)
         } finally {
             clearTimeout(timeoutId)
         }
@@ -147,6 +154,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null)
         setProfile(null)
         setRole(null)
+        setTenantId(null)
     }
 
     const refreshProfile = async () => {
@@ -159,6 +167,7 @@ export const AuthProvider = ({ children }) => {
         user,
         profile,
         role,
+        tenantId,
         loading,
         signOut,
         refreshProfile,

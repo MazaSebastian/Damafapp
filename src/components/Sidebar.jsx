@@ -2,11 +2,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, User, CreditCard, ShoppingBag, MapPin, Info, LogOut, ChevronRight, Globe } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 import { useRef, useEffect } from 'react'
 
 const Sidebar = ({ isOpen, onClose }) => {
     const { user, profile, signOut } = useAuth()
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantLogo, tenantName } = useTenant()
     const sidebarRef = useRef(null)
 
     // Handle outside click
@@ -23,15 +27,13 @@ const Sidebar = ({ isOpen, onClose }) => {
     const handleSignOut = async () => {
         await signOut()
         onClose()
-        navigate('/')
+        tenantNav.navigate('/')
     }
 
     const menuItems = [
-        { icon: User, label: 'Información de cuenta', to: '/profile' },
-        // { icon: CreditCard, label: 'Métodos de pago', action: () => { } }, // Hidden as per MP integration
-        { icon: ShoppingBag, label: 'Órdenes recientes', to: '/my-orders' },
-
-        { icon: Info, label: 'Sobre la aplicación', to: '/club-info' },
+        { icon: User, label: 'Información de cuenta', to: tenantNav.path('/profile') },
+        { icon: ShoppingBag, label: 'Órdenes recientes', to: tenantNav.path('/my-orders') },
+        { icon: Info, label: 'Sobre la aplicación', to: tenantNav.path('/club-info') },
     ]
 
     return (
@@ -60,7 +62,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         <div className="p-6 border-b border-white/5 bg-[var(--color-background)]">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
-                                    <img src="/logo-damaf.png" alt="Logo" className="w-6 h-auto" />
+                                    <img src={tenantLogo || '/logo-stacked.png'} alt="Logo" className="w-6 h-auto" />
                                 </div>
                                 <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                                     <X className="w-6 h-6 text-white" />
@@ -76,7 +78,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 <div>
                                     <h3 className="font-bold text-lg text-white">¡Bienvenido!</h3>
                                     <Link
-                                        to="/login"
+                                        to={tenantNav.path('/login')}
                                         onClick={onClose}
                                         className="text-xs text-[var(--color-secondary)] font-bold hover:underline"
                                     >
@@ -122,7 +124,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         )}
 
                         <div className="p-6 text-center">
-                            <p className="text-[10px] text-[var(--color-text-muted)]">Versión 2.1.0 • DamafAPP</p>
+                            <p className="text-[10px] text-[var(--color-text-muted)]">Versión 2.1.0 • {tenantName}</p>
                         </div>
                     </motion.div>
                 </>

@@ -3,11 +3,13 @@ import { supabase } from '../supabaseClient'
 import { Store, DollarSign } from 'lucide-react'
 import OverviewSkeleton from './skeletons/OverviewSkeleton'
 import { useStoreStatus } from '../hooks/useStoreStatus'
+import { useTenant } from '../context/TenantContext'
 import WeatherWidget from './WeatherWidget'
 import DashboardHeader from './DashboardHeader'
 
 const AdminOverview = () => {
-    const { isOpen, loading: statusLoading } = useStoreStatus()
+    const { tenantId } = useTenant()
+    const { isOpen, loading: statusLoading } = useStoreStatus(tenantId)
     const [cashStatus, setCashStatus] = useState('closed')
     const [loading, setLoading] = useState(true)
 

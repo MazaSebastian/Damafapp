@@ -3,20 +3,24 @@ import { supabase } from '../supabaseClient'
 import { MapPin, Clock, Instagram } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useStoreStatus } from '../hooks/useStoreStatus'
+import { useTenant } from '../context/TenantContext'
 
 const StoreInfoHeader = () => {
-    const { isOpen, loading: statusLoading } = useStoreStatus()
+    const { tenantId, tenantName, tenantLogo } = useTenant()
+    const { isOpen, loading: statusLoading } = useStoreStatus(tenantId)
     const [info, setInfo] = useState({
-        slogan: 'Perfectamente desubicadas.',
-        address: 'Carapachay, Vicente López',
-        schedule: 'Jueves a Domingos de 20hs a 23hs',
-        instagram: 'https://instagram.com/damafa'
+        slogan: '',
+        address: '',
+        schedule: '',
+        instagram: ''
     })
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        if (!tenantId) return
+
         const fetchInfo = async () => {
-            const { data } = await supabase.from('app_settings').select('*')
+            const { data } = await supabase.from('app_settings').select('*').eq('tenant_id', tenantId)
             if (data) {
                 const newInfo = { ...info }
                 data.forEach(item => {
@@ -32,14 +36,14 @@ const StoreInfoHeader = () => {
 
         fetchInfo()
 
-        // Realtime updates for text fields
+        // Realtime updates for text fields — scoped to tenant
         const channel = supabase
-            .channel('store_info_header')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings' }, fetchInfo)
+            .channel(`store_info_${tenantId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: `tenant_id=eq.${tenantId}` }, fetchInfo)
             .subscribe()
 
         return () => supabase.removeChannel(channel)
-    }, [])
+    }, [tenantId])
 
     if (loading || statusLoading) return <div className="h-48 animate-pulse bg-white/5 rounded-xl mb-6"></div>
 
@@ -53,7 +57,7 @@ const StoreInfoHeader = () => {
             >
                 {/* Logo Area */}
                 <div className="flex justify-center mb-2">
-                    <img src="/logo-damaf.png" alt="DAMAFAPP" className="h-20 md:h-28 w-auto drop-shadow-2xl hover:scale-105 transition-transform" />
+                    <img src={tenantLogo || '/logo-stacked.png'} alt={tenantName} className="h-20 md:h-28 w-auto drop-shadow-2xl hover:scale-105 transition-transform" />
                 </div>
 
                 <div>

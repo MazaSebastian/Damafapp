@@ -50,6 +50,17 @@ serve(async (req) => {
         // 2. Prepare items for Mercado Pago
         console.log('Order Data:', JSON.stringify(order))
 
+        // Get tenant name for branding
+        let tenantName = 'Stacked'
+        if (order.tenant_id) {
+            const { data: tenant } = await supabaseClient
+                .from('tenants')
+                .select('name')
+                .eq('id', order.tenant_id)
+                .single()
+            if (tenant?.name) tenantName = tenant.name
+        }
+
         // --- STRICT PRICE VALIDATION ---
         // Force conversion to number (Handle string "100.50", number 100.50, etc.)
         let safePrice = Number(order.total)
@@ -67,7 +78,7 @@ serve(async (req) => {
         const items = [
             {
                 id: "order-total",
-                title: `Pedido DamafAPP`,
+                title: `Pedido ${tenantName}`,
                 quantity: 1,
                 currency_id: 'ARS',
                 unit_price: safePrice // Guaranteed to be a number
@@ -81,7 +92,7 @@ serve(async (req) => {
             throw new Error('Server configuration error: Missing MP Token')
         }
 
-        const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://damafapp.vercel.app'
+        const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://stacked.com'
 
         const preferenceData = {
             items: items,
@@ -92,7 +103,7 @@ serve(async (req) => {
             },
             auto_return: "approved",
             external_reference: order_id,
-            statement_descriptor: "DAMAFAPP"
+            statement_descriptor: "STACKED"
         }
 
         const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {

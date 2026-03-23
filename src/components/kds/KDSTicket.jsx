@@ -100,15 +100,27 @@ const KDSTicket = ({ order, onAdvanceStatus }) => {
                             </span>
                             {checkedItems[item.id] && <Check className="w-6 h-6 text-green-400 flex-shrink-0" />}
                         </div>
-                        {/* Variations */}
+                        {/* Removed Ingredients - CRITICAL for kitchen */}
+                        {item.removed_ingredients?.length > 0 && (
+                            <div className="mt-2 pl-3 border-l-4 border-red-500/50 space-y-1">
+                                {item.removed_ingredients.map((ing, idx) => (
+                                    <div key={idx} className="text-lg text-red-400 font-bold">
+                                        🚫 SIN {ing.toUpperCase()}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {/* Extras / Modifiers */}
                         {item.modifiers?.length > 0 && (
                             <div className="text-lg text-white/90 pl-3 border-l-4 border-white/10 mt-2 space-y-1">
                                 {item.modifiers.map((m, idx) => (
-                                    <div key={idx}>• {m.name}</div>
+                                    <div key={idx}>+ {m.name} {m.quantity > 1 ? `(x${m.quantity})` : ''}</div>
                                 ))}
                             </div>
                         )}
                         {item.side_info && <div className="text-lg text-yellow-400/90 font-medium pl-3 mt-2 flex items-center gap-2">🍟 {item.side_info.name}</div>}
+                        {item.drink_info && <div className="text-lg text-blue-400/90 font-medium pl-3 mt-2 flex items-center gap-2">🥤 {item.drink_info.name}</div>}
+                        {item.notes && <div className="text-base text-orange-400 italic pl-3 mt-2">📝 {item.notes}</div>}
                     </div>
                 ))}
             </div>

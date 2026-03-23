@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Plus, Trash2, Image, Type, Link as LinkIcon, Loader2, Video, Edit, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../context/TenantContext'
 
 const NewsManager = () => {
+    const { tenantId } = useTenant()
     const [news, setNews] = useState([])
     const [loading, setLoading] = useState(true)
     const [editingId, setEditingId] = useState(null)
@@ -95,7 +97,7 @@ const NewsManager = () => {
             }
         } else {
             // Create new
-            const { data, error } = await supabase.from('news_events').insert([formData]).select()
+            const { data, error } = await supabase.from('news_events').insert([{ ...formData, tenant_id: tenantId }]).select()
 
             if (!error && data) {
                 setNews([data[0], ...news])

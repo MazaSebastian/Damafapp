@@ -3,9 +3,13 @@ import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { supabase } from '../supabaseClient'
 import { ArrowRight, Loader2, Mail, Lock } from 'lucide-react'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const LoginPage = () => {
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantLogo, tenantName } = useTenant()
     const [loading, setLoading] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -33,19 +37,36 @@ const LoginPage = () => {
             const role = profile?.role
 
             if (role === 'admin' || role === 'owner') {
-                navigate('/admin')
+                tenantNav.navigate('/admin')
             } else if (role === 'kitchen') {
-                navigate('/kds')
+                tenantNav.navigate('/kds')
             } else if (role === 'rider' || role === 'driver') {
-                navigate('/rider')
+                tenantNav.navigate('/rider')
             } else {
-                navigate('/')
+                tenantNav.navigate('/')
             }
         } catch (err) {
             setError(err.message)
             toast.error('Error: ' + err.message)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleForgotPassword = async () => {
+        if (!email.trim()) {
+            toast.warning('Ingresa tu email primero para recuperar tu contraseña')
+            return
+        }
+        const toastId = toast.loading('Enviando link de recuperación...')
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}${tenantNav.path('/login')}`
+            })
+            if (error) throw error
+            toast.success('¡Revisá tu email! Te enviamos un link para restablecer tu contraseña.', { id: toastId, duration: 6000 })
+        } catch (err) {
+            toast.error('Error: ' + err.message, { id: toastId })
         }
     }
 
@@ -57,9 +78,9 @@ const LoginPage = () => {
             <div className="z-10 w-full max-w-sm">
                 {/* Brand Logo Section */}
                 <div className="flex flex-col items-center mb-8">
-                    <img src="/logo-damaf.png" alt="DAMAFAPP" className="h-24 w-auto drop-shadow-2xl mb-4 hover:scale-105 transition-transform" />
+                    <img src={tenantLogo || '/logo-stacked.png'} alt={tenantName} className="h-24 w-auto drop-shadow-2xl mb-4 hover:scale-105 transition-transform" />
                     <p className="text-[var(--color-text-muted)] text-center max-w-xs">
-                        ¡Qué bueno verte de nuevo! ¿Sale bajón? 🍔
+                        ¡Qué bueno verte de nuevo! 👋
                     </p>
                 </div>
 
@@ -108,35 +129,26 @@ const LoginPage = () => {
                                 </>
                             )}
                         </button>
+
+                        <button
+                            type="button"
+                            onClick={handleForgotPassword}
+                            className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors mt-2 text-right w-full"
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </button>
                     </form>
 
                     <div className="mt-8 text-center pt-6 border-t border-white/5">
                         <p className="text-[var(--color-text-muted)] text-sm">
                             ¿Primera vez por aquí?{' '}
                             <Link
-                                to="/register"
+                                to={tenantNav.path('/register')}
                                 className="text-[var(--color-secondary)] font-bold hover:underline ml-1"
                             >
                                 Regístrate
                             </Link>
                         </p>
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                const toastId = toast.loading("Probando conexión...")
-                                try {
-                                    const { count, error } = await supabase.from('app_settings').select('count', { count: 'exact', head: true })
-                                    if (error) throw error
-                                    toast.success("Conexión exitosa a Supabase", { id: toastId })
-                                } catch (e) {
-                                    console.error(e)
-                                    toast.error("Error de conexión: " + e.message, { id: toastId })
-                                }
-                            }}
-                            className="text-xs text-gray-600 mt-4 hover:text-gray-400 underline"
-                        >
-                            Probar Conexión
-                        </button>
                     </div>
                 </div>
             </div>

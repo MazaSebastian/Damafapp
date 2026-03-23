@@ -1,99 +1,199 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { LanguageProvider } from './context/LanguageContext'
 import { SettingsProvider } from './context/SettingsContext'
+import { TenantProvider } from './context/TenantContext'
 import { AnimatePresence } from 'framer-motion'
+import { ThemeProvider } from './context/ThemeContext'
 import PageTransition from './components/PageTransition'
 import ProtectedRoute from './components/ProtectedRoute'
+import GlobalErrorBoundary from './components/GlobalErrorBoundary'
+import { Loader2 } from 'lucide-react'
 
+// Lightweight pages — loaded eagerly
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import AdminDashboard from './pages/AdminDashboard'
 import ClubInfoPage from './pages/ClubInfoPage'
-import RewardsStorePage from './pages/RewardsStorePage'
 import MenuPage from './pages/MenuPage'
-import CheckoutPage from './pages/CheckoutPage'
-import MyOrdersPage from './pages/MyOrdersPage'
 import CouponsPage from './pages/CouponsPage'
-import ProfilePage from './pages/ProfilePage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
-import DeliveryDashboard from './components/DeliveryDashboard'
-import RiderInterface from './components/RiderInterface'
-import { CartProvider } from './context/CartContext'
-import KDSPage from './pages/KDSPage'
 import CustomerDisplayPage from './pages/CustomerDisplayPage'
-import POSPage from './pages/POSPage'
+import NotFoundPage from './pages/NotFoundPage'
+import { CartProvider } from './context/CartContext'
 import useFCM from './hooks/useFCM.jsx'
+import IOSInstallPrompt from './components/pwa/IOSInstallPrompt'
+import NotificationModal from './components/NotificationModal'
 
-const AnimatedRoutes = () => {
+// Heavy pages — lazy loaded for better initial bundle
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
+const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const RewardsStorePage = lazy(() => import('./pages/RewardsStorePage'))
+const KDSPage = lazy(() => import('./pages/KDSPage'))
+const POSPage = lazy(() => import('./pages/POSPage'))
+const DeliveryDashboard = lazy(() => import('./components/DeliveryDashboard'))
+const RiderInterface = lazy(() => import('./components/RiderInterface'))
+
+// Suspense fallback
+const LazyFallback = () => (
+  <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
+    <Loader2 className="w-10 h-10 animate-spin text-[var(--color-primary)]" />
+  </div>
+)
+
+/**
+ * Routes within a tenant context (/:tenantSlug/*)
+ * All routes here have access to useTenant()
+ */
+const TenantRoutes = () => {
   const location = useLocation()
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/kds" element={
-          <ProtectedRoute role={['admin', 'kitchen']}>
-            <KDSPage />
-          </ProtectedRoute>
-        } />
+      <Suspense fallback={<LazyFallback />}>
+        <Routes location={location} key={location.pathname}>
+          {/* Protected: Kitchen Display */}
+          <Route path="/kds" element={
+            <ProtectedRoute role={['admin', 'owner', 'kitchen']}>
+              <KDSPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path="/display/client" element={<CustomerDisplayPage />} />
+          {/* Public: Customer-facing display */}
+          <Route path="/display/client" element={<CustomerDisplayPage />} />
 
-        <Route path="/delivery" element={
-          <ProtectedRoute role="admin">
-            <DeliveryDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/rider" element={
-          <RiderInterface />
-        } />
+          {/* Protected: Delivery management */}
+          <Route path="/delivery" element={
+            <ProtectedRoute role={['admin', 'owner']}>
+              <DeliveryDashboard />
+            </ProtectedRoute>
+          } />
 
-        {/* Specific Admin Routes first */}
-        <Route path="/admin/pos" element={
-          <ProtectedRoute role={['admin', 'owner']}>
-            <POSPage />
-          </ProtectedRoute>
-        } />
+          {/* Protected: Rider interface */}
+          <Route path="/rider" element={
+            <ProtectedRoute role={['admin', 'owner', 'rider', 'driver']}>
+              <RiderInterface />
+            </ProtectedRoute>
+          } />
 
-        {/* General Admin Dashboard last (catch-all for /admin) */}
-        <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
+          {/* Protected: POS (specific admin route first) */}
+          <Route path="/admin/pos" element={
+            <ProtectedRoute role={['admin', 'owner']}>
+              <POSPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
-        <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
-        <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
-        <Route path="/club-info" element={<PageTransition><ClubInfoPage /></PageTransition>} />
-        <Route path="/rewards" element={<PageTransition><RewardsStorePage /></PageTransition>} />
-        <Route path="/menu" element={<PageTransition><MenuPage /></PageTransition>} />
-        <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
-        <Route path="/my-orders" element={<PageTransition><MyOrdersPage /></PageTransition>} />
-        <Route path="/coupons" element={<PageTransition><CouponsPage /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
-        <Route path="/privacy" element={<PageTransition><PrivacyPolicyPage /></PageTransition>} />
-        <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
-      </Routes >
-    </AnimatePresence >
+          {/* Protected: Admin Dashboard */}
+          <Route path="/admin" element={
+            <ProtectedRoute role={['admin', 'owner']}>
+              <PageTransition><AdminDashboard /></PageTransition>
+            </ProtectedRoute>
+          } />
+
+          {/* Public pages */}
+          <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
+          <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+          <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
+          <Route path="/club-info" element={<PageTransition><ClubInfoPage /></PageTransition>} />
+          <Route path="/rewards" element={<PageTransition><RewardsStorePage /></PageTransition>} />
+          <Route path="/menu" element={<PageTransition><MenuPage /></PageTransition>} />
+          <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
+          <Route path="/my-orders" element={<PageTransition><MyOrdersPage /></PageTransition>} />
+          <Route path="/coupons" element={<PageTransition><CouponsPage /></PageTransition>} />
+          <Route path="/profile" element={<PageTransition><ProfilePage /></PageTransition>} />
+          <Route path="/privacy" element={<PageTransition><PrivacyPolicyPage /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
+
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </AnimatePresence>
   )
 }
 
-
-import IOSInstallPrompt from './components/pwa/IOSInstallPrompt';
-import NotificationModal from './components/NotificationModal';
+/**
+ * Wrapper for tenant routes — provides TenantContext and all
+ * nested providers that depend on tenant (Settings, Language, Cart)
+ */
+const TenantApp = () => {
+  return (
+    <GlobalErrorBoundary>
+      <TenantProvider>
+        <ThemeProvider>
+          <SettingsProvider>
+            <AuthProvider>
+              <LanguageProvider>
+                <CartProvider>
+                  <TenantAppContent />
+                </CartProvider>
+              </LanguageProvider>
+            </AuthProvider>
+          </SettingsProvider>
+        </ThemeProvider>
+      </TenantProvider>
+    </GlobalErrorBoundary>
+  )
+}
 
 // Wrapper to use hooks that depend on contexts
-const AppContent = () => {
+const TenantAppContent = () => {
   // Initialize FCM
   useFCM();
 
   return (
     <>
-      <AnimatedRoutes />
+      <TenantRoutes />
       <IOSInstallPrompt />
       <NotificationModal />
     </>
   );
+}
+
+/**
+ * Landing page for root URL (/)
+ * This is the Stacked platform page — NOT a tenant page.
+ * Each tenant has their own path: /damafa, /pepito, etc.
+ */
+const StackedLanding = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center p-6 text-center">
+      {/* Logo */}
+      <img
+        src="/logo-stacked.png"
+        alt="Stacked"
+        className="w-28 h-28 object-contain mb-8 drop-shadow-2xl"
+      />
+
+      {/* Hero */}
+      <h1 className="text-5xl font-black text-white mb-3 tracking-tight">
+        Stacked
+      </h1>
+      <p className="text-lg text-white/60 max-w-md mb-10">
+        La plataforma todo-en-uno para tu restaurante. Pedidos, menú digital, delivery, facturación y más.
+      </p>
+
+      {/* CTA */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <a
+          href="mailto:contacto@stacked.com"
+          className="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all hover:scale-105 active:scale-95"
+        >
+          Quiero Stacked para mi local
+        </a>
+      </div>
+
+      {/* Footer */}
+      <p className="text-white/30 text-xs mt-16">
+        © {new Date().getFullYear()} Stacked. Todos los derechos reservados.
+      </p>
+    </div>
+  )
 }
 
 function App() {
@@ -206,15 +306,13 @@ function App() {
           },
         }}
       />
-      <SettingsProvider>
-        <AuthProvider>
-          <LanguageProvider>
-            <CartProvider>
-              <AppContent />
-            </CartProvider>
-          </LanguageProvider>
-        </AuthProvider>
-      </SettingsProvider>
+      <Routes>
+        {/* Root landing page */}
+        <Route path="/" element={<StackedLanding />} />
+
+        {/* Tenant-scoped routes: /:tenantSlug/* */}
+        <Route path="/:tenantSlug/*" element={<TenantApp />} />
+      </Routes>
     </BrowserRouter>
   )
 }

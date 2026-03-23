@@ -6,10 +6,14 @@ import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { CouponSkeleton } from '../components/skeletons/CouponSkeleton'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const CouponsPage = () => {
     const { user, loading: authLoading } = useAuth()
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantId } = useTenant()
     const [coupons, setCoupons] = useState([])
     const [loading, setLoading] = useState(true)
     const [copied, setCopied] = useState(null) // Added state
@@ -32,6 +36,7 @@ const CouponsPage = () => {
                 .from('coupons')
                 .select('*, products(name)')
                 .eq('is_active', true)
+                .eq('tenant_id', tenantId)
 
             if (error) throw error
 
@@ -57,7 +62,7 @@ const CouponsPage = () => {
         return (
             <div className="min-h-screen bg-[var(--color-background)] pb-24 flex flex-col">
                 <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
-                    <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                    <Link to={tenantNav.path('/')} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                         <ArrowLeft className="w-6 h-6" />
                     </Link>
                     <h1 className="ml-2 font-bold text-lg">Cupones</h1>
@@ -75,7 +80,7 @@ const CouponsPage = () => {
                         </p>
                     </div>
                     <Link
-                        to="/login"
+                        to={tenantNav.path('/login')}
                         className="w-full max-w-xs bg-[var(--color-primary)] text-white font-bold py-4 rounded-xl shadow-lg shadow-purple-900/20 hover:bg-purple-700 transition-all active:scale-95"
                     >
                         Iniciar Sesión / Registrarme
@@ -89,7 +94,7 @@ const CouponsPage = () => {
         <div className="min-h-screen bg-[var(--color-background)] pb-24">
             {/* Header */}
             <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
-                <Link to="/" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                <Link to={tenantNav.path('/')} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6" />
                 </Link>
                 <h1 className="ml-2 font-bold text-lg">Cupones Disponibles</h1>

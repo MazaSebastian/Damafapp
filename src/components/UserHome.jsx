@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { UtensilsCrossed, Loader2 } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
 import LoyaltyBanner from './LoyaltyBanner'
@@ -15,6 +17,8 @@ import StoreInfoHeader from './StoreInfoHeader'
 const UserHome = () => {
     const { user, profile, role, signOut } = useAuth()
     const { isHydrated } = useSettings()
+    const tenantNav = useTenantNav()
+    const { tenantId } = useTenant()
     const [news, setNews] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -31,10 +35,10 @@ const UserHome = () => {
             const timeoutId = setTimeout(() => controller.abort(), 3500)
 
             try {
-                console.log('Fetching news...')
                 const { data: newsData, error: newsError } = await supabase
                     .from('news_events')
                     .select('*')
+                    .eq('tenant_id', tenantId)
                     .order('created_at', { ascending: false })
                     .abortSignal(controller.signal)
 
@@ -44,7 +48,8 @@ const UserHome = () => {
                     setNews(newsData)
                 }
             } catch (error) {
-                if (error.name !== 'AbortError') {
+                const isAbort = error.name === 'AbortError' || error.message?.includes('AbortError')
+                if (!isAbort) {
                     console.error('Error fetching news:', error)
                 }
             } finally {
@@ -67,7 +72,7 @@ const UserHome = () => {
             {/* Top Header */}
             <header className="px-4 py-6 flex justify-between items-center relative z-10">
                 <div className="flex items-center gap-3">
-                    <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <Link to={tenantNav.path('/profile')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                         <div className="w-10 h-10 rounded-full bg-[var(--color-surface)] border border-white/10 flex items-center justify-center text-xl">
                             {profile?.full_name ? profile.full_name[0] : '👤'}
                         </div>
@@ -85,7 +90,7 @@ const UserHome = () => {
                 {/* Admin Link or Sign Out */}
                 <div className="flex gap-2 items-center relative z-20">
                     {role === 'admin' && (
-                        <Link to="/admin" className="text-white text-[10px] font-bold px-3 py-1.5 rounded-full bg-[var(--color-primary)] hover:bg-purple-700 transition-colors border border-transparent uppercase tracking-wider">
+                        <Link to={tenantNav.path('/admin')} className="text-white text-[10px] font-bold px-3 py-1.5 rounded-full bg-[var(--color-primary)] hover:bg-purple-700 transition-colors border border-transparent uppercase tracking-wider">
                             Admin
                         </Link>
                     )}

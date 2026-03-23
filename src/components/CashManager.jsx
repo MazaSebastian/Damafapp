@@ -3,8 +3,10 @@ import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
 import { DollarSign, Lock, Unlock, TrendingUp, TrendingDown, RefreshCcw, Save, Trash2, Edit2, X } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
+import { useTenant } from '../context/TenantContext'
 
 const CashManager = () => {
+    const { tenantId } = useTenant()
     const [loading, setLoading] = useState(true)
     const [currentRegister, setCurrentRegister] = useState(null)
 
@@ -44,6 +46,7 @@ const CashManager = () => {
                 .from('cash_registers')
                 .select('*')
                 .eq('status', 'open')
+                .eq('tenant_id', tenantId)
                 .single()
 
             if (data) {
@@ -126,7 +129,8 @@ const CashManager = () => {
                 .insert([{
                     opening_amount: openingAmount,
                     user_id: user.id,
-                    status: 'open'
+                    status: 'open',
+                    tenant_id: tenantId
                 }])
                 .select()
                 .single()
@@ -184,7 +188,8 @@ const CashManager = () => {
                     register_id: currentRegister.id,
                     amount: expenseAmount,
                     type: type,
-                    description: expenseDescription
+                    description: expenseDescription,
+                    tenant_id: tenantId
                 }])
 
             if (error) throw error

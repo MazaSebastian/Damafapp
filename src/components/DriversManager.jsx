@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Plus, Search, MapPin, Phone, MessageCircle, Truck, Trash2, Edit, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../context/TenantContext'
 
 const DriversManager = () => {
+    const { tenantId } = useTenant()
     const [drivers, setDrivers] = useState([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
@@ -36,7 +38,7 @@ const DriversManager = () => {
 
         const { error } = await supabase
             .from('drivers')
-            .insert([{ name: newDriver.name, phone: newDriver.phone, status: 'active' }])
+            .insert([{ name: newDriver.name, phone: newDriver.phone, status: 'active', tenant_id: tenantId }])
 
         if (error) {
             toast.error('Error al crear repartidor')

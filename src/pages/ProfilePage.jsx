@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { ArrowLeft, Loader2, Home, User, Star, Gift, LogIn, Bell, MapPin } from 'lucide-react'
+import { ArrowLeft, Loader2, Home, User, Star, Gift, LogIn, Bell, MapPin, LogOut } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { countryCodes } from '../utils/countryCodes'
 import { requestForToken } from '../services/messaging'
 import DeliveryMap from '../components/DeliveryMap'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const ProfilePage = () => {
-    const { user } = useAuth()
+    const { user, signOut } = useAuth()
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantLogo, tenantName } = useTenant()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [showMap, setShowMap] = useState(false) // Toggle Map
@@ -141,7 +145,7 @@ const ProfilePage = () => {
                     <div className="flex-1 text-center pr-2">
                         <span className="font-bold text-lg">Mi Cuenta</span>
                     </div>
-                    <Link to="/" className="p-2 -mr-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                    <Link to={tenantNav.path('/')} className="p-2 -mr-2 text-white hover:bg-white/10 rounded-full transition-colors">
                         <Home className="w-6 h-6 text-[var(--color-primary)]" />
                     </Link>
                 </header>
@@ -178,19 +182,19 @@ const ProfilePage = () => {
                     </div>
 
                     <div className="w-full space-y-3">
-                        <Link to="/register" className="block w-full bg-[var(--color-secondary)] text-white font-black text-lg py-3.5 rounded-full shadow-lg hover:bg-orange-600 transition-transform active:scale-95">
+                        <Link to={tenantNav.path('/register')} className="block w-full bg-[var(--color-secondary)] text-white font-black text-lg py-3.5 rounded-full shadow-lg hover:bg-orange-600 transition-transform active:scale-95">
                             Crear Cuenta
                         </Link>
-                        <Link to="/login" className="block w-full bg-transparent border border-white/10 text-white font-bold text-lg py-3.5 rounded-full hover:bg-white/5 transition-colors">
+                        <Link to={tenantNav.path('/login')} className="block w-full bg-transparent border border-white/10 text-white font-bold text-lg py-3.5 rounded-full hover:bg-white/5 transition-colors">
                             Iniciar Sesión
                         </Link>
                     </div>
 
                     <div className="mt-12 space-y-4 border-t border-white/5 pt-4 w-full">
-                        <Link to="/privacy" className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
+                        <Link to={tenantNav.path('/privacy')} className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
                             Política de privacidad <ArrowLeft className="w-4 h-4 rotate-180" />
                         </Link>
-                        <Link to="/terms" className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
+                        <Link to={tenantNav.path('/terms')} className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
                             Términos de servicio <ArrowLeft className="w-4 h-4 rotate-180" />
                         </Link>
                     </div>
@@ -207,9 +211,9 @@ const ProfilePage = () => {
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div className="flex-1 text-center pr-2">
-                    <img src="/logo-damaf.png" alt="Damaf Logo" className="h-10 w-auto mx-auto drop-shadow-md" />
+                    <img src={tenantLogo || '/logo-stacked.png'} alt={tenantName} className="h-10 w-auto mx-auto drop-shadow-md" />
                 </div>
-                <Link to="/" className="p-2 -mr-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                <Link to={tenantNav.path('/')} className="p-2 -mr-2 text-white hover:bg-white/10 rounded-full transition-colors">
                     <Home className="w-6 h-6 text-[var(--color-primary)]" />
                 </Link>
             </header>
@@ -373,7 +377,6 @@ const ProfilePage = () => {
 
                         {/* Notification Permission Button */}
                         <div className="pt-4 border-t border-white/5">
-                            <div className="text-[10px] text-gray-600 font-mono mb-2 text-center">Debug ID: {user?.id || 'NULL'}</div>
                             <button
                                 type="button"
                                 onClick={async () => {
@@ -412,15 +415,35 @@ const ProfilePage = () => {
                                 Activa las notificaciones para saber cuando tu pedido esté listo.
                             </p>
                         </div>
+
+                        {/* Logout Button */}
+                        <div className="pt-4 border-t border-white/5">
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const toastId = toast.loading('Cerrando sesión...')
+                                    try {
+                                        await signOut()
+                                        toast.dismiss(toastId)
+                                    } catch (error) {
+                                        toast.error('Error al salir', { id: toastId })
+                                    }
+                                }}
+                                className="w-full flex items-center justify-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 font-bold text-sm py-3 rounded-xl hover:bg-red-500/20 transition-colors"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Cerrar Sesión
+                            </button>
+                        </div>
                     </form>
                 )}
 
                 {/* Footer Links */}
                 <div className="mt-8 space-y-4 border-t border-white/5 pt-4">
-                    <Link to="/privacy" className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
+                    <Link to={tenantNav.path('/privacy')} className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
                         Política de privacidad <ArrowLeft className="w-4 h-4 rotate-180" />
                     </Link>
-                    <Link to="/terms" className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
+                    <Link to={tenantNav.path('/terms')} className="w-full flex justify-between items-center text-sm font-bold text-white/80 hover:text-white py-2">
                         Términos de servicio <ArrowLeft className="w-4 h-4 rotate-180" />
                     </Link>
                 </div>

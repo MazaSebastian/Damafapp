@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Plus, Trash2, Image, Type, Loader2, Star, Video, Edit, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../context/TenantContext'
 
 const RewardsManager = () => {
+    const { tenantId } = useTenant()
     const [rewards, setRewards] = useState([])
     const [loading, setLoading] = useState(true)
     const [editingId, setEditingId] = useState(null)
@@ -91,7 +93,7 @@ const RewardsManager = () => {
             }
         } else {
             // Create
-            const { data, error } = await supabase.from('rewards').insert([formData]).select()
+            const { data, error } = await supabase.from('rewards').insert([{ ...formData, tenant_id: tenantId }]).select()
 
             if (!error && data) {
                 setRewards([...rewards, data[0]].sort((a, b) => a.cost - b.cost))

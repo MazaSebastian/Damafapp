@@ -5,8 +5,10 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import LiveFleetMap from './LiveFleetMap'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const DeliveryDashboard = () => {
+    const tenantNav = useTenantNav()
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -131,7 +133,7 @@ const DeliveryDashboard = () => {
             {/* Header */}
             <header className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
                 <div className="flex items-center gap-4">
-                    <Link to="/admin" className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                    <Link to={tenantNav.path('/admin')} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                         <ArrowLeft className="w-6 h-6" />
                     </Link>
                     <div>

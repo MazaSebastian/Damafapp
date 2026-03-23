@@ -3,9 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2, Plus, Search, Loader2, Save } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
+import { useTenant } from '../context/TenantContext'
 import OrderModal from './OrderModal'
 
 const EditOrderModal = ({ isOpen, onClose, order, onUpdate }) => {
+    const { tenantId } = useTenant()
     const [loading, setLoading] = useState(false)
     const [products, setProducts] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
@@ -79,6 +81,7 @@ const EditOrderModal = ({ isOpen, onClose, order, onUpdate }) => {
             // 1. Insert into DB
             const newItemPayload = {
                 order_id: order.id,
+                tenant_id: tenantId,
                 product_id: customItem.id,
                 quantity: customItem.quantity,
                 unit_price: customItem.price,
@@ -186,9 +189,19 @@ const EditOrderModal = ({ isOpen, onClose, order, onUpdate }) => {
                                     <div className="text-xs text-[var(--color-text-muted)]">
                                         ${item.price_at_time}
                                     </div>
+                                    {/* Removed Ingredients */}
+                                    {item.removed_ingredients?.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {item.removed_ingredients.map((ing, i) => (
+                                                <span key={i} className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold">
+                                                    Sin {ing}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                     {/* Modifiers display */}
                                     {item.modifiers && item.modifiers.length > 0 && (
-                                        <div className="text-[10px] text-[var(--color-text-muted)] pl-2 border-l border-white/10 mt-1">
+                                        <div className="text-[10px] text-emerald-400/70 pl-2 border-l border-white/10 mt-1">
                                             {item.modifiers.map((m, i) => (
                                                 <div key={i}>+ {m.quantity > 1 ? `(x${m.quantity}) ` : ''}{m.name}</div>
                                             ))}

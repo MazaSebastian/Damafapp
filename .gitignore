@@ -28,3 +28,7 @@ dist-ssr
 # Secrets
 service_account_setup.json
 supabase/functions/push/service_account_setup.json
+certs/
+
+# Legacy Archive
+_archive/

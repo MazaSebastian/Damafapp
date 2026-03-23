@@ -9,7 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-        storageKey: 'damafapp-auth-v2', // Explicit key to version-break old bad states
+        storageKey: 'stacked-auth-v1', // Version-break to new platform identity
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true

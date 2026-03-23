@@ -1,7 +1,9 @@
 import { Star, Trophy, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTenant } from '../context/TenantContext'
 
 const LockedLoyaltyBanner = () => {
+    const { tenantName } = useTenant()
     return (
         <div className="relative mb-6 group cursor-pointer">
             {/* The "Card" - Blurred and Grayscale */}
@@ -53,7 +55,7 @@ const LockedLoyaltyBanner = () => {
                     <Lock className="w-6 h-6 text-orange-500" />
                 </div>
 
-                <h3 className="font-bold text-lg text-white mb-1 drop-shadow-md">DAMAFAPP <span className="text-orange-500">CLUB</span></h3>
+                <h3 className="font-bold text-lg text-white mb-1 drop-shadow-md">{tenantName?.toUpperCase()} <span className="text-orange-500">CLUB</span></h3>
                 <p className="text-sm text-gray-200 mb-3 max-w-[80%] font-medium drop-shadow-md">
                     Registrate para desbloquear tus estrellas, subir de nivel y canjear premios.
                 </p>

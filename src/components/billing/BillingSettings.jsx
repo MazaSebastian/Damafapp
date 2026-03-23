@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Save, Upload, AlertTriangle, ShieldCheck, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../supabaseClient';
+import { useTenant } from '../../context/TenantContext';
 
 const BillingSettings = () => {
+    const { tenantId } = useTenant();
     const [isLoading, setIsLoading] = useState(false);
     const [cuit, setCuit] = useState('');
     const [salesPoint, setSalesPoint] = useState('');
@@ -158,7 +160,8 @@ const BillingSettings = () => {
                 tax_condition: taxCondition,
                 phone: phone,
                 email: email,
-                is_active: true
+                is_active: true,
+                tenant_id: tenantId
             };
 
             let saveError;

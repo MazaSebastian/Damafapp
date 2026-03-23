@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { UserPlus, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const GuestAlertModal = ({ isOpen, onClose, onContinueAsGuest }) => {
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
 
     if (!isOpen) return null
 
@@ -47,7 +49,7 @@ const GuestAlertModal = ({ isOpen, onClose, onContinueAsGuest }) => {
 
                         <div className="w-full space-y-3 pt-2">
                             <button
-                                onClick={() => navigate('/register')}
+                                onClick={() => tenantNav.navigate('/register')}
                                 className="w-full bg-[var(--color-primary)] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-purple-900/20 active:scale-95 transition-all"
                             >
                                 Sí, Registrarme

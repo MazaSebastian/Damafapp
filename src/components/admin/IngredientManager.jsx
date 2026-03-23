@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
 import { Plus, Trash2, Edit2, Save, X, AlertTriangle, Package, History } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../../context/TenantContext'
 
 const IngredientManager = () => {
+    const { tenantId } = useTenant()
     const [ingredients, setIngredients] = useState([])
     const [loading, setLoading] = useState(true)
     const [isCreating, setIsCreating] = useState(false)
@@ -49,7 +51,8 @@ const IngredientManager = () => {
                 name: formData.name,
                 unit: formData.unit,
                 stock: parseFloat(formData.stock),
-                min_stock: parseFloat(formData.min_stock)
+                min_stock: parseFloat(formData.min_stock),
+                tenant_id: tenantId
             }
 
             if (editingId) {

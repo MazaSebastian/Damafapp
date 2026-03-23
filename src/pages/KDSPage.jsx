@@ -4,11 +4,15 @@ import { Loader2, ArrowLeft, X, LogOut } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import KDSTicket from '../components/kds/KDSTicket'
-import useSound from 'use-sound' // Optional: Install if we want sounds, generic notification for now
+import useSound from 'use-sound'
 import { useAuth } from '../context/AuthContext'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const KDSPage = () => {
     const { signOut } = useAuth()
+    const tenantNav = useTenantNav()
+    const { tenantLogo, tenantName } = useTenant()
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [newOrderAlert, setNewOrderAlert] = useState(null) // For visual alert modal
@@ -259,11 +263,11 @@ const KDSPage = () => {
             {/* Top Bar */}
             <div className="bg-[var(--color-surface)]/90 backdrop-blur-xl px-6 py-5 flex justify-between items-center border-b border-white/5 z-10 shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
                 <div className="flex items-center gap-4">
-                    <Link to="/admin" className="p-2.5 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-200 border border-white/5 hover:border-white/10 hover:scale-105">
+                    <Link to={tenantNav.path('/admin')} className="p-2.5 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-200 border border-white/5 hover:border-white/10 hover:scale-105">
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div className="flex items-center gap-3">
-                        <img src="/logo-damaf.png" alt="DamafAPP" className="h-10 w-auto object-contain" />
+                        <img src={tenantLogo || '/logo-stacked.png'} alt={tenantName} className="h-10 w-auto object-contain" />
                         <span className="px-3 py-1 bg-[var(--color-surface)] border border-white/10 rounded-full text-xs font-bold tracking-widest text-[var(--color-secondary)] uppercase">
                             KDS / COCINA
                         </span>

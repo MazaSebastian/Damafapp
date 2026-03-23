@@ -1,26 +1,31 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 
-export const useStoreStatus = () => {
+export const useStoreStatus = (tenantId) => {
     const [isOpen, setIsOpen] = useState(false) // Default closed for safety
     const [statusText, setStatusText] = useState('Cerrado')
     const [loading, setLoading] = useState(true)
     const [schedule, setSchedule] = useState({})
 
     useEffect(() => {
+        if (!tenantId) return
+
         // Initial Fetch
         fetchStatus()
 
-        // Realtime Subscription
+        // Realtime Subscription — scoped to this tenant
         const channel = supabase
-            .channel('store_status_auto')
+            .channel(`store_status_${tenantId}`)
             .on('postgres_changes', {
                 event: 'UPDATE',
                 schema: 'public',
                 table: 'app_settings',
-                filter: "key=eq.store_schedule"
-            }, () => {
-                fetchStatus()
+                filter: `key=eq.store_schedule`
+            }, (payload) => {
+                // Double-check tenant_id in payload to avoid cross-tenant leaks
+                if (payload.new?.tenant_id === tenantId) {
+                    fetchStatus()
+                }
             })
             .subscribe()
 
@@ -33,14 +38,16 @@ export const useStoreStatus = () => {
             supabase.removeChannel(channel)
             clearInterval(interval)
         }
-    }, [schedule])
+    }, [schedule, tenantId])
 
     const fetchStatus = async () => {
+        if (!tenantId) return
         try {
             const { data } = await supabase
                 .from('app_settings')
                 .select('value')
                 .eq('key', 'store_schedule')
+                .eq('tenant_id', tenantId)
                 .single()
 
             if (data) {

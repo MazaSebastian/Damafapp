@@ -5,13 +5,15 @@ import OrderModal from './OrderModal'
 import { useStoreStatus } from '../hooks/useStoreStatus'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
+import { useTenant } from '../context/TenantContext'
 import GuestAlertModal from './GuestAlertModal'
 
 const FloatingOrderButton = () => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [showGuestAlert, setShowGuestAlert] = useState(false)
     const navigate = useNavigate()
-    const { isOpen, loading } = useStoreStatus()
+    const { tenantId } = useTenant()
+    const { isOpen, loading } = useStoreStatus(tenantId)
     const { user } = useAuth()
 
     const handleClick = () => {

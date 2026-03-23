@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 import { ArrowLeft, Trash2, MapPin, Car, Info, AlertTriangle, Play, Pause, RotateCcw, Plus, ShoppingBag, ArrowRight, Loader2, CreditCard, Banknote, Bike, ChevronRight, Store, X, Copy } from 'lucide-react'
 import { initMercadoPago } from '../payment/MercadoPagoConfig'
 import DeliveryMap from '../components/DeliveryMap'
@@ -16,9 +18,11 @@ import OrderApprovalModal from '../components/checkout/OrderApprovalModal'
 
 const CheckoutPage = () => {
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantId } = useTenant()
     const { cart, removeFromCart, total, clearCart } = useCart()
     const { user, profile, refreshProfile } = useAuth()
-    const { isOpen, loading: statusLoading } = useStoreStatus()
+    const { isOpen, loading: statusLoading } = useStoreStatus(tenantId)
     const [loading, setLoading] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [paymentMethod, setPaymentMethod] = useState('mercadopago') // 'mercadopago' | 'cash'
@@ -50,7 +54,7 @@ const CheckoutPage = () => {
 
     useEffect(() => {
         const fetchSettings = async () => {
-            const { data } = await supabase.from('app_settings').select('*')
+            const { data } = await supabase.from('app_settings').select('*').eq('tenant_id', tenantId)
             if (data) {
                 const newSettings = {}
                 data.forEach(item => {
@@ -70,7 +74,7 @@ const CheckoutPage = () => {
             }
         }
         fetchSettings()
-    }, [])
+    }, [tenantId])
 
     const applyCoupon = async () => {
         if (!couponCode) return
@@ -173,10 +177,7 @@ const CheckoutPage = () => {
     const [pendingOrderId, setPendingOrderId] = useState(null)
 
     const processOrder = async (confirmedPhone = null, confirmedName = null) => {
-        console.log('🔥🔥🔥 PROCESS ORDER CALLED! Phone:', confirmedPhone, 'Name:', confirmedName)
-
         const { data: { user } } = await supabase.auth.getUser()
-        console.log('🔥 User fetched:', user?.id, user?.email)
 
         // Validation logic
         const userPhone = profile?.phone || user?.phone || user?.user_metadata?.phone || confirmedPhone
@@ -192,7 +193,7 @@ const CheckoutPage = () => {
             userName = 'Cliente Web'
         }
 
-        console.log('🔥 Final contact data - Name:', userName, 'Phone:', userPhone)
+
 
         try {
             // 1. Create Order
@@ -200,6 +201,7 @@ const CheckoutPage = () => {
 
             const orderPayload = {
                 user_id: user?.id || null,
+                tenant_id: tenantId,
                 total: finalTotal,
                 status: initialStatus,
                 order_type: orderType,
@@ -227,55 +229,58 @@ const CheckoutPage = () => {
                 throw orderError
             }
 
-            console.log('✅ ORDER CREATED! ID:', order.id)
+
 
             // If user provided phone and didn't have one, maybe update profile?
             if (user && confirmedPhone && !user.phone) {
-                console.log('🔥 Updating user phone...')
+
                 try {
                     // Update profile phone silently
                     await supabase.auth.updateUser({
                         data: { phone: confirmedPhone }
                     })
                     await supabase.from('profiles').update({ phone: confirmedPhone }).eq('id', user.id)
-                    console.log('✅ Phone updated')
+
                 } catch (profileError) {
                     console.error('⚠️ Profile update failed (non-critical):', profileError)
                     // Don't throw - this is non-critical, order should continue
                 }
             }
 
-            console.log('🔥 About to create order items...')
+
 
             // 2. Create Order Items
             const orderItems = cart.map(item => ({
                 order_id: order.id,
+                tenant_id: tenantId,
                 product_id: item.main.id,
                 quantity: 1,
                 price_at_time: item.main.price, // Now works - SQL migration executed
                 modifiers: item.modifiers || [],
+                removed_ingredients: item.removed_ingredients || [],
+                notes: item.notes || null,
                 side_info: item.side ? { id: item.side.id, name: item.side.name, price: item.side.price } : null,
                 drink_info: item.drink ? { id: item.drink.id, name: item.drink.name, price: item.drink.price } : null
             }))
 
-            console.log('🔥 INSERTING ORDER ITEMS:', JSON.stringify(orderItems, null, 2))
+
 
             const { error: itemsError } = await supabase
                 .from('order_items')
                 .insert(orderItems)
 
-            console.log('🔥 INSERT RESULT - Error:', itemsError)
+
 
             if (itemsError) {
                 console.error('❌ ORDER ITEMS INSERT FAILED:', itemsError)
                 throw itemsError
             }
 
-            console.log('✅ ORDER ITEMS INSERTED SUCCESSFULLY')
+
 
             // Save order locally if guest
             if (!user) {
-                const currentGuestOrders = JSON.parse(localStorage.getItem('damaf_guest_orders') || '[]')
+                const currentGuestOrders = JSON.parse(localStorage.getItem('stacked_guest_orders') || '[]')
 
                 const fullGuestOrder = {
                     ...order,
@@ -291,7 +296,7 @@ const CheckoutPage = () => {
                     }))
                 }
 
-                localStorage.setItem('damaf_guest_orders', JSON.stringify([fullGuestOrder, ...currentGuestOrders]))
+                localStorage.setItem('stacked_guest_orders', JSON.stringify([fullGuestOrder, ...currentGuestOrders]))
             }
 
             // 3. Handle Payment Flow
@@ -312,7 +317,7 @@ const CheckoutPage = () => {
                 toast.success('Pedido enviado. Administración te contactará para confirmar y coordinar el pago 🕒', { duration: 5000 })
                 // Redirect to Profile or Home
                 setTimeout(() => {
-                    navigate('/')
+                    navigate(-1)
                 }, 2000)
             }
 
@@ -442,7 +447,7 @@ const CheckoutPage = () => {
                 </div>
                 <h2 className="text-2xl font-bold mb-2">Tu pedido está vacío</h2>
                 <p className="text-[var(--color-text-muted)] mb-8">¡Hora de buscar algo delicioso!</p>
-                <Link to="/menu" className="bg-[var(--color-secondary)] text-white px-8 py-3 rounded-full font-bold hover:bg-orange-600 transition-colors">
+                <Link to={tenantNav.path('/menu')} className="bg-[var(--color-secondary)] text-white px-8 py-3 rounded-full font-bold hover:bg-orange-600 transition-colors">
                     Ir al Menú
                 </Link>
             </div>
@@ -452,7 +457,7 @@ const CheckoutPage = () => {
     return (
         <div className="min-h-screen bg-[var(--color-background)] pb-64">
             <header className="p-4 flex items-center sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-40 border-b border-white/5">
-                <Link to="/menu" className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
+                <Link to={tenantNav.path('/menu')} className="p-2 -ml-2 text-white hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6" />
                 </Link>
                 <h1 className="ml-2 font-bold text-lg">Tu Pedido</h1>
@@ -544,10 +549,19 @@ const CheckoutPage = () => {
                                 </button>
                             </div>
                             <div className="pl-4 border-l-2 border-white/10 space-y-1 text-sm text-[var(--color-text-muted)]">
+                                {item.removed_ingredients?.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mb-1">
+                                        {item.removed_ingredients.map(ing => (
+                                            <span key={ing} className="text-[10px] bg-red-500/15 text-red-400 px-2 py-0.5 rounded-full font-bold">
+                                                🚫 Sin {ing}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                                 {item.modifiers?.map(mod => (
                                     <div key={mod.id} className="flex justify-between">
-                                        <span>• {mod.name}</span>
-                                        {mod.price > 0 && <span>+${mod.price}</span>}
+                                        <span>• {mod.name} {mod.quantity > 1 ? `x${mod.quantity}` : ''}</span>
+                                        {mod.price > 0 && <span>+${mod.price * (mod.quantity || 1)}</span>}
                                     </div>
                                 ))}
                                 {item.side && (
@@ -775,7 +789,7 @@ const CheckoutPage = () => {
                                     setLoading(true) // Prevent empty cart screen flash
                                     setShowBankModal(false)
                                     clearCart() // Now clear cart when finishing
-                                    navigate('/')
+                                    tenantNav.navigate('/')
                                 }}
                                 className="w-full bg-white/10 text-white py-3 rounded-xl font-bold hover:bg-white/20 transition-colors"
                             >

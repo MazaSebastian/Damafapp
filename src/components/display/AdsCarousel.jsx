@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTenant } from '../../context/TenantContext'
 
 // Placeholder images - You should replace these with your actual promotional assets
 const ADS = [
@@ -24,6 +25,7 @@ const ADS = [
 ]
 
 const AdsCarousel = () => {
+    const { tenantLogo } = useTenant()
     const [currentIndex, setCurrentIndex] = useState(0)
 
     useEffect(() => {
@@ -89,7 +91,7 @@ const AdsCarousel = () => {
             </div>
 
             <div className="absolute top-10 right-10">
-                <img src="/logo-damaf.png" alt="Logo" className="h-24 w-auto drop-shadow-2xl" />
+                <img src={tenantLogo || '/logo-stacked.png'} alt="Logo" className="h-24 w-auto drop-shadow-2xl" />
             </div>
         </div>
     )

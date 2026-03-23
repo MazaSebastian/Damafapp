@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed, Ticket, Menu, X, Loader2, LogOut, DollarSign, ChefHat, Layers, TrendingUp, Clock, Bell, MessageCircle, FileText } from 'lucide-react'
 import { useRealtimeConnection } from '../hooks/useRealtimeConnection'
 import NewsManager from '../components/NewsManager'
@@ -12,7 +14,7 @@ import AdminOverview from '../components/AdminOverview'
 import CouponsManager from '../components/CouponsManager'
 import InventoryManager from '../components/InventoryManager'
 import CustomersManager from '../components/CustomersManager'
-import DebugConnection from '../components/DebugConnection'
+
 import CashManager from '../components/CashManager'
 import ModifiersManager from '../components/ModifiersManager'
 import AnalyticsManager from '../components/AnalyticsManager'
@@ -30,6 +32,8 @@ import BillingManager from '../components/billing/BillingManager'
 const AdminDashboard = () => {
     const { user, role, loading, signOut } = useAuth()
     const navigate = useNavigate()
+    const tenantNav = useTenantNav()
+    const { tenantId, tenantLogo, tenantName } = useTenant()
     const [activeTab, setActiveTab] = useState('Overview')
     const [isSidebarOpen, setIsSidebarOpen] = useState(0)
     const [pendingOrdersCount, setPendingOrdersCount] = useState(0)
@@ -39,22 +43,26 @@ const AdminDashboard = () => {
     // Badge Logic
     const fetchCounts = async () => {
         if (!user) return
+        const tid = tenantId
+        if (!tid) return
 
-        // Orders: Pending
+        // Orders: Pending (scoped to tenant)
         const { count: ordersCount } = await supabase
             .from('orders')
             .select('*', { count: 'exact', head: true })
             .eq('status', 'pending')
+            .eq('tenant_id', tid)
 
         if (ordersCount !== null) setPendingOrdersCount(ordersCount)
 
-        // Inventory: Low Stock (Ingredients + Products)
+        // Inventory: Low Stock (Ingredients + Products — scoped to tenant)
         let lowCount = 0
 
         // 1. Ingredients
         const { data: ingredients } = await supabase
             .from('ingredients')
             .select('stock, min_stock')
+            .eq('tenant_id', tid)
 
         if (ingredients) {
             lowCount += ingredients.filter(i => i.stock <= i.min_stock).length
@@ -65,6 +73,7 @@ const AdminDashboard = () => {
             .from('products')
             .select('stock')
             .eq('is_available', true)
+            .eq('tenant_id', tid)
 
         if (products) {
             lowCount += products.filter(p => p.stock !== null && p.stock === 0).length
@@ -102,18 +111,18 @@ const AdminDashboard = () => {
         playBell(audioContext.currentTime + 0.8) // 3
     }
 
-    // Global Real-time Subscription
+    // Global Real-time Subscription (scoped to tenant)
     useEffect(() => {
-        if (!user) return
+        if (!user || !tenantId) return
 
         const channel = supabase
-            .channel('global_admin_alerts')
+            .channel(`admin_alerts_${tenantId}`)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
-                table: 'orders'
+                table: 'orders',
+                filter: `tenant_id=eq.${tenantId}`
             }, (payload) => {
-                // Determine if we should alert (e.g. ignore if simple status update? logic says event=INSERT so only new)
                 playNewOrderSound()
                 setAlertOrder(payload.new)
             })
@@ -122,17 +131,17 @@ const AdminDashboard = () => {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [user])
+    }, [user, tenantId])
 
 
     useEffect(() => {
         if (!loading) {
             if (!user) {
-                navigate('/login')
+                tenantNav.navigate('/login')
             } else if (role !== 'admin' && role !== 'owner') {
                 console.warn('Unauthorized access attempt by:', user.email, 'Role:', role)
                 if (role === 'user') {
-                    navigate('/')
+                    tenantNav.navigate('/')
                 }
             }
         }
@@ -140,7 +149,7 @@ const AdminDashboard = () => {
 
     const handleLogout = async () => {
         await signOut()
-        navigate('/login')
+        tenantNav.navigate('/login')
     }
 
     if (loading) return (
@@ -193,7 +202,7 @@ const AdminDashboard = () => {
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
                 <div className="p-6 flex justify-center items-center border-b border-white/5 bg-[var(--color-surface)]">
-                    <img src="/logo-damaf.png" alt="DamafAPP" className="h-12 w-auto object-contain hover:scale-105 transition-transform" />
+                    <img src={tenantLogo || '/logo-stacked.png'} alt={tenantName} className="h-12 w-auto object-contain hover:scale-105 transition-transform" />
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden absolute right-4 text-white/50 hover:text-white">
                         <X className="w-6 h-6" />
                     </button>
@@ -266,7 +275,7 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Connection Status */}
-                <DebugConnection />
+
             </aside>
 
             {/* Main Content */}

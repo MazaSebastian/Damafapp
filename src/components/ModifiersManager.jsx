@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Plus, Trash2, Edit2, Save, X, Layers, Scale } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../context/TenantContext'
 
 const ModifiersManager = () => {
+    const { tenantId } = useTenant()
     const [modifiers, setModifiers] = useState([])
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -47,7 +49,8 @@ const ModifiersManager = () => {
             category: formData.get('category') || 'General',
             min_quantity: parseInt(formData.get('min_quantity')) || 0,
             max_quantity: parseInt(formData.get('max_quantity')) || 10,
-            is_available: true
+            is_available: true,
+            tenant_id: tenantId
         }
 
         let modifierId = editingModifier?.id
@@ -92,7 +95,8 @@ const ModifiersManager = () => {
                 const moves = modifierRecipe.map(r => ({
                     modifier_id: modifierId,
                     ingredient_id: r.ingredient_id,
-                    quantity: parseFloat(r.quantity)
+                    quantity: parseFloat(r.quantity),
+                    tenant_id: tenantId
                 }))
                 await supabase.from('modifier_recipes').insert(moves)
             }

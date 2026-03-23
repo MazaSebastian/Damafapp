@@ -182,7 +182,7 @@ serve(async (req) => {
                 notification: {
                     title: title,
                     body: body,
-                    image: 'https://damafapp-six.vercel.app/logo-damaf.png'
+                    image: Deno.env.get('APP_LOGO_URL') || 'https://stacked.com/logo-stacked.png'
                 },
                 data: {
                     url: openUrl || "/", // Custom data for redirection

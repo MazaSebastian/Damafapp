@@ -5,9 +5,13 @@ import { supabase } from '../supabaseClient'
 import { ArrowRight, Loader2, Mail, Lock, Phone, User } from 'lucide-react'
 import { countryCodes } from '../utils/countryCodes'
 import DeliveryMap from '../components/DeliveryMap'
+import { useTenant } from '../context/TenantContext'
+import { useTenantNav } from '../hooks/useTenantNav'
 
 const RegisterPage = () => {
     const navigate = useNavigate()
+    const { tenantId, tenantLogo, tenantName } = useTenant()
+    const tenantNav = useTenantNav()
     const [loading, setLoading] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -19,8 +23,9 @@ const RegisterPage = () => {
     const [error, setError] = useState(null)
 
     useEffect(() => {
+        if (!tenantId) return
         const fetchSettings = async () => {
-            const { data } = await supabase.from('app_settings').select('*')
+            const { data } = await supabase.from('app_settings').select('*').eq('tenant_id', tenantId)
             if (data) {
                 const settings = {}
                 data.forEach(item => settings[item.key] = item.value)
@@ -33,10 +38,17 @@ const RegisterPage = () => {
             }
         }
         fetchSettings()
-    }, [])
+    }, [tenantId])
 
     // Registration fields
     const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+    const validatePassword = (pwd) => {
+        if (pwd.length < 8) return 'La contraseña debe tener al menos 8 caracteres'
+        if (!/[A-Z]/.test(pwd)) return 'Debe contener al menos una mayúscula'
+        if (!/[0-9]/.test(pwd)) return 'Debe contener al menos un número'
+        return null
+    }
 
     const handleRegister = async (e) => {
         e.preventDefault()
@@ -49,6 +61,10 @@ const RegisterPage = () => {
             if (!phoneData.number) throw new Error('El teléfono es requerido')
             if (!addressData.address) throw new Error('La dirección es requerida')
             if (!dob.day || !dob.month || !dob.year) throw new Error('La fecha de nacimiento es requerida')
+
+            // Password strength validation
+            const passwordError = validatePassword(password)
+            if (passwordError) throw new Error(passwordError)
 
             const fullPhone = `${phoneData.countryCode} ${phoneData.number}`.trim()
             // Ensure 2 digits for day/month
@@ -67,7 +83,8 @@ const RegisterPage = () => {
                         address: addressData.address,
                         floor: addressData.floor,
                         department: addressData.department,
-                        postal_code: addressData.postal_code
+                        postal_code: addressData.postal_code,
+                        tenant_id: tenantId
                     }
                 }
             })
@@ -111,7 +128,7 @@ const RegisterPage = () => {
                         </p>
 
                         <button
-                            onClick={() => navigate('/login')}
+                            onClick={() => tenantNav.navigate('/login')}
                             className="w-full bg-white text-black font-black py-4 rounded-xl hover:scale-105 transition-transform shadow-xl"
                         >
                             Ir a Iniciar Sesión
@@ -123,7 +140,7 @@ const RegisterPage = () => {
             <div className="z-10 w-full max-w-sm my-8">
                 {/* Brand Logo Section */}
                 <div className="flex flex-col items-center mb-8">
-                    <img src="/logo-damaf.png" alt="DAMAFAPP" className="h-24 w-auto drop-shadow-2xl mb-4 hover:scale-105 transition-transform" />
+                    <img src={tenantLogo || '/logo-stacked.png'} alt={tenantName} className="h-24 w-auto drop-shadow-2xl mb-4 hover:scale-105 transition-transform" />
                     <p className="text-[var(--color-text-muted)] text-center max-w-xs">
                         Únete al club y disfruta de las mejores hamburguesas.
                     </p>
@@ -175,6 +192,21 @@ const RegisterPage = () => {
                                     required
                                 />
                             </div>
+                            {/* Password Strength Indicator */}
+                            {password.length > 0 && (
+                                <div className="space-y-2 px-1">
+                                    <div className="flex gap-1">
+                                        <div className={`h-1 flex-1 rounded-full transition-colors ${password.length >= 8 ? 'bg-green-500' : 'bg-white/10'}`} />
+                                        <div className={`h-1 flex-1 rounded-full transition-colors ${/[A-Z]/.test(password) ? 'bg-green-500' : 'bg-white/10'}`} />
+                                        <div className={`h-1 flex-1 rounded-full transition-colors ${/[0-9]/.test(password) ? 'bg-green-500' : 'bg-white/10'}`} />
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px]">
+                                        <span className={password.length >= 8 ? 'text-green-400' : 'text-gray-500'}>✓ 8+ caracteres</span>
+                                        <span className={/[A-Z]/.test(password) ? 'text-green-400' : 'text-gray-500'}>✓ Mayúscula</span>
+                                        <span className={/[0-9]/.test(password) ? 'text-green-400' : 'text-gray-500'}>✓ Número</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Phone */}
@@ -301,7 +333,7 @@ const RegisterPage = () => {
                         <p className="text-[var(--color-text-muted)] text-sm">
                             ¿Ya tienes cuenta?{' '}
                             <Link
-                                to="/login"
+                                to={tenantNav.path('/login')}
                                 className="text-[var(--color-secondary)] font-bold hover:underline ml-1"
                             >
                                 Inicia Sesión

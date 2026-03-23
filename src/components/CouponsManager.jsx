@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { Ticket, Plus, Trash2, StopCircle, PlayCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../context/TenantContext'
 
 const CouponsManager = () => {
+    const { tenantId } = useTenant()
     const [coupons, setCoupons] = useState([])
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -45,7 +47,8 @@ const CouponsManager = () => {
             value: formData.discount_type === 'product' ? 0 : parseFloat(formData.value),
             target_product_id: formData.discount_type === 'product' ? formData.target_product_id : null,
             usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
-            is_active: true
+            is_active: true,
+            tenant_id: tenantId
         }])
 
         if (error) {

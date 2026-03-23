@@ -1,13 +1,39 @@
 import { GoogleMap, useLoadScript, HeatmapLayer } from '@react-google-maps/api'
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 
 const LIBRARIES = ['visualization', 'places']
 
-const GeoHeatmap = ({ orders }) => {
+// Wrapper: Fetches API Key from DB (same pattern as DeliveryMap)
+const GeoHeatmap = (props) => {
+    const [mapsApiKey, setMapsApiKey] = useState(null)
+    const [error, setError] = useState(null)
+
+    useEffect(() => {
+        const fetchMapsKey = async () => {
+            const { data, error } = await supabase.from('app_settings').select('value').eq('key', 'google_maps_api_key').single()
+            if (data?.value) {
+                setMapsApiKey(data.value)
+            } else {
+                console.error('Google Maps API Key missing for Heatmap', error)
+                setError('Falta configurar la API Key de Google Maps en Ajustes → Credenciales')
+            }
+        }
+        fetchMapsKey()
+    }, [])
+
+    if (error) return <div className="p-4 bg-red-500/10 text-red-400 rounded-lg text-sm">{error}</div>
+    if (!mapsApiKey) return <div className="h-96 bg-white/5 animate-pulse rounded-3xl flex items-center justify-center text-[var(--color-text-muted)]">Cargando Mapa de Calor...</div>
+
+    return <GeoHeatmapContent apiKey={mapsApiKey} {...props} />
+}
+
+// Actual Map Component
+const GeoHeatmapContent = ({ apiKey, orders }) => {
     const { isLoaded, loadError } = useLoadScript({
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        googleMapsApiKey: apiKey,
         libraries: LIBRARIES,
-        id: 'google-map-script'
+        id: 'google-map-heatmap'
     })
 
     // Process orders into Heatmap points
@@ -27,7 +53,7 @@ const GeoHeatmap = ({ orders }) => {
         opacity: 0.7,
     }
 
-    if (loadError) return <div className="p-4 text-red-400 bg-red-900/10 rounded-lg">Error loading Maps</div>
+    if (loadError) return <div className="p-4 text-red-400 bg-red-900/10 rounded-lg">Error loading Maps: {loadError.message}</div>
     if (!isLoaded) return <div className="h-96 bg-white/5 animate-pulse rounded-3xl flex items-center justify-center">Cargando Mapa de Calor...</div>
 
     return (

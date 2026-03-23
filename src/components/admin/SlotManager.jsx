@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../supabaseClient'
 import { Loader2, Save, Cloud, Check, Truck, ShoppingBag, Clock, Plus, Trash2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../../context/TenantContext'
 
 const SlotManager = () => {
+    const { tenantId } = useTenant()
     const [slots, setSlots] = useState([])
     const [loading, setLoading] = useState(true)
     const [newTime, setNewTime] = useState('')
@@ -44,7 +46,8 @@ const SlotManager = () => {
                 max_orders: 5,
                 is_delivery: true,
                 is_takeaway: true,
-                is_active: true
+                is_active: true,
+                tenant_id: tenantId
             }
 
             const { data, error } = await supabase

@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, X, Loader2, Printer, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTenant } from '../context/TenantContext'
 import OrderModal from './OrderModal'
 import DeliverySlotSelector from './checkout/DeliverySlotSelector'
 
 const POSModal = ({ isOpen, onClose, onSuccess }) => {
+    const { tenantId } = useTenant()
     const [products, setProducts] = useState([])
     const [categories, setCategories] = useState([])
     const [cart, setCart] = useState([])
@@ -138,6 +140,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
 
             const orderPayload = {
                 user_id: orderUserId,
+                tenant_id: tenantId,
                 client_name: finalName,
                 client_phone: finalPhone, // New Field
                 status: 'cooking',
@@ -163,6 +166,7 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
             // 2. Order Items
             const orderItems = cart.map(item => ({
                 order_id: orderData.id,
+                tenant_id: tenantId,
                 product_id: item.id,
                 quantity: item.quantity,
                 unit_price: item.price,
@@ -173,20 +177,20 @@ const POSModal = ({ isOpen, onClose, onSuccess }) => {
                 drink_info: item.drink_info
             }))
 
-            console.log('🔥 POS - INSERTING ORDER ITEMS:', JSON.stringify(orderItems, null, 2))
+
 
             const { error: itemsError } = await supabase
                 .from('order_items')
                 .insert(orderItems)
 
-            console.log('🔥 POS - INSERT RESULT - Error:', itemsError)
+
 
             if (itemsError) {
                 console.error('❌ POS - ORDER ITEMS INSERT FAILED:', itemsError)
                 throw itemsError
             }
 
-            console.log('✅ POS - ORDER ITEMS INSERTED SUCCESSFULLY')
+
 
             // ... (Payment Processing) -> Remains same but uses finalName/finalPhone for print payloads
 

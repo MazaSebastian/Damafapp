@@ -75,7 +75,7 @@ const printWebUSB = async (order) => {
         let commands = INIT;
 
         // Header
-        commands += ALIGN_CENTER + BOLD_ON + TEXT_DOUBLE + "DAMAF APP\n" + TEXT_NORMAL + BOLD_OFF;
+        commands += ALIGN_CENTER + BOLD_ON + TEXT_DOUBLE + "STACKED\n" + TEXT_NORMAL + BOLD_OFF;
         commands += "Av. Principal 123\n";
         commands += "Tel: 555-1234\n";
         commands += "--------------------------------\n";
@@ -114,7 +114,7 @@ const printWebUSB = async (order) => {
 
         // Footer
         commands += "Gracias por su compra!\n";
-        commands += "www.damaf.com\n";
+        commands += "www.stacked.com\n";
         commands += "\n\n\n\n"; // Feed
         commands += CUT;
 

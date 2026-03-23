@@ -3,10 +3,14 @@ import { ArrowLeft, Star, Coffee, Crown, Trophy } from 'lucide-react'
 import { useLoyaltyLevels } from '../hooks/useLoyaltyLevels'
 import { useAuth } from '../context/AuthContext'
 import LoyaltyBanner from '../components/LoyaltyBanner'
+import { useTenantNav } from '../hooks/useTenantNav'
+import { useTenant } from '../context/TenantContext'
 
 const ClubInfoPage = () => {
     const { user, profile } = useAuth()
     const { levels, loading, moneyPerStar } = useLoyaltyLevels()
+    const tenantNav = useTenantNav()
+    const { tenantName } = useTenant()
     const stars = profile?.stars || 0
 
     if (loading) return <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center text-white">Cargando...</div>
@@ -15,7 +19,7 @@ const ClubInfoPage = () => {
         <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-main)] pb-20">
             {/* Header */}
             <header className="sticky top-0 bg-[var(--color-background)]/90 backdrop-blur-md z-50 px-4 py-4 flex items-center gap-4 border-b border-white/5">
-                <Link to="/" className="p-2 bg-[var(--color-surface)] rounded-full hover:bg-white/10 transition-colors">
+                <Link to={tenantNav.path('/')} className="p-2 bg-[var(--color-surface)] rounded-full hover:bg-white/10 transition-colors">
                     <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <h1 className="text-lg font-bold">Información del Club</h1>
@@ -25,7 +29,7 @@ const ClubInfoPage = () => {
 
                 {/* Intro Section */}
                 <div className="text-center space-y-2">
-                    <h2 className="text-2xl font-bold italic">DAMAFAPP <span className="text-[var(--color-secondary)]">CLUB</span></h2>
+                    <h2 className="text-2xl font-bold italic">{tenantName?.toUpperCase()} <span className="text-[var(--color-secondary)]">CLUB</span></h2>
                     <p className="text-[var(--color-text-muted)] text-sm">
                         Suma estrellas con cada compra y desbloquea beneficios exclusivos.
                     </p>
@@ -38,7 +42,7 @@ const ClubInfoPage = () => {
                     <div className="bg-[var(--color-surface)] p-6 rounded-2xl border border-white/5 text-center">
                         <p className="text-white font-bold mb-2">¡Únete hoy mismo!</p>
                         <p className="text-xs text-[var(--color-text-muted)] mb-4">Regístrate para empezar a sumar.</p>
-                        <Link to="/register" className="inline-block bg-[var(--color-primary)] text-white text-sm font-bold px-6 py-2.5 rounded-full hover:bg-purple-700 transition-colors">
+                        <Link to={tenantNav.path('/register')} className="inline-block bg-[var(--color-primary)] text-white text-sm font-bold px-6 py-2.5 rounded-full hover:bg-purple-700 transition-colors">
                             Registrarme
                         </Link>
                     </div>

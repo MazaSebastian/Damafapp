@@ -3,8 +3,10 @@ import { supabase } from '../supabaseClient'
 import { Plus, Trash2, Edit2, Save, X, ChevronRight, Loader2, Image, List, Settings, Scale } from 'lucide-react'
 import { toast } from 'sonner'
 import ConfirmModal from './ConfirmModal'
+import { useTenant } from '../context/TenantContext'
 
 const ProductManager = () => {
+    const { tenantId } = useTenant()
     const [categories, setCategories] = useState([])
     const [selectedCategory, setSelectedCategory] = useState(null)
     const [products, setProducts] = useState([])
@@ -108,7 +110,8 @@ const ProductManager = () => {
             image_url: formData.get('image_url'),
             media_type: formData.get('media_type') || 'image',
             removable_ingredients: removableArr,
-            is_available: true
+            is_available: true,
+            tenant_id: tenantId
         }
 
         let productId = editingProduct?.id
@@ -152,7 +155,8 @@ const ProductManager = () => {
         if (productModifiers.length > 0) {
             const links = productModifiers.map(modId => ({
                 product_id: productId,
-                modifier_id: modId
+                modifier_id: modId,
+                tenant_id: tenantId
             }))
             const { error: linkError } = await supabase.from('product_modifiers').insert(links)
             if (linkError) console.error('Error linking modifiers:', linkError)
@@ -168,7 +172,8 @@ const ProductManager = () => {
             const recipeLinks = productRecipe.map(item => ({
                 product_id: productId,
                 ingredient_id: item.ingredient_id,
-                quantity: parseFloat(item.quantity)
+                quantity: parseFloat(item.quantity),
+                tenant_id: tenantId
             }))
             const { error: recipeError } = await supabase.from('product_recipes').insert(recipeLinks)
             if (recipeError) console.error('Error saving recipe:', recipeError)
@@ -270,7 +275,8 @@ const ProductManager = () => {
         const newCat = {
             name: formData.get('name'),
             slug: formData.get('name').toLowerCase().replace(/\s+/g, '-'),
-            sort_order: categories.length + 1
+            sort_order: categories.length + 1,
+            tenant_id: tenantId
         }
         const { data, error } = await supabase.from('categories').insert([newCat]).select()
         if (!error && data) {
