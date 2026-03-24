@@ -138,9 +138,9 @@ const PrinterDiagnostics = () => {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {devices.map((device, idx) => (
+                    {devices.map((device) => (
                         <div
-                            key={device.deviceId || idx}
+                            key={device.deviceId || device.index}
                             className={`bg-[var(--color-background)]/50 rounded-xl p-4 border transition-all ${device.isPrinter
                                     ? 'border-green-500/20 hover:border-green-500/40'
                                     : 'border-white/5 hover:border-white/10'
@@ -164,7 +164,7 @@ const PrinterDiagnostics = () => {
                                             <span className="font-bold text-white text-sm">{device.name}</span>
                                             {device.isPrinter && (
                                                 <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-bold">
-                                                    IMPRESORA
+                                                    IMPRESORA #{device.printerIndex}
                                                 </span>
                                             )}
                                         </div>
@@ -185,15 +185,15 @@ const PrinterDiagnostics = () => {
                                 {/* Actions */}
                                 {device.isPrinter && (
                                     <button
-                                        onClick={() => testPrint(idx)}
-                                        disabled={testingIndex === idx}
-                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all ${testingIndex === idx
+                                        onClick={() => testPrint(device.printerIndex)}
+                                        disabled={testingIndex === device.printerIndex}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all ${testingIndex === device.printerIndex
                                                 ? 'bg-gray-500/20 text-gray-400 cursor-wait'
                                                 : 'bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20'
                                             }`}
                                     >
-                                        <Send className={`w-3.5 h-3.5 ${testingIndex === idx ? 'animate-pulse' : ''}`} />
-                                        {testingIndex === idx ? 'Imprimiendo...' : 'Test Print'}
+                                        <Send className={`w-3.5 h-3.5 ${testingIndex === device.printerIndex ? 'animate-pulse' : ''}`} />
+                                        {testingIndex === device.printerIndex ? 'Imprimiendo...' : 'Test Print'}
                                     </button>
                                 )}
                             </div>

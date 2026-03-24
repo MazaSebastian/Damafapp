@@ -54,6 +54,7 @@ class WebAppInterface(private val context: Context) {
 
     /**
      * Returns JSON array of all connected USB devices with printer detection.
+     * Each printer gets a sequential `printerIndex` for use with printTestPage/printToDevice.
      * Called from JS: window.AndroidPrint.listUsbDevices()
      */
     @JavascriptInterface
@@ -64,16 +65,24 @@ class WebAppInterface(private val context: Context) {
             val printerConnections = UsbPrintersConnections(context).list ?: emptyArray()
             val printerDeviceIds = printerConnections.map { it.device.deviceId }.toSet()
             
+            // Build a map from deviceId -> printerIndex (sequential among printers only)
+            val printerIndexMap = mutableMapOf<Int, Int>()
+            printerConnections.forEachIndexed { idx, conn ->
+                printerIndexMap[conn.device.deviceId] = idx
+            }
+            
             val result = org.json.JSONArray()
             
             deviceList.values.forEachIndexed { index, device ->
                 val obj = JSONObject()
+                val isPrinter = printerDeviceIds.contains(device.deviceId)
                 obj.put("index", index)
                 obj.put("name", device.productName ?: "Dispositivo desconocido")
                 obj.put("vendorId", device.vendorId)
                 obj.put("productId", device.productId)
                 obj.put("deviceId", device.deviceId)
-                obj.put("isPrinter", printerDeviceIds.contains(device.deviceId))
+                obj.put("isPrinter", isPrinter)
+                obj.put("printerIndex", if (isPrinter) printerIndexMap[device.deviceId] ?: -1 else -1)
                 obj.put("manufacturer", device.manufacturerName ?: "N/A")
                 result.put(obj)
             }
@@ -85,26 +94,27 @@ class WebAppInterface(private val context: Context) {
     }
 
     /**
-     * Print a test page to a specific printer by device index.
-     * Called from JS: window.AndroidPrint.printTestPage(0)
+     * Print a test page to a specific printer by its printerIndex.
+     * Called from JS: window.AndroidPrint.printTestPage(0) — where 0 is the printerIndex, NOT deviceIndex
      */
     @JavascriptInterface
-    fun printTestPage(deviceIndex: Int) {
+    fun printTestPage(printerIndex: Int) {
         try {
             val printerConnections = UsbPrintersConnections(context).list
-            if (printerConnections == null || deviceIndex >= printerConnections.size) {
-                showStyledSnackbar(getRootView(), "❌ Impresora #$deviceIndex no encontrada", SnackbarType.ERROR)
+            if (printerConnections == null || printerIndex < 0 || printerIndex >= printerConnections.size) {
+                showStyledSnackbar(getRootView(), "❌ Impresora #$printerIndex no encontrada", SnackbarType.ERROR)
                 return
             }
             
-            val connection = printerConnections[deviceIndex]
+            val connection = printerConnections[printerIndex]
+            val deviceName = connection.device.productName ?: "Sin nombre"
             val printer = EscPosPrinter(connection, 203, 80f, 46)
             
             val testText = """
                 [C]<b><font size='big'>TEST DE IMPRESION</font></b>
                 [C]--------------------------------
-                [C]Impresora #$deviceIndex
-                [C]${connection.device.productName ?: "Sin nombre"}
+                [C]Impresora #$printerIndex
+                [C]$deviceName
                 [C]--------------------------------
                 [L]
                 [C]Si puedes leer esto,
@@ -120,27 +130,27 @@ class WebAppInterface(private val context: Context) {
             printer.printFormattedTextAndCut(testText)
             printer.disconnectPrinter()
             
-            showStyledSnackbar(getRootView(), "✅ Test impreso en: ${connection.device.productName}", SnackbarType.SUCCESS)
+            showStyledSnackbar(getRootView(), "✅ Test impreso en: $deviceName", SnackbarType.SUCCESS)
         } catch (e: Exception) {
             showStyledSnackbar(getRootView(), "❌ Error en test: ${e.message}", SnackbarType.ERROR)
         }
     }
 
     /**
-     * Print order to a specific device by index.
+     * Print order to a specific device by printerIndex.
      * Called from JS: window.AndroidPrint.printToDevice(jsonOrder, 0)
      */
     @JavascriptInterface
-    fun printToDevice(jsonOrder: String, deviceIndex: Int) {
+    fun printToDevice(jsonOrder: String, printerIndex: Int) {
         try {
             val printerConnections = UsbPrintersConnections(context).list
-            if (printerConnections == null || deviceIndex >= printerConnections.size) {
-                showStyledSnackbar(getRootView(), "❌ Impresora #$deviceIndex no disponible", SnackbarType.ERROR)
+            if (printerConnections == null || printerIndex < 0 || printerIndex >= printerConnections.size) {
+                showStyledSnackbar(getRootView(), "❌ Impresora #$printerIndex no disponible", SnackbarType.ERROR)
                 return
             }
             
             val order = JSONObject(jsonOrder)
-            val connection = printerConnections[deviceIndex]
+            val connection = printerConnections[printerIndex]
             val printer = EscPosPrinter(connection, 203, 80f, 46)
             
             val formattedText = formatOrderToEscPos(order)
