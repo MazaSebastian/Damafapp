@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { toast } from 'sonner'
-import { Save, Loader2, Settings as SettingsIcon, Palette, Lock, Eye, EyeOff } from 'lucide-react'
+import { Save, Loader2, Settings as SettingsIcon, Palette, Lock, Eye, EyeOff, Printer } from 'lucide-react'
 import ScheduleConfig from './ScheduleConfig'
+import PrinterDiagnostics from './PrinterDiagnostics'
 import { useTheme } from '../context/ThemeContext'
 
 const SettingsManager = () => {
@@ -120,7 +121,8 @@ const SettingsManager = () => {
         { id: 'pagos', label: 'Pagos' },
         { id: 'loyalty', label: 'Fidelización' },
         { id: 'apariencia', label: 'Apariencia', icon: <Palette className="w-4 h-4" /> },
-        { id: 'credentials', label: 'Credenciales', icon: <Lock className="w-4 h-4" /> }
+        { id: 'credentials', label: 'Credenciales', icon: <Lock className="w-4 h-4" /> },
+        { id: 'impresoras', label: 'Impresoras', icon: <Printer className="w-4 h-4" /> }
     ]
 
 
@@ -245,75 +247,79 @@ const SettingsManager = () => {
                 ))}
             </div>
 
-            <div className="grid gap-6">
-                {getSettingsByCategory(activeTab).length > 0 ? (
-                    getSettingsByCategory(activeTab).map((setting) => (
-                        <div key={setting.key} className="bg-[var(--color-surface)] p-6 rounded-2xl border border-white/5">
-                            {setting.key === 'store_schedule' ? (
-                                // Full Width Layout for Schedule
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex justify-between items-start">
-                                        <div>
+            {activeTab === 'impresoras' ? (
+                <PrinterDiagnostics />
+            ) : (
+                <div className="grid gap-6">
+                    {getSettingsByCategory(activeTab).length > 0 ? (
+                        getSettingsByCategory(activeTab).map((setting) => (
+                            <div key={setting.key} className="bg-[var(--color-surface)] p-6 rounded-2xl border border-white/5">
+                                {setting.key === 'store_schedule' ? (
+                                    // Full Width Layout for Schedule
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white transition-colors">{SETTING_LABELS[setting.key] || setting.key.replace(/_/g, ' ')}</h3>
+                                                <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                                                    {setting.description || 'Sin descripción'}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleSave(setting.key, setting.value)}
+                                                disabled={saving}
+                                                className="group flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-900/20 hover:shadow-purple-900/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title="Guardar cambios"
+                                            >
+                                                {saving ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                                )}
+                                                <span className="text-sm font-bold">{saving ? 'Guardando...' : 'Guardar'}</span>
+                                            </button>
+                                        </div>
+                                        <div className="w-full">
+                                            {renderSettingInput(setting)}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    // Standard Side-by-Side Layout
+                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                        <div className="flex-1">
                                             <h3 className="text-lg font-bold text-white transition-colors">{SETTING_LABELS[setting.key] || setting.key.replace(/_/g, ' ')}</h3>
                                             <p className="text-sm text-[var(--color-text-muted)] mt-1">
                                                 {setting.description || 'Sin descripción'}
                                             </p>
                                         </div>
-                                        <button
-                                            onClick={() => handleSave(setting.key, setting.value)}
-                                            disabled={saving}
-                                            className="group flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-900/20 hover:shadow-purple-900/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            title="Guardar cambios"
-                                        >
-                                            {saving ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                            )}
-                                            <span className="text-sm font-bold">{saving ? 'Guardando...' : 'Guardar'}</span>
-                                        </button>
-                                    </div>
-                                    <div className="w-full">
-                                        {renderSettingInput(setting)}
-                                    </div>
-                                </div>
-                            ) : (
-                                // Standard Side-by-Side Layout
-                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                    <div className="flex-1">
-                                        <h3 className="text-lg font-bold text-white transition-colors">{SETTING_LABELS[setting.key] || setting.key.replace(/_/g, ' ')}</h3>
-                                        <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                                            {setting.description || 'Sin descripción'}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-start gap-3 w-full md:w-auto">
-                                        <div className="relative w-full md:w-80">
-                                            {renderSettingInput(setting)}
+                                        <div className="flex items-start gap-3 w-full md:w-auto">
+                                            <div className="relative w-full md:w-80">
+                                                {renderSettingInput(setting)}
+                                            </div>
+                                            <button
+                                                onClick={() => handleSave(setting.key, setting.value)}
+                                                disabled={saving}
+                                                className="group flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-900/20 hover:shadow-purple-900/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-0.5"
+                                                title="Guardar cambios"
+                                            >
+                                                {saving ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                                )}
+                                                <span className="text-sm font-bold hidden md:inline">{saving ? 'Guardando...' : 'Guardar'}</span>
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => handleSave(setting.key, setting.value)}
-                                            disabled={saving}
-                                            className="group flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-900/20 hover:shadow-purple-900/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-0.5"
-                                            title="Guardar cambios"
-                                        >
-                                            {saving ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                            )}
-                                            <span className="text-sm font-bold hidden md:inline">{saving ? 'Guardando...' : 'Guardar'}</span>
-                                        </button>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="bg-[var(--color-surface)] p-8 rounded-2xl border border-white/5 text-center">
+                            <p className="text-[var(--color-text-muted)]">No hay configuraciones disponibles en esta categoría.</p>
                         </div>
-                    ))
-                ) : (
-                    <div className="bg-[var(--color-surface)] p-8 rounded-2xl border border-white/5 text-center">
-                        <p className="text-[var(--color-text-muted)]">No hay configuraciones disponibles en esta categoría.</p>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

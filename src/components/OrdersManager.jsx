@@ -60,6 +60,65 @@ const OrdersManager = () => {
     // Auto-Refresh Logic (Mobile/Tab Focus + 30s Polling)
     useRealtimeConnection(() => fetchOrders(false), [filters], 'OrdersManager', 30000)
 
+    // ============================================
+    // REALTIME: Auto-print when a NEW order arrives
+    // ============================================
+    useEffect(() => {
+        if (!tenantId) return
+
+        const channel = supabase
+            .channel('new-orders-print')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `tenant_id=eq.${tenantId}`
+                },
+                async (payload) => {
+                    console.log('[OrdersManager] New order detected via Realtime:', payload.new?.id)
+
+                    // Refresh orders list
+                    await fetchOrders(false)
+
+                    // Notification
+                    toast.success('🔔 ¡Nuevo pedido recibido!', {
+                        description: `Orden #${payload.new?.id?.slice(0, 4)} — $${payload.new?.total || '?'}`,
+                        duration: 8000
+                    })
+
+                    // Play notification sound 
+                    try {
+                        const audio = new Audio('/notification.mp3')
+                        audio.volume = 0.7
+                        audio.play().catch(() => { })
+                    } catch (e) { /* ignore */ }
+
+                    // Auto-Print: fetch full order with items for the ticket
+                    try {
+                        const { data: fullOrder, error } = await supabase
+                            .from('orders')
+                            .select('*,order_items(*,products(name)),profiles(*)')
+                            .eq('id', payload.new.id)
+                            .single()
+
+                        if (!error && fullOrder) {
+                            toast.info('🖨️ Imprimiendo comanda automática...', { duration: 3000 })
+                            handlePrint(fullOrder)
+                        }
+                    } catch (printErr) {
+                        console.warn('[OrdersManager] Auto-print failed:', printErr)
+                    }
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [tenantId, usbConnected])
+
     const fetchOrders = async (showLoading = true) => {
         if (showLoading) setLoading(true)
 
@@ -803,7 +862,7 @@ const OrdersManager = () => {
                             </div>
                             <div className="text-right">
                                 <span className="font-bold text-lg block">${order.total}</span>
-                                <div className="flex gap-1 mt-2">
+                                <div className="flex gap-1 mt-2 flex-wrap">
                                     {getNextStatusButton(order.status) && (
                                         <button
                                             onClick={() => updateStatus(order.id, getNextStatusButton(order.status).next)}
@@ -813,8 +872,32 @@ const OrdersManager = () => {
                                         </button>
                                     )}
                                     <button
+                                        onClick={() => handlePrint(order)}
+                                        className="text-blue-400 p-1.5 hover:bg-blue-500/10 rounded-lg transition-all"
+                                        title="Imprimir comanda"
+                                    >
+                                        <Printer className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setEditingOrder(order)}
+                                        className="text-yellow-400 p-1.5 hover:bg-yellow-500/10 rounded-lg transition-all"
+                                        title="Editar pedido"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    {order.order_type === 'delivery' && (
+                                        <button
+                                            onClick={() => openAssignModal(order.id)}
+                                            className="text-purple-400 p-1.5 hover:bg-purple-500/10 rounded-lg transition-all"
+                                            title="Asignar repartidor"
+                                        >
+                                            <Bike className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <button
                                         onClick={() => deleteOrder(order.id)}
-                                        className="text-red-400 p-1 hover:bg-red-500/10 rounded transition-all"
+                                        className="text-red-400 p-1.5 hover:bg-red-500/10 rounded-lg transition-all"
+                                        title="Eliminar pedido"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
