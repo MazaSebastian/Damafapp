@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Suspense, lazy, useState, useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import { LanguageProvider } from './context/LanguageContext'
@@ -11,6 +11,7 @@ import PageTransition from './components/PageTransition'
 import ProtectedRoute from './components/ProtectedRoute'
 import GlobalErrorBoundary from './components/GlobalErrorBoundary'
 import { Loader2 } from 'lucide-react'
+import { supabase } from './supabaseClient'
 
 // Lightweight pages — loaded eagerly
 import HomePage from './pages/HomePage'
@@ -169,6 +170,59 @@ const TenantAppContent = () => {
  * Each tenant has their own path: /damafa, /pepito, etc.
  */
 const StackedLanding = () => {
+  const navigate = useNavigate()
+  const [checking, setChecking] = useState(true)
+  const [slugInput, setSlugInput] = useState('')
+
+  // Auto-redirect: If user is logged in and has a tenant, go straight there
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          // Get user's tenant slug
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', session.user.id)
+            .single()
+
+          if (profile?.tenant_id) {
+            const { data: tenant } = await supabase
+              .from('tenants')
+              .select('slug')
+              .eq('id', profile.tenant_id)
+              .single()
+
+            if (tenant?.slug) {
+              navigate(`/${tenant.slug}`, { replace: true })
+              return
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Session check failed:', err)
+      }
+      setChecking(false)
+    }
+    checkSession()
+  }, [navigate])
+
+  const handleGoToSlug = (e) => {
+    e.preventDefault()
+    const slug = slugInput.trim().toLowerCase().replace(/\s+/g, '-')
+    if (slug) navigate(`/${slug}`)
+  }
+
+  // Show loading while checking session
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center p-6 text-center">
       {/* Logo */}
@@ -186,11 +240,34 @@ const StackedLanding = () => {
         La plataforma todo-en-uno para tu restaurante. Pedidos, menú digital, delivery, facturación y más.
       </p>
 
+      {/* Go to your local */}
+      <form onSubmit={handleGoToSlug} className="w-full max-w-sm mb-8">
+        <p className="text-white/40 text-sm mb-2">¿Ya tenés un local?</p>
+        <div className="flex gap-2">
+          <div className="flex-1 flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+            <span className="text-white/30 pl-3 text-sm select-none">/</span>
+            <input
+              type="text"
+              value={slugInput}
+              onChange={(e) => setSlugInput(e.target.value)}
+              placeholder="mi-local"
+              className="flex-1 bg-transparent px-2 py-3 text-white placeholder-white/20 focus:outline-none text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="px-5 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-orange-500/20 text-sm"
+          >
+            Ir
+          </button>
+        </div>
+      </form>
+
       {/* CTA */}
       <div className="flex flex-col sm:flex-row gap-4">
         <a
           href="mailto:contacto@stacked.com"
-          className="px-8 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all hover:scale-105 active:scale-95"
+          className="px-8 py-3.5 bg-white/5 border border-white/10 text-white/80 font-bold rounded-2xl hover:bg-white/10 transition-all text-sm"
         >
           Quiero Stacked para mi local
         </a>

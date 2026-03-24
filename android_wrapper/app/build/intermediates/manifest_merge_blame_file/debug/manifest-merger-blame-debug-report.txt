@@ -20,141 +20,175 @@
 14    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 14-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:8:5-76
 14-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:8:22-73
-15
-16    <!-- Android 11+ Package Visibility -->
-17    <queries>
-17-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:11:5-14:15
-18        <package android:name="com.whatsapp" />
-18-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:12:9-48
-18-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:12:18-45
-19        <package android:name="com.whatsapp.w4b" />
-19-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:13:9-52
-19-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:13:18-49
-20    </queries>
-21
-22    <permission
-22-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
-23        android:name="com.damafapp.pos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-23-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
-24        android:protectionLevel="signature" />
-24-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
-25
-26    <uses-permission android:name="com.damafapp.pos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-26-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
-26-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
-27
-28    <application
-28-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:16:5-38:19
-29        android:allowBackup="true"
-29-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:17:9-35
-30        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-30-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
-31        android:dataExtractionRules="@xml/data_extraction_rules"
-31-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:19:9-65
-32        android:debuggable="true"
-33        android:extractNativeLibs="false"
-34        android:fullBackupContent="@xml/backup_rules"
-34-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:20:9-54
-35        android:icon="@drawable/ic_launcher"
-35-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:21:9-45
-36        android:label="Damaf POS"
-36-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:22:9-34
-37        android:roundIcon="@drawable/ic_launcher"
-37-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:23:9-50
-38        android:supportsRtl="true"
-38-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:24:9-35
-39        android:testOnly="true"
-40        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-40-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:25:9-65
-41        android:usesCleartextTraffic="true" >
-41-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:18:9-44
-42        <activity
-42-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:28:9-37:20
-43            android:name="com.damafapp.pos.MainActivity"
-43-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:29:13-41
-44            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-44-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:32:13-87
-45            android:exported="true"
-45-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:30:13-36
-46            android:screenOrientation="landscape" >
-46-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:31:13-50
-47            <intent-filter>
-47-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:33:13-36:29
-48                <action android:name="android.intent.action.MAIN" />
-48-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:34:17-69
-48-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:34:25-66
-49
-50                <category android:name="android.intent.category.LAUNCHER" />
-50-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:35:17-77
-50-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:35:27-74
-51            </intent-filter>
-52        </activity>
-53
-54        <provider
-54-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
-55            android:name="androidx.startup.InitializationProvider"
-55-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:25:13-67
-56            android:authorities="com.damafapp.pos.androidx-startup"
-56-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:26:13-68
-57            android:exported="false" >
-57-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:27:13-37
-58            <meta-data
-58-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
-59                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-59-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:30:17-75
-60                android:value="androidx.startup" />
-60-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:31:17-49
-61            <meta-data
-61-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a6a333b24900cef2aa08f2e33bb72757/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:29:13-31:52
-62                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-62-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a6a333b24900cef2aa08f2e33bb72757/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:30:17-78
-63                android:value="androidx.startup" />
-63-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a6a333b24900cef2aa08f2e33bb72757/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:31:17-49
-64            <meta-data
-64-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
-65                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-65-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
-66                android:value="androidx.startup" />
-66-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
-67        </provider>
+15    <uses-permission android:name="android.permission.VIBRATE" />
+15-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:9:5-66
+15-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:9:22-63
+16    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+16-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:10:5-77
+16-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:10:22-74
+17    <uses-permission android:name="android.permission.CAMERA" />
+17-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:11:5-65
+17-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:11:22-62
+18    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+18-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:12:5-79
+18-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:12:22-76
+19    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+19-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:13:5-81
+19-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:13:22-78
+20
+21    <!-- Bluetooth/Camera are optional — app works without them -->
+22    <uses-feature
+22-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:16:5-88
+23        android:name="android.hardware.bluetooth"
+23-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:16:19-60
+24        android:required="false" />
+24-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:16:61-85
+25    <uses-feature
+25-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:17:5-85
+26        android:name="android.hardware.camera"
+26-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:17:19-57
+27        android:required="false" />
+27-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:17:58-82
+28    <uses-feature
+28-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:18:5-91
+29        android:name="android.hardware.location.gps"
+29-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:18:19-63
+30        android:required="false" />
+30-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:18:64-88
+31
+32    <!-- Android 11+ Package Visibility -->
+33    <queries>
+33-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:21:5-24:15
+34        <package android:name="com.whatsapp" />
+34-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:22:9-48
+34-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:22:18-45
+35        <package android:name="com.whatsapp.w4b" />
+35-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:23:9-52
+35-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:23:18-49
+36    </queries>
+37
+38    <permission
+38-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
+39        android:name="com.damafapp.pos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+39-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
+40        android:protectionLevel="signature" />
+40-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
+41
+42    <uses-permission android:name="com.damafapp.pos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+42-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
+42-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+43
+44    <application
+44-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:26:5-48:19
+45        android:allowBackup="true"
+45-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:27:9-35
+46        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+46-->[androidx.core:core:1.12.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/7f4228df67fac75b5c1ff26e9b859e80/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
+47        android:dataExtractionRules="@xml/data_extraction_rules"
+47-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:29:9-65
+48        android:debuggable="true"
+49        android:extractNativeLibs="false"
+50        android:fullBackupContent="@xml/backup_rules"
+50-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:30:9-54
+51        android:icon="@drawable/ic_launcher"
+51-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:31:9-45
+52        android:label="Stacked"
+52-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:32:9-32
+53        android:roundIcon="@drawable/ic_launcher"
+53-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:33:9-50
+54        android:supportsRtl="true"
+54-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:34:9-35
+55        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+55-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:35:9-65
+56        android:usesCleartextTraffic="false" >
+56-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:28:9-45
+57        <activity
+57-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:38:9-47:20
+58            android:name="com.damafapp.pos.MainActivity"
+58-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:39:13-41
+59            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+59-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:42:13-87
+60            android:exported="true"
+60-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:40:13-36
+61            android:screenOrientation="unspecified" >
+61-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:41:13-52
+62            <intent-filter>
+62-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:43:13-46:29
+63                <action android:name="android.intent.action.MAIN" />
+63-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:44:17-69
+63-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:44:25-66
+64
+65                <category android:name="android.intent.category.LAUNCHER" />
+65-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:45:17-77
+65-->/Users/sebamaza/Desktop/PROYECTOS DEV/DamafAPP v2/android_wrapper/app/src/main/AndroidManifest.xml:45:27-74
+66            </intent-filter>
+67        </activity>
 68
-69        <receiver
-69-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
-70            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-70-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
-71            android:directBootAware="false"
-71-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
-72            android:enabled="true"
-72-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
-73            android:exported="true"
-73-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
-74            android:permission="android.permission.DUMP" >
-74-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
-75            <intent-filter>
-75-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
-76                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-76-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
-76-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
-77            </intent-filter>
-78            <intent-filter>
-78-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
-79                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-79-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
-79-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
-80            </intent-filter>
-81            <intent-filter>
-81-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
-82                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-82-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
-82-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
-83            </intent-filter>
-84            <intent-filter>
-84-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
-85                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-85-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
-85-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
-86            </intent-filter>
-87        </receiver>
-88    </application>
-89
-90</manifest>
+69        <provider
+69-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
+70            android:name="androidx.startup.InitializationProvider"
+70-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:25:13-67
+71            android:authorities="com.damafapp.pos.androidx-startup"
+71-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:26:13-68
+72            android:exported="false" >
+72-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:27:13-37
+73            <meta-data
+73-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
+74                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+74-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:30:17-75
+75                android:value="androidx.startup" />
+75-->[androidx.emoji2:emoji2:1.2.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/3368a4de9c3c0307b495d259918b1b85/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:31:17-49
+76            <meta-data
+76-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a6a333b24900cef2aa08f2e33bb72757/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:29:13-31:52
+77                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+77-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a6a333b24900cef2aa08f2e33bb72757/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:30:17-78
+78                android:value="androidx.startup" />
+78-->[androidx.lifecycle:lifecycle-process:2.6.1] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/a6a333b24900cef2aa08f2e33bb72757/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:31:17-49
+79            <meta-data
+79-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
+80                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+80-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
+81                android:value="androidx.startup" />
+81-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
+82        </provider>
+83
+84        <receiver
+84-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
+85            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+85-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
+86            android:directBootAware="false"
+86-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
+87            android:enabled="true"
+87-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
+88            android:exported="true"
+88-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
+89            android:permission="android.permission.DUMP" >
+89-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
+90            <intent-filter>
+90-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
+91                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+91-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
+91-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
+92            </intent-filter>
+93            <intent-filter>
+93-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
+94                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+94-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
+94-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
+95            </intent-filter>
+96            <intent-filter>
+96-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
+97                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
+98            </intent-filter>
+99            <intent-filter>
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
+100                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] /Users/sebamaza/.gradle/caches/9.0-milestone-1/transforms/4dbfd87f9137d4e1af7f589ffd67ee57/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
+101            </intent-filter>
+102        </receiver>
+103    </application>
+104
+105</manifest>

@@ -21,8 +21,10 @@ class MainActivity : AppCompatActivity() {
 
         // 1. Setup Main Screen (Guest Home - Login cuando sea necesario)
         val mainWebView = findViewById<WebView>(R.id.main_webview)
-        // Production URL - Carga Home Guest por defecto
-        setupWebView(mainWebView, "https://damafapp-six.vercel.app/")
+        // Production URL
+        setupWebView(mainWebView, "https://software.stacked.com.ar/")
+        // Fallback (Vercel direct):
+        // setupWebView(mainWebView, "https://damafapp-six.vercel.app/")
         // Local Debugging (Network IP for Physical Device)
         // setupWebView(mainWebView, "http://192.168.1.19:5173/")
         // Local Debugging (Emulator Loopback)
