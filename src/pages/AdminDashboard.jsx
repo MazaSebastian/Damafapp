@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTenantNav } from '../hooks/useTenantNav'
 import { useTenant } from '../context/TenantContext'
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed, Ticket, Menu, X, Loader2, LogOut, DollarSign, ChefHat, Layers, TrendingUp, Clock, Bell, MessageCircle, FileText } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Newspaper, Gift, UtensilsCrossed, Ticket, Menu, X, Loader2, LogOut, DollarSign, ChefHat, Layers, TrendingUp, Clock, Bell, MessageCircle, FileText, Puzzle } from 'lucide-react'
 import { useRealtimeConnection } from '../hooks/useRealtimeConnection'
 import NewsManager from '../components/NewsManager'
 import RewardsManager from '../components/RewardsManager'
@@ -251,6 +251,7 @@ const AdminDashboard = () => {
                     <div className="space-y-1">
                         <p className="px-4 text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Sistema</p>
                         <NavItem icon={<Settings />} label="Configuración" active={activeTab === 'Settings'} onClick={() => { setActiveTab('Settings'); setIsSidebarOpen(false) }} />
+                        <NavItem icon={<Puzzle />} label="Integraciones" active={false} onClick={() => { setIsSidebarOpen(false); tenantNav.navigate('/admin/integraciones') }} />
                     </div>
 
                 </nav>

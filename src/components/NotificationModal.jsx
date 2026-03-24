@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTenant } from '../context/TenantContext'
 import { requestForToken } from '../services/messaging'
 import { toast } from 'sonner'
 
 const NotificationModal = () => {
     const { user } = useAuth()
+    const { tenantId } = useTenant()
     const [isOpen, setIsOpen] = useState(false)
 
     useEffect(() => {
@@ -40,7 +42,7 @@ const NotificationModal = () => {
         toast.info('Solicitando permiso...')
 
         try {
-            const { token, error } = await requestForToken(user.id)
+            const { token, error } = await requestForToken(user.id, tenantId)
             if (token) {
                 toast('🎉 ¡Súper! Te avisaremos 🛵', {
                     description: 'Te notificaremos apenas tu pedido salga de la cocina.',

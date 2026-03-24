@@ -14,7 +14,7 @@ const ProfilePage = () => {
     const { user, signOut } = useAuth()
     const navigate = useNavigate()
     const tenantNav = useTenantNav()
-    const { tenantLogo, tenantName } = useTenant()
+    const { tenantId, tenantLogo, tenantName } = useTenant()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [showMap, setShowMap] = useState(false) // Toggle Map
@@ -385,7 +385,7 @@ const ProfilePage = () => {
                                         return;
                                     }
                                     toast.info('Solicitando permiso...');
-                                    const { token, error } = await requestForToken(user.id);
+                                    const { token, error } = await requestForToken(user.id, tenantId);
 
                                     if (token) {
                                         toast.success('Notificaciones activadas correctamente 🔔');

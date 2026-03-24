@@ -168,8 +168,8 @@ const CheckoutPage = () => {
 
     // Initialize Mercado Pago
     useEffect(() => {
-        initMercadoPago()
-    }, [])
+        initMercadoPago(tenantId)
+    }, [tenantId])
 
     // Approval Flow State
     const [showApprovalModal, setShowApprovalModal] = useState(false)

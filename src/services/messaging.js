@@ -27,25 +27,28 @@ if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined") {
     console.warn('Firebase config missing. FCM disabled.');
 }
 
-// VAPID Key from Console -> Project Settings -> Cloud Messaging -> Web Configuration
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
-export const requestForToken = async (userId) => {
-    console.log('requestForToken called with userId:', userId);
+/**
+ * Request FCM token and save to push_subscriptions (multi-tenant)
+ * Falls back to profiles.fcm_token (legacy) as a safety net.
+ *
+ * @param {string} userId - auth.uid()
+ * @param {string} tenantId - current tenant UUID
+ */
+export const requestForToken = async (userId, tenantId) => {
+    console.log('requestForToken called:', { userId, tenantId });
 
     if (!userId) {
-        console.error('No userId provided to requestForToken');
-        return { token: null, error: 'missing_user_id: No se recibió ID de usuario' };
+        return { token: null, error: 'missing_user_id' };
     }
 
     try {
         if (!('Notification' in window)) {
-            console.log('This browser does not support desktop notification');
             return { token: null, error: 'unsupported_browser' };
         }
 
         if (!messaging) {
-            console.warn('Messaging not initialized. Check Env Vars.');
             return { token: null, error: 'missing_config' };
         }
 
@@ -54,10 +57,10 @@ export const requestForToken = async (userId) => {
             try {
                 const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
                 if (currentToken) {
-                    console.log('FCM Token generated:', currentToken);
+                    console.log('FCM Token generated:', currentToken.substring(0, 20) + '...');
 
-                    // Always try to save for this app
-                    const { success, error } = await saveTokenToDatabase(currentToken, userId);
+                    // Save to push_subscriptions (multi-tenant)
+                    const { success, error } = await saveTokenToDatabase(currentToken, userId, tenantId);
 
                     if (!success) {
                         const errorMsg = error?.message || JSON.stringify(error) || 'Unknown DB Error';
@@ -65,10 +68,8 @@ export const requestForToken = async (userId) => {
                         return { token: null, error: 'db_save_error: ' + errorMsg };
                     }
 
-                    console.log('Token flow completed successfully');
                     return { token: currentToken, error: null };
                 } else {
-                    console.log('No registration token available.');
                     return { token: null, error: 'no_token' };
                 }
             } catch (tokenError) {
@@ -76,19 +77,51 @@ export const requestForToken = async (userId) => {
                 return { token: null, error: 'token_error: ' + tokenError.message };
             }
         } else {
-            console.log('Notification permission denied.');
             return { token: null, error: 'permission_denied' };
         }
     } catch (err) {
-        console.log('An error occurred while retrieving token. ', err);
+        console.log('Error retrieving token:', err);
         return { token: null, error: 'unknown_error: ' + err.message };
     }
 };
 
-const saveTokenToDatabase = async (token, userId) => {
+/**
+ * Save FCM token to push_subscriptions table (multi-tenant)
+ * Also updates legacy profiles.fcm_token for backward compatibility
+ */
+const saveTokenToDatabase = async (token, userId, tenantId) => {
     try {
-        // We must inspect if the row was actually updated.
-        // If the user profile doesn't exist or RLS hides it, no error is thrown but data is empty.
+        // 1. Upsert into push_subscriptions (new multi-tenant table)
+        if (tenantId) {
+            const deviceInfo = {
+                platform: 'web',
+                browser: navigator.userAgent.includes('Chrome') ? 'Chrome' :
+                    navigator.userAgent.includes('Firefox') ? 'Firefox' :
+                        navigator.userAgent.includes('Safari') ? 'Safari' : 'Unknown',
+                screen: `${window.screen.width}x${window.screen.height}`,
+            };
+
+            const { error: upsertError } = await supabase
+                .from('push_subscriptions')
+                .upsert({
+                    fcm_token: token,
+                    user_id: userId,
+                    tenant_id: tenantId,
+                    device_info: deviceInfo,
+                    is_active: true,
+                    last_seen_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: 'fcm_token' });
+
+            if (upsertError) {
+                console.error('push_subscriptions upsert error:', upsertError);
+                // Don't fail — try legacy fallback
+            } else {
+                console.log('FCM Token saved to push_subscriptions (tenant:', tenantId, ')');
+            }
+        }
+
+        // 2. Legacy: also update profiles.fcm_token (backward compat)
         const { data, error } = await supabase
             .from('profiles')
             .update({ fcm_token: token })
@@ -98,15 +131,17 @@ const saveTokenToDatabase = async (token, userId) => {
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            console.warn('Token save failed: Profile not found or RLS restriction for ID', userId);
-            return { success: false, error: { message: 'Profile not found (Rows affected: 0)' } };
+            console.warn('Profile not found for FCM token save, ID:', userId);
+            // If push_subscriptions worked, still return success
+            if (tenantId) return { success: true };
+            return { success: false, error: { message: 'Profile not found' } };
         }
 
-        console.log('FCM Token saved to profile');
+        console.log('FCM Token saved to profile (legacy)');
         return { success: true };
     } catch (error) {
-        console.error('Error saving FCM token to DB:', error);
-        return { success: false, error: error };
+        console.error('Error saving FCM token:', error);
+        return { success: false, error };
     }
 };
 

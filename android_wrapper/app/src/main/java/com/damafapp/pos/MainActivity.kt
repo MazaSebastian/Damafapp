@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // Debugging
-        WebView.setWebContentsDebuggingEnabled(true)
+        if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
 
         // 1. Setup Main Screen (Guest Home - Login cuando sea necesario)
         val mainWebView = findViewById<WebView>(R.id.main_webview)
@@ -107,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidPrint")
 
         // Debugging
-        WebView.setWebContentsDebuggingEnabled(true)
+        if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {

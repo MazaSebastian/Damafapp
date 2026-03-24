@@ -7,35 +7,24 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-    // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
     try {
-        // Use SERVICE_ROLE_KEY to bypass RLS and ensure we can read the order
-        // This is critical for getting the correct price if the user lacks select permissions
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            }
+            { auth: { autoRefreshToken: false, persistSession: false } }
         )
 
         const { order_id } = await req.json()
 
-        if (!order_id) {
-            console.error('Missing order_id in request body')
-            throw new Error('Missing order_id')
-        }
+        if (!order_id) throw new Error('Missing order_id')
 
         console.log(`Processing Order ID: ${order_id}`)
 
-        // 1. Fetch Order details
+        // 1. Fetch Order
         const { data: order, error: orderError } = await supabaseClient
             .from('orders')
             .select('*')
@@ -47,63 +36,65 @@ serve(async (req) => {
             throw new Error('Order not found')
         }
 
-        // 2. Prepare items for Mercado Pago
-        console.log('Order Data:', JSON.stringify(order))
+        const tenantId = order.tenant_id
+        if (!tenantId) throw new Error('Order has no tenant_id')
 
-        // Get tenant name for branding
+        // 2. Get MercadoPago credentials for THIS tenant
+        const { data: mpCreds, error: mpCredsError } = await supabaseClient
+            .from('mp_credentials')
+            .select('access_token, public_key')
+            .eq('tenant_id', tenantId)
+            .eq('is_active', true)
+            .single()
+
+        if (mpCredsError || !mpCreds?.access_token) {
+            console.error('MP Credentials Error:', mpCredsError)
+            throw new Error('MercadoPago no configurado para este local. Configuralo en Integraciones.')
+        }
+
+        const mpAccessToken = mpCreds.access_token
+
+        // 3. Get tenant name for branding
         let tenantName = 'Stacked'
-        if (order.tenant_id) {
-            const { data: tenant } = await supabaseClient
-                .from('tenants')
-                .select('name')
-                .eq('id', order.tenant_id)
-                .single()
-            if (tenant?.name) tenantName = tenant.name
-        }
+        const { data: tenant } = await supabaseClient
+            .from('tenants')
+            .select('name, slug')
+            .eq('id', tenantId)
+            .single()
+        if (tenant?.name) tenantName = tenant.name
+        const tenantSlug = tenant?.slug || ''
 
-        // --- STRICT PRICE VALIDATION ---
-        // Force conversion to number (Handle string "100.50", number 100.50, etc.)
+        // 4. Price validation
         let safePrice = Number(order.total)
-
-        // Validate: If it's NaN or <= 0, we have a problem.
         if (isNaN(safePrice) || safePrice <= 0) {
-            console.error(`Invalid Price Detected: ${order.total} (Type: ${typeof order.total}). Defaulting to 1.0 for debugging/fallback.`)
-            // Fallback to 1.0 to prevent MP crash, but log error loudly.
+            console.error(`Invalid Price: ${order.total}`)
             safePrice = 1.0
-        } else {
-            console.log(`Valid Price: ${safePrice} (Type: ${typeof safePrice})`)
-        }
-        // --- STRICT PRICE VALIDATION END ---
-
-        const items = [
-            {
-                id: "order-total",
-                title: `Pedido ${tenantName}`,
-                quantity: 1,
-                currency_id: 'ARS',
-                unit_price: safePrice // Guaranteed to be a number
-            }
-        ];
-
-        // 3. Create Preference in Mercado Pago
-        const mpAccessToken = Deno.env.get('MP_ACCESS_TOKEN')
-        if (!mpAccessToken) {
-            console.error('MP_ACCESS_TOKEN is not set')
-            throw new Error('Server configuration error: Missing MP Token')
         }
 
+        const items = [{
+            id: "order-total",
+            title: `Pedido ${tenantName}`,
+            quantity: 1,
+            currency_id: 'ARS',
+            unit_price: safePrice
+        }]
+
+        // 5. Create Preference
         const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://stacked.com'
+        const basePath = tenantSlug ? `/${tenantSlug}` : ''
 
         const preferenceData = {
-            items: items,
+            items,
             back_urls: {
-                success: `${frontendUrl}/my-orders?status=approved`,
-                failure: `${frontendUrl}/checkout?status=failure`,
-                pending: `${frontendUrl}/my-orders?status=pending`
+                success: `${frontendUrl}${basePath}/my-orders?status=approved`,
+                failure: `${frontendUrl}${basePath}/checkout?status=failure`,
+                pending: `${frontendUrl}${basePath}/my-orders?status=pending`
             },
             auto_return: "approved",
             external_reference: order_id,
-            statement_descriptor: "STACKED"
+            // Encode tenant_id in metadata so webhook can resolve it
+            metadata: { tenant_id: tenantId },
+            statement_descriptor: tenantName.substring(0, 22).toUpperCase()
         }
 
         const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -122,34 +113,23 @@ serve(async (req) => {
             throw new Error(`Mercado Pago API Error: ${mpData.message || 'Unknown'}`)
         }
 
-        // 4. Update Order with Preference ID
+        // 6. Update Order with Preference ID
         await supabaseClient
             .from('orders')
             .update({ mercadopago_preference_id: mpData.id })
             .eq('id', order_id)
 
-        // 5. Return init_point
+        // 7. Return init_point
         return new Response(
-            JSON.stringify({
-                init_point: mpData.init_point,
-                preference_id: mpData.id
-            }),
+            JSON.stringify({ init_point: mpData.init_point, preference_id: mpData.id }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
 
     } catch (error: any) {
-        // Log the full error to Supabase Dashboard Logs
-        console.error('CRITIAL ERROR IN EDGE FUNCTION:', error)
-
+        console.error('CRITICAL ERROR:', error)
         return new Response(
-            JSON.stringify({
-                error: error.message || 'Error interno desconocido',
-                details: error.toString()
-            }),
-            {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 400
-            }
+            JSON.stringify({ error: error.message || 'Error interno', details: error.toString() }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         )
     }
 })

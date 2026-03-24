@@ -38,6 +38,7 @@ const KDSPage = lazy(() => import('./pages/KDSPage'))
 const POSPage = lazy(() => import('./pages/POSPage'))
 const DeliveryDashboard = lazy(() => import('./components/DeliveryDashboard'))
 const RiderInterface = lazy(() => import('./components/RiderInterface'))
+const AdminIntegraciones = lazy(() => import('./pages/AdminIntegraciones'))
 
 // Suspense fallback
 const LazyFallback = () => (
@@ -85,6 +86,13 @@ const TenantRoutes = () => {
           <Route path="/admin/pos" element={
             <ProtectedRoute role={['admin', 'owner']}>
               <POSPage />
+            </ProtectedRoute>
+          } />
+
+          {/* Protected: Admin Integraciones */}
+          <Route path="/admin/integraciones" element={
+            <ProtectedRoute role={['admin', 'owner']}>
+              <PageTransition><AdminIntegraciones /></PageTransition>
             </ProtectedRoute>
           } />
 
