@@ -588,6 +588,30 @@ const OrdersManager = () => {
     const handlePrint = (order) => {
         if (!order) return
 
+        // 1. Android Native Bridge (highest priority — handles USB natively)
+        if (window.AndroidPrint) {
+            try {
+                // Build payload for Android native printer
+                const printPayload = {
+                    ...order,
+                    cart_items: order.order_items?.map(item => ({
+                        name: item.products?.name || 'Producto',
+                        quantity: item.quantity,
+                        price: item.price_at_time,
+                        modifiers: item.modifiers || [],
+                        notes: item.notes || ''
+                    })) || []
+                }
+                window.AndroidPrint.printTicket(JSON.stringify(printPayload))
+                toast.success('Imprimiendo... 🖨️')
+            } catch (e) {
+                console.error('[handlePrint] Android bridge error:', e)
+                toast.error('Error al imprimir: ' + e.message)
+            }
+            return
+        }
+
+        // 2. WebUSB (desktop Chrome with USB printer)
         if (usbConnected) {
             printViaUsb(order)
         } else {
