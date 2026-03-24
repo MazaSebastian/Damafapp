@@ -41,24 +41,29 @@ const CashManager = () => {
     const fetchCurrentRegister = async () => {
         setLoading(true)
         try {
-            // Find OPEN register
+            // Get the MOST RECENT open register (handles case where multiple exist)
             const { data, error } = await supabase
                 .from('cash_registers')
                 .select('*')
                 .eq('status', 'open')
                 .eq('tenant_id', tenantId)
-                .single()
+                .order('opened_at', { ascending: false })
+                .limit(1)
 
-            if (data) {
-                setCurrentRegister(data)
-                await fetchMovements(data.id, data.opening_amount)
+            if (error) {
+                console.error('[CashManager] fetch error:', error)
+                setCurrentRegister(null)
+                return
+            }
+
+            if (data && data.length > 0) {
+                setCurrentRegister(data[0])
+                await fetchMovements(data[0].id, data[0].opening_amount)
             } else {
                 setCurrentRegister(null)
             }
         } catch (error) {
-            // Error 406 is 'none found', which is fine (closed)
-            // But Supabase JS might return null data on single().
-            // We'll assume no open register if error.
+            console.warn('[CashManager] fetchCurrentRegister catch:', error)
             setCurrentRegister(null)
         } finally {
             setLoading(false)
@@ -124,6 +129,17 @@ const CashManager = () => {
 
         try {
             const { data: { user } } = await supabase.auth.getUser()
+            console.log('[CashManager] handleOpenRegister - user:', user?.id, 'tenantId:', tenantId)
+
+            if (!user) {
+                toast.error('No hay sesión activa. Por favor iniciá sesión nuevamente.')
+                return
+            }
+            if (!tenantId) {
+                toast.error('Error: No se detectó el tenant. Recargá la página.')
+                return
+            }
+
             const { data, error } = await supabase
                 .from('cash_registers')
                 .insert([{
@@ -135,12 +151,20 @@ const CashManager = () => {
                 .select()
                 .single()
 
+            console.log('[CashManager] handleOpenRegister result - data:', data, 'error:', error)
+
             if (error) throw error
+
+            if (!data) {
+                toast.error('La caja no se pudo abrir (sin datos devueltos). Verificá permisos.')
+                return
+            }
 
             toast.success('Caja abierta correctamente')
             setCurrentRegister(data)
-            await fetchMovements(data.id, data.opening_amount) // Will be empty but inits stats
+            await fetchMovements(data.id, data.opening_amount)
         } catch (error) {
+            console.error('[CashManager] handleOpenRegister error:', error)
             toast.error('Error al abrir caja: ' + error.message)
         }
     }
