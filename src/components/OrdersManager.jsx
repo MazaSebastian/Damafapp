@@ -11,6 +11,7 @@ import POSModal from './POSModal'
 import AssignDriverModal from './AssignDriverModal'
 import EditOrderModal from './EditOrderModal'
 import ConfirmModal from './ConfirmModal'
+import PendingOrdersQueue from './PendingOrdersQueue'
 import { useRealtimeConnection } from '../hooks/useRealtimeConnection'
 import { useTenant } from '../context/TenantContext'
 
@@ -95,21 +96,8 @@ const OrdersManager = () => {
                         audio.play().catch(() => { })
                     } catch (e) { /* ignore */ }
 
-                    // Auto-Print: fetch full order with items for the ticket
-                    try {
-                        const { data: fullOrder, error } = await supabase
-                            .from('orders')
-                            .select('*,order_items(*,products(name)),profiles(*)')
-                            .eq('id', payload.new.id)
-                            .single()
-
-                        if (!error && fullOrder) {
-                            toast.info('🖨️ Imprimiendo comanda automática...', { duration: 3000 })
-                            handlePrint(fullOrder)
-                        }
-                    } catch (printErr) {
-                        console.warn('[OrdersManager] Auto-print failed:', printErr)
-                    }
+                    // NOTE: Auto-print was removed here.
+                    // Print now triggers when admin ACCEPTS the order (status → cooking)
                 }
             )
             .subscribe()
@@ -647,8 +635,9 @@ const OrdersManager = () => {
 
     const getNextStatusButton = (status) => {
         switch (status) {
-            case 'pending':
             case 'pending_approval':
+                return { text: '✅ Aceptar', next: 'cooking', color: 'bg-green-600 hover:bg-green-500' }
+            case 'pending':
                 return { text: 'Enviar a Cocina', next: 'cooking', color: 'bg-green-600 hover:bg-green-500' }
             case 'cooking':
                 return { text: 'Preparar Envío', next: 'packaging', color: 'bg-orange-600 hover:bg-orange-500' }
@@ -668,6 +657,13 @@ const OrdersManager = () => {
             <div className="hidden">
                 <TicketTemplate order={printingOrder} />
             </div>
+
+            {/* Floating Pending Orders Queue */}
+            <PendingOrdersQueue
+                orders={orders}
+                onAccept={(orderId) => updateStatus(orderId, 'cooking')}
+                onReject={(orderId) => updateStatus(orderId, 'rejected')}
+            />
 
 
 
@@ -898,6 +894,14 @@ const OrdersManager = () => {
                                             className={`${getNextStatusButton(order.status).color} text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg`}
                                         >
                                             {getNextStatusButton(order.status).text}
+                                        </button>
+                                    )}
+                                    {(order.status === 'pending_approval' || order.status === 'pending') && (
+                                        <button
+                                            onClick={() => updateStatus(order.id, 'rejected')}
+                                            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg"
+                                        >
+                                            ❌ Rechazar
                                         </button>
                                     )}
                                     <button
