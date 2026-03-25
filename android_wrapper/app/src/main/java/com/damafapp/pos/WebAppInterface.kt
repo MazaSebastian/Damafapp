@@ -257,11 +257,14 @@ class WebAppInterface(private val context: Context) {
         sb.append("[C]--------------------------------\n")
         
         // 4. Client & Type
-        val profile = order.optJSONObject("profiles") // Supabase sometimes wraps joined data
-        // Check both locations for safety
-        val clientName = profile?.optString("full_name") 
-            ?: order.optString("client_name") // Fallback if flattened
-            ?: "Invitado"
+        // client_name is set explicitly by JS from profiles.full_name
+        val clientName = order.optString("client_name", "").let {
+            if (it.isNotEmpty() && it != "null") it
+            else {
+                val profile = order.optJSONObject("profiles")
+                profile?.optString("full_name", "Invitado") ?: "Invitado"
+            }
+        }
             
         sb.append("[L]Cliente: <b>$clientName</b>\n")
         
@@ -288,10 +291,6 @@ class WebAppInterface(private val context: Context) {
         if (type == "delivery") {
             // Fallback for non-profile delivery address
             val address = order.optString("delivery_address", "")
-            // Only show if different or if we didn't show client_address above
-            // Usually delivery_address is the one to go.
-            // Let's assume for Takeaway/POS we trust the profile address if printed.
-            // If Type is DELIVERY, we should reiterate the delivery address.
             if (address.isNotEmpty() && address != clientAddress) {
                  sb.append("[L]Entregar en: $address\n")
             }
@@ -310,17 +309,42 @@ class WebAppInterface(private val context: Context) {
                 val qty = item.optInt("quantity", 1)
                 
                 // Item Line: BIG FONT
-                // "1 x Bacon King"
                 sb.append("[L]<b><font size='big'>$qty x $name</font></b>\n")
                 
-                // Modifiers
+                // Removed Ingredients (🚫 SIN X)
+                val removedIngredients = item.optJSONArray("removed_ingredients")
+                if (removedIngredients != null && removedIngredients.length() > 0) {
+                    for (j in 0 until removedIngredients.length()) {
+                        val ingredient = removedIngredients.getString(j)
+                        sb.append("[L]  SIN $ingredient\n")
+                    }
+                }
+                
+                // Modifiers / Extras (+ X)
                 val modifiers = item.optJSONArray("modifiers")
                 if (modifiers != null) {
                     for (j in 0 until modifiers.length()) {
                         val mod = modifiers.getJSONObject(j)
                         val modName = mod.optString("name", "")
-                        sb.append("[L]  + $modName\n")
+                        val modQty = mod.optInt("quantity", 1)
+                        if (modQty > 1) {
+                            sb.append("[L]  + $modName x$modQty\n")
+                        } else {
+                            sb.append("[L]  + $modName\n")
+                        }
                     }
+                }
+                
+                // Side (🍟 X)
+                val sideName = item.optString("side_name", "")
+                if (sideName.isNotEmpty()) {
+                    sb.append("[L]  Guarnicion: $sideName\n")
+                }
+                
+                // Drink (🥤 X)
+                val drinkName = item.optString("drink_name", "")
+                if (drinkName.isNotEmpty()) {
+                    sb.append("[L]  Bebida: $drinkName\n")
                 }
                 
                 // Notes

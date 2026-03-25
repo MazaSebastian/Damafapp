@@ -592,13 +592,18 @@ const OrdersManager = () => {
         if (window.AndroidPrint) {
             try {
                 // Build payload for Android native printer
+                const clientName = order.profiles?.full_name || order.client_name || 'Invitado'
                 const printPayload = {
                     ...order,
+                    client_name: clientName,
                     cart_items: order.order_items?.map(item => ({
                         name: item.products?.name || 'Producto',
                         quantity: item.quantity,
                         price: item.price_at_time,
                         modifiers: item.modifiers || [],
+                        removed_ingredients: item.removed_ingredients || [],
+                        side_name: item.side_info?.name || '',
+                        drink_name: item.drink_info?.name || '',
                         notes: item.notes || ''
                     })) || []
                 }
@@ -855,7 +860,7 @@ const OrdersManager = () => {
                         <div className="p-4 border-b border-white/5 bg-[var(--color-background)]/50 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-bold text-lg text-white">#{order.id.slice(0, 4)}</span>
+                                    <span className="font-bold text-lg text-white">#{order.order_number ? String(order.order_number).padStart(4, '0') : order.id.slice(0, 4)}</span>
                                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${getStatusColor(order.status)}`}>{order.status}</span>
                                 </div>
                                 <span className="text-xs text-[var(--color-text-muted)]">{new Date(order.created_at).toLocaleString()}</span>
