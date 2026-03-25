@@ -165,11 +165,11 @@ class WebAppInterface(private val context: Context) {
 
     private fun printUsb(order: JSONObject) {
         try {
-            showStyledSnackbar(getRootView(), "Buscando impresora USB...", SnackbarType.INFO)
+            showStyledSnackbar(getRootView(), "Buscando impresoras USB...", SnackbarType.INFO)
             
-            val usbConnection = UsbPrintersConnections.selectFirstConnected(context)
+            val printerConnections = UsbPrintersConnections(context).list
             
-            if (usbConnection == null) {
+            if (printerConnections == null || printerConnections.isEmpty()) {
                 // FALLBACK DEBUGGING: List all devices to see if OS sees anything
                 val manager = context.getSystemService(Context.USB_SERVICE) as android.hardware.usb.UsbManager
                 val deviceList = manager.deviceList
@@ -182,16 +182,29 @@ class WebAppInterface(private val context: Context) {
                 return
             }
 
-            showStyledSnackbar(getRootView(), "✅ Impresora conectada. Imprimiendo...", SnackbarType.SUCCESS)
-
-            // 80mm width, 46 chars per line to avoid edge cutoff (was 48)
-            val printer = EscPosPrinter(usbConnection, 203, 80f, 46)
-            
             val formattedText = formatOrderToEscPos(order)
+            var printedCount = 0
+            var lastError: String? = null
             
-            // Apply Cut Command explicitly
-            printer.printFormattedTextAndCut(formattedText)
-            printer.disconnectPrinter()
+            // Print on ALL connected printers
+            for (connection in printerConnections) {
+                try {
+                    val deviceName = connection.device.productName ?: "Impresora"
+                    val printer = EscPosPrinter(connection, 203, 80f, 46)
+                    printer.printFormattedTextAndCut(formattedText)
+                    printer.disconnectPrinter()
+                    printedCount++
+                } catch (e: Exception) {
+                    lastError = "${connection.device.productName}: ${e.message}"
+                    e.printStackTrace()
+                }
+            }
+            
+            if (printedCount > 0) {
+                showStyledSnackbar(getRootView(), "✅ Impreso en $printedCount impresora(s)", SnackbarType.SUCCESS)
+            } else {
+                showStyledSnackbar(getRootView(), "❌ No se pudo imprimir: $lastError", SnackbarType.ERROR)
+            }
             
         } catch (e: Exception) {
             e.printStackTrace()
