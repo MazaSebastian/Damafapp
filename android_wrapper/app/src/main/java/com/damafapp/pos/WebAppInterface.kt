@@ -380,49 +380,49 @@ class WebAppInterface(private val context: Context) {
     private fun formatOrderToEscPos(order: JSONObject): String {
         val sb = StringBuilder()
         
+        // Read ticket config flags (all default to true if not present)
+        val cfg = order.optJSONObject("ticket_config")
+        fun show(key: String): Boolean = cfg?.optBoolean(key, true) ?: true
+        
         // 1. Top Header
-        sb.append("[C]<b><font size='big'>DAMAF APP</font></b>\n")
-        sb.append("[C]--------------------------------\n")
-
-        // 2. Date & Time (Explicit)
-        // Parse ISO string to local readable
-        val dateRaw = order.optString("created_at", "")
-        // Simple manual parsing or use the formatted string passed from JS if available. 
-        // Assuming ISO: 2026-01-19T21:30:00...
-        var dateDisplay = dateRaw
-        var timeDisplay = ""
-        
-        if (dateRaw.length >= 16) {
-           // 2026-01-19T21:30
-           val parts = dateRaw.split("T")
-           if (parts.size >= 2) {
-               val d = parts[0].split("-") // [2026, 01, 19]
-               if (d.size == 3) dateDisplay = "${d[2]}/${d[1]}/${d[0]}"
-               
-               timeDisplay = parts[1].substring(0, 5) // 21:30
-           }
+        if (show("header")) {
+            sb.append("[C]<b><font size='big'>DAMAF APP</font></b>\n")
+            sb.append("[C]--------------------------------\n")
         }
 
-        sb.append("[L]Fecha: $dateDisplay\n")
-        if (timeDisplay.isNotEmpty()) sb.append("[L]Hora:  $timeDisplay\n")
-        
-        // 3. ORDEN Header (Centered)
-        sb.append("\n[C]ORDEN\n")
-        
-        // 3. ID (HUGE)
-        // 3. ID (HUGE)
-        val orderNumber = order.optString("order_number", "")
-        val displayId = if (orderNumber.isNotEmpty() && orderNumber != "null") {
-             "#" + orderNumber.padStart(4, '0') 
-        } else {
-             "#" + order.optString("id", "").take(4)
+        // 2. Date & Time
+        if (show("datetime")) {
+            val dateRaw = order.optString("created_at", "")
+            var dateDisplay = dateRaw
+            var timeDisplay = ""
+            
+            if (dateRaw.length >= 16) {
+               val parts = dateRaw.split("T")
+               if (parts.size >= 2) {
+                   val d = parts[0].split("-")
+                   if (d.size == 3) dateDisplay = "${d[2]}/${d[1]}/${d[0]}"
+                   timeDisplay = parts[1].substring(0, 5)
+               }
+            }
+
+            sb.append("[L]Fecha: $dateDisplay\n")
+            if (timeDisplay.isNotEmpty()) sb.append("[L]Hora:  $timeDisplay\n")
         }
         
-        sb.append("[C]<b><font size='big'>$displayId</font></b>\n")
-        sb.append("[C]--------------------------------\n")
+        // 3. ORDEN & Number
+        if (show("order_number")) {
+            sb.append("\n[C]ORDEN\n")
+            val orderNumber = order.optString("order_number", "")
+            val displayId = if (orderNumber.isNotEmpty() && orderNumber != "null") {
+                 "#" + orderNumber.padStart(4, '0') 
+            } else {
+                 "#" + order.optString("id", "").take(4)
+            }
+            sb.append("[C]<b><font size='big'>$displayId</font></b>\n")
+            sb.append("[C]--------------------------------\n")
+        }
         
-        // 4. Client & Type
-        // client_name is set explicitly by JS from profiles.full_name
+        // 4. Client Name
         val clientName = order.optString("client_name", "").let {
             if (it.isNotEmpty() && it != "null") it
             else {
@@ -430,128 +430,148 @@ class WebAppInterface(private val context: Context) {
                 profile?.optString("full_name", "Invitado") ?: "Invitado"
             }
         }
-            
-        sb.append("[L]Cliente: <b>$clientName</b>\n")
         
-        // Extended Profile Data (from POS search)
+        if (show("client_name")) {
+            sb.append("[L]Cliente: <b>$clientName</b>\n")
+        }
+        
+        // Extended Profile Data
         val clientAddress = order.optString("client_address", "")
         val clientPhone = order.optString("client_phone", "")
         val clientShift = order.optString("client_shift", "")
         
-        if (clientAddress.isNotEmpty()) sb.append("[L]Calle: $clientAddress\n")
-        if (clientPhone.isNotEmpty()) sb.append("[L]Tel: $clientPhone\n")
-        if (clientShift.isNotEmpty()) {
+        if (show("client_address") && clientAddress.isNotEmpty()) {
+            sb.append("[L]Calle: $clientAddress\n")
+        }
+        if (show("client_phone") && clientPhone.isNotEmpty()) {
+            sb.append("[L]Tel: $clientPhone\n")
+        }
+        if (show("scheduled_time") && clientShift.isNotEmpty()) {
              sb.append("\n[C]Turno de entrega:\n")
              sb.append("[C]<b><font size='big'>$clientShift</font></b>\n")
         }
         
-        
-        // Order Type - HUGE (Match PAGO size)
-        val type = order.optString("order_type", "takeaway")
-        val typeText = if (type == "delivery") "DELIVERY" else "TAKE AWAY"
-        
-        // Changed from 'wide' to 'big' to match Payment/Total style requested
-        sb.append("\n[C]<b><font size='big'>$typeText</font></b>\n\n")
+        // Order Type
+        if (show("order_type")) {
+            val type = order.optString("order_type", "takeaway")
+            val typeText = if (type == "delivery") "DELIVERY" else "TAKE AWAY"
+            sb.append("\n[C]<b><font size='big'>$typeText</font></b>\n\n")
 
-        if (type == "delivery") {
-            // Fallback for non-profile delivery address
-            val address = order.optString("delivery_address", "")
-            if (address.isNotEmpty() && address != clientAddress) {
-                 sb.append("[L]Entregar en: $address\n")
+            if (type == "delivery") {
+                val address = order.optString("delivery_address", "")
+                if (address.isNotEmpty() && address != clientAddress) {
+                     sb.append("[L]Entregar en: $address\n")
+                }
             }
         }
         
         sb.append("[C]--------------------------------\n")
         
-        // 5. Items (BIG FONT based on feedback)
-        val items = order.optJSONArray("cart_items") 
-        val itemsArray = if (items != null && items.length() > 0) items else order.optJSONArray("items")
+        // 5. Items
+        if (show("items")) {
+            val items = order.optJSONArray("cart_items") 
+            val itemsArray = if (items != null && items.length() > 0) items else order.optJSONArray("items")
 
-        if (itemsArray != null) {
-            for (i in 0 until itemsArray.length()) {
-                val item = itemsArray.getJSONObject(i)
-                val name = item.optString("name", "Producto")
-                val qty = item.optInt("quantity", 1)
-                
-                // Item Line: BIG FONT
-                sb.append("[L]<b><font size='big'>$qty x $name</font></b>\n")
-                
-                // Removed Ingredients (🚫 SIN X)
-                val removedIngredients = item.optJSONArray("removed_ingredients")
-                if (removedIngredients != null && removedIngredients.length() > 0) {
-                    for (j in 0 until removedIngredients.length()) {
-                        val ingredient = removedIngredients.getString(j)
-                        sb.append("[L]  SIN $ingredient\n")
-                    }
-                }
-                
-                // Modifiers / Extras (+ X)
-                val modifiers = item.optJSONArray("modifiers")
-                if (modifiers != null) {
-                    for (j in 0 until modifiers.length()) {
-                        val mod = modifiers.getJSONObject(j)
-                        val modName = mod.optString("name", "")
-                        val modQty = mod.optInt("quantity", 1)
-                        if (modQty > 1) {
-                            sb.append("[L]  + $modName x$modQty\n")
-                        } else {
-                            sb.append("[L]  + $modName\n")
+            if (itemsArray != null) {
+                for (i in 0 until itemsArray.length()) {
+                    val item = itemsArray.getJSONObject(i)
+                    val name = item.optString("name", "Producto")
+                    val qty = item.optInt("quantity", 1)
+                    
+                    sb.append("[L]<b><font size='big'>$qty x $name</font></b>\n")
+                    
+                    // Removed Ingredients
+                    if (show("removed_ingredients")) {
+                        val removedIngredients = item.optJSONArray("removed_ingredients")
+                        if (removedIngredients != null && removedIngredients.length() > 0) {
+                            for (j in 0 until removedIngredients.length()) {
+                                val ingredient = removedIngredients.getString(j)
+                                sb.append("[L]  SIN $ingredient\n")
+                            }
                         }
                     }
+                    
+                    // Modifiers / Extras
+                    if (show("modifiers")) {
+                        val modifiers = item.optJSONArray("modifiers")
+                        if (modifiers != null) {
+                            for (j in 0 until modifiers.length()) {
+                                val mod = modifiers.getJSONObject(j)
+                                val modName = mod.optString("name", "")
+                                val modQty = mod.optInt("quantity", 1)
+                                if (modQty > 1) {
+                                    sb.append("[L]  + $modName x$modQty\n")
+                                } else {
+                                    sb.append("[L]  + $modName\n")
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Sides
+                    if (show("sides")) {
+                        val sideName = item.optString("side_name", "")
+                        if (sideName.isNotEmpty()) {
+                            sb.append("[L]  Guarnicion: $sideName\n")
+                        }
+                    }
+                    
+                    // Drinks
+                    if (show("drinks")) {
+                        val drinkName = item.optString("drink_name", "")
+                        if (drinkName.isNotEmpty()) {
+                            sb.append("[L]  Bebida: $drinkName\n")
+                        }
+                    }
+                    
+                    // Item Notes
+                    if (show("item_notes")) {
+                        val notes = item.optString("notes", "")
+                        if (notes.isNotEmpty()) {
+                             sb.append("[L]  (Nota: $notes)\n")
+                        }
+                    }
+                    
+                    sb.append("[L]\n")
                 }
-                
-                // Side (🍟 X)
-                val sideName = item.optString("side_name", "")
-                if (sideName.isNotEmpty()) {
-                    sb.append("[L]  Guarnicion: $sideName\n")
-                }
-                
-                // Drink (🥤 X)
-                val drinkName = item.optString("drink_name", "")
-                if (drinkName.isNotEmpty()) {
-                    sb.append("[L]  Bebida: $drinkName\n")
-                }
-                
-                // Notes
-                val notes = item.optString("notes", "")
-                if (notes.isNotEmpty()) {
-                     sb.append("[L]  (Nota: $notes)\n")
-                }
-                
-                // Spacer
-                sb.append("[L]\n")
+            }
+        }
+        
+        // Customer Notes
+        if (show("customer_notes")) {
+            val customerNotes = order.optString("notes", "")
+            if (customerNotes.isNotEmpty()) {
+                sb.append("[C]--------------------------------\n")
+                sb.append("[L]Nota: $customerNotes\n")
             }
         }
         
         sb.append("[C]--------------------------------\n")
         
-        // 6. Totals (HUGE & WIDE)
-        val method = order.optString("payment_method", "cash")
-        val methodStr = when(method) {
-            "mercadopago" -> "Mercado Pago"
-            "cash" -> "Efectivo"
-            "transfer" -> "Transferencia"
-            else -> method
+        // 6. Payment & Total
+        if (show("payment_method")) {
+            val method = order.optString("payment_method", "cash")
+            val methodStr = when(method) {
+                "mercadopago" -> "Mercado Pago"
+                "cash" -> "Efectivo"
+                "transfer" -> "Transferencia"
+                else -> method
+            }
+            sb.append("\n")
+            sb.append("[L]<b><font size='big'>PAGO: ${methodStr.uppercase()}</font></b>\n")
         }
         
-        // Spacer
-        sb.append("\n")
+        if (show("total")) {
+            val total = order.optDouble("total", 0.0)
+            sb.append("\n")
+            sb.append("[L]<font size='big'>TOTAL</font>\n")
+            sb.append("[L]<b><font size='big'>${formatCurrency(total)}</font></b>\n")
+            sb.append("\n")
+        }
         
-        // Payment Method: MAX SIZE (Big + Bold)
-        sb.append("[L]<b><font size='big'>PAGO: ${methodStr.uppercase()}</font></b>\n")
-        
-        val total = order.optDouble("total", 0.0)
-        
-        // Extra Spacing
-        sb.append("\n")
-        sb.append("[L]<font size='big'>TOTAL</font>\n")
-        
-        // TOTAL Amount: BIG + BOLD
-        // Note: 'big' is usually the max standard font (Double Width/Height).
-        sb.append("[L]<b><font size='big'>${formatCurrency(total)}</font></b>\n")
-        sb.append("\n") // More space at bottom
-        
-        sb.append("[C]www.damaf.com\n")
+        if (show("footer")) {
+            sb.append("[C]www.damaf.com\n")
+        }
         
         // 7. Fiscal Data (CAE)
         val invoices = order.optJSONArray("invoices")

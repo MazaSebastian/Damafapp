@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Save, Loader2, Settings as SettingsIcon, Palette, Lock, Eye, EyeOff, Printer } from 'lucide-react'
 import ScheduleConfig from './ScheduleConfig'
 import PrinterDiagnostics from './PrinterDiagnostics'
+import TicketDesigner from './TicketDesigner'
 import { useTheme } from '../context/ThemeContext'
 
 const SettingsManager = () => {
@@ -248,7 +249,10 @@ const SettingsManager = () => {
             </div>
 
             {activeTab === 'impresoras' ? (
-                <PrinterDiagnostics />
+                <div className="space-y-6">
+                    <PrinterDiagnostics />
+                    <TicketDesigner />
+                </div>
             ) : (
                 <div className="grid gap-6">
                     {getSettingsByCategory(activeTab).length > 0 ? (

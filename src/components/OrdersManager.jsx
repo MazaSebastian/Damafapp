@@ -12,6 +12,7 @@ import AssignDriverModal from './AssignDriverModal'
 import EditOrderModal from './EditOrderModal'
 import ConfirmModal from './ConfirmModal'
 import PendingOrdersQueue from './PendingOrdersQueue'
+import { getEnabledFlags, getTicketConfig } from './TicketDesigner'
 import { useRealtimeConnection } from '../hooks/useRealtimeConnection'
 import { useTenant } from '../context/TenantContext'
 
@@ -595,6 +596,13 @@ const OrdersManager = () => {
                         notes: item.notes || ''
                     })) || []
                 }
+
+                // Inject ticket config flags for Kotlin formatter
+                const ticketFlags = getEnabledFlags()
+                const { receiptWidth } = getTicketConfig()
+                printPayload.ticket_config = ticketFlags
+                printPayload.receipt_width = receiptWidth
+
                 window.AndroidPrint.printTicket(JSON.stringify(printPayload))
                 toast.success('Imprimiendo... 🖨️')
             } catch (e) {
