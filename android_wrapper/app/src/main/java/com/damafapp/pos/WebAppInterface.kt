@@ -163,6 +163,171 @@ class WebAppInterface(private val context: Context) {
         }
     }
 
+    // =============================================
+    // TSPL PROTOCOL — For XP-470B Label Printer
+    // =============================================
+
+    /**
+     * Send raw TSPL commands to a USB device by deviceId.
+     * Returns true if successful.
+     */
+    private fun sendRawTspl(deviceId: Int, tsplCommands: String): Boolean {
+        val manager = context.getSystemService(Context.USB_SERVICE) as android.hardware.usb.UsbManager
+        val device = manager.deviceList.values.find { it.deviceId == deviceId } ?: return false
+        
+        val connection = manager.openDevice(device) ?: return false
+        
+        try {
+            // Find the bulk OUT endpoint
+            for (i in 0 until device.interfaceCount) {
+                val intf = device.getInterface(i)
+                connection.claimInterface(intf, true)
+                
+                for (j in 0 until intf.endpointCount) {
+                    val endpoint = intf.getEndpoint(j)
+                    if (endpoint.direction == android.hardware.usb.UsbConstants.USB_DIR_OUT) {
+                        val data = tsplCommands.toByteArray(Charsets.UTF_8)
+                        val result = connection.bulkTransfer(endpoint, data, data.size, 5000)
+                        connection.releaseInterface(intf)
+                        connection.close()
+                        return result >= 0
+                    }
+                }
+                connection.releaseInterface(intf)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
+        connection.close()
+        return false
+    }
+
+    /**
+     * Print a TSPL test label on the XP-470B.
+     * Called from JS: window.AndroidPrint.printTsplTest(deviceId)
+     */
+    @JavascriptInterface
+    fun printTsplTest(deviceId: Int) {
+        try {
+            showStyledSnackbar(getRootView(), "Enviando test TSPL...", SnackbarType.INFO)
+            
+            val tspl = StringBuilder()
+            tspl.append("SIZE 60 mm, 40 mm\r\n")
+            tspl.append("GAP 2 mm, 0 mm\r\n")
+            tspl.append("DIRECTION 1,0\r\n")
+            tspl.append("CLS\r\n")
+            tspl.append("TEXT 30,30,\"3\",0,1,1,\"TEST DAMAF APP\"\r\n")
+            tspl.append("TEXT 30,80,\"2\",0,1,1,\"Etiquetadora XP-470B\"\r\n")
+            tspl.append("TEXT 30,120,\"2\",0,1,1,\"Funcionando OK\"\r\n")
+            tspl.append("PRINT 1,1\r\n")
+            
+            val success = sendRawTspl(deviceId, tspl.toString())
+            
+            if (success) {
+                showStyledSnackbar(getRootView(), "✅ Test TSPL enviado correctamente", SnackbarType.SUCCESS)
+            } else {
+                showStyledSnackbar(getRootView(), "❌ No se pudo enviar TSPL. Verifica permisos USB.", SnackbarType.ERROR)
+            }
+        } catch (e: Exception) {
+            showStyledSnackbar(getRootView(), "❌ Error TSPL: ${e.message}", SnackbarType.ERROR)
+        }
+    }
+
+    /**
+     * Print order items as a TSPL label on XP-470B.
+     * Called from JS: window.AndroidPrint.printTsplLabel(jsonOrder, deviceId)
+     */
+    @JavascriptInterface
+    fun printTsplLabel(jsonOrder: String, deviceId: Int) {
+        try {
+            val order = JSONObject(jsonOrder)
+            val items = order.optJSONArray("cart_items") ?: order.optJSONArray("items")
+            
+            val orderNumber = order.optString("order_number", "")
+            val displayId = if (orderNumber.isNotEmpty() && orderNumber != "null") {
+                "#" + orderNumber.padStart(4, '0')
+            } else {
+                "#" + order.optString("id", "").take(4)
+            }
+            
+            // Calculate label height based on items
+            val itemCount = items?.length() ?: 0
+            var yPos = 30
+            val lineHeight = 35
+            val labelHeight = 60 + (itemCount * lineHeight) + 40 // header + items + footer
+            
+            val tspl = StringBuilder()
+            tspl.append("SIZE 60 mm, ${labelHeight / 8} mm\r\n")
+            tspl.append("GAP 2 mm, 0 mm\r\n")
+            tspl.append("DIRECTION 1,0\r\n")
+            tspl.append("CLS\r\n")
+            
+            // Order number header
+            tspl.append("TEXT 30,$yPos,\"3\",0,1,1,\"ORDEN $displayId\"\r\n")
+            yPos += 50
+            
+            // Separator line
+            tspl.append("TEXT 30,$yPos,\"1\",0,1,1,\"------------------------------\"\r\n")
+            yPos += 30
+            
+            // Items
+            if (items != null) {
+                for (i in 0 until items.length()) {
+                    val item = items.getJSONObject(i)
+                    val name = item.optString("name", "Producto")
+                    val qty = item.optInt("quantity", 1)
+                    
+                    tspl.append("TEXT 30,$yPos,\"2\",0,1,1,\"${qty}x $name\"\r\n")
+                    yPos += lineHeight
+                    
+                    // Removed ingredients
+                    val removed = item.optJSONArray("removed_ingredients")
+                    if (removed != null) {
+                        for (j in 0 until removed.length()) {
+                            tspl.append("TEXT 50,$yPos,\"1\",0,1,1,\"SIN ${removed.getString(j)}\"\r\n")
+                            yPos += 25
+                        }
+                    }
+                    
+                    // Modifiers
+                    val mods = item.optJSONArray("modifiers")
+                    if (mods != null) {
+                        for (j in 0 until mods.length()) {
+                            val mod = mods.getJSONObject(j)
+                            tspl.append("TEXT 50,$yPos,\"1\",0,1,1,\"+ ${mod.optString("name", "")}\"\r\n")
+                            yPos += 25
+                        }
+                    }
+                    
+                    // Side & Drink
+                    val side = item.optString("side_name", "")
+                    if (side.isNotEmpty()) {
+                        tspl.append("TEXT 50,$yPos,\"1\",0,1,1,\"Guarnicion: $side\"\r\n")
+                        yPos += 25
+                    }
+                    val drink = item.optString("drink_name", "")
+                    if (drink.isNotEmpty()) {
+                        tspl.append("TEXT 50,$yPos,\"1\",0,1,1,\"Bebida: $drink\"\r\n")
+                        yPos += 25
+                    }
+                }
+            }
+            
+            tspl.append("PRINT 1,1\r\n")
+            
+            val success = sendRawTspl(deviceId, tspl.toString())
+            
+            if (success) {
+                showStyledSnackbar(getRootView(), "✅ Etiqueta impresa", SnackbarType.SUCCESS)
+            } else {
+                showStyledSnackbar(getRootView(), "❌ Error al imprimir etiqueta", SnackbarType.ERROR)
+            }
+        } catch (e: Exception) {
+            showStyledSnackbar(getRootView(), "❌ Error TSPL: ${e.message}", SnackbarType.ERROR)
+        }
+    }
+
     private fun printUsb(order: JSONObject) {
         try {
             showStyledSnackbar(getRootView(), "Buscando impresoras USB...", SnackbarType.INFO)

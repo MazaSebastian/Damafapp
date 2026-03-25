@@ -53,14 +53,31 @@ const PrinterDiagnostics = () => {
             return
         }
 
-        setTestingIndex(deviceIndex)
+        setTestingIndex(`escpos-${deviceIndex}`)
         try {
             window.AndroidPrint.printTestPage(deviceIndex)
-            toast.info('Enviando página de prueba...')
+            toast.info('Enviando test ESC/POS...')
         } catch (e) {
             toast.error('Error al imprimir test: ' + e.message)
         } finally {
             setTimeout(() => setTestingIndex(null), 2000)
+        }
+    }
+
+    const testTspl = (deviceId) => {
+        if (!window.AndroidPrint?.printTsplTest) {
+            toast.error('Función TSPL no disponible. Actualiza la APK.')
+            return
+        }
+
+        setTestingIndex(`tspl-${deviceId}`)
+        try {
+            window.AndroidPrint.printTsplTest(deviceId)
+            toast.info('Enviando test TSPL (etiquetas)...')
+        } catch (e) {
+            toast.error('Error TSPL: ' + e.message)
+        } finally {
+            setTimeout(() => setTestingIndex(null), 3000)
         }
     }
 
@@ -142,8 +159,8 @@ const PrinterDiagnostics = () => {
                         <div
                             key={device.deviceId || device.index}
                             className={`bg-[var(--color-background)]/50 rounded-xl p-4 border transition-all ${device.isPrinter
-                                    ? 'border-green-500/20 hover:border-green-500/40'
-                                    : 'border-white/5 hover:border-white/10'
+                                ? 'border-green-500/20 hover:border-green-500/40'
+                                : 'border-white/5 hover:border-white/10'
                                 }`}
                         >
                             <div className="flex items-center justify-between">
@@ -183,19 +200,32 @@ const PrinterDiagnostics = () => {
                                 </div>
 
                                 {/* Actions */}
-                                {device.isPrinter && (
+                                <div className="flex gap-1.5">
+                                    {device.isPrinter && (
+                                        <button
+                                            onClick={() => testPrint(device.printerIndex)}
+                                            disabled={testingIndex === `escpos-${device.printerIndex}`}
+                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all ${testingIndex === `escpos-${device.printerIndex}`
+                                                    ? 'bg-gray-500/20 text-gray-400 cursor-wait'
+                                                    : 'bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20'
+                                                }`}
+                                        >
+                                            <Send className={`w-3 h-3 ${testingIndex === `escpos-${device.printerIndex}` ? 'animate-pulse' : ''}`} />
+                                            ESC/POS
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={() => testPrint(device.printerIndex)}
-                                        disabled={testingIndex === device.printerIndex}
-                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all ${testingIndex === device.printerIndex
+                                        onClick={() => testTspl(device.deviceId)}
+                                        disabled={testingIndex === `tspl-${device.deviceId}`}
+                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all ${testingIndex === `tspl-${device.deviceId}`
                                                 ? 'bg-gray-500/20 text-gray-400 cursor-wait'
-                                                : 'bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20'
+                                                : 'bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20'
                                             }`}
                                     >
-                                        <Send className={`w-3.5 h-3.5 ${testingIndex === device.printerIndex ? 'animate-pulse' : ''}`} />
-                                        {testingIndex === device.printerIndex ? 'Imprimiendo...' : 'Test Print'}
+                                        <Send className={`w-3 h-3 ${testingIndex === `tspl-${device.deviceId}` ? 'animate-pulse' : ''}`} />
+                                        TSPL
                                     </button>
-                                )}
+                                </div>
                             </div>
                         </div>
                     ))}
